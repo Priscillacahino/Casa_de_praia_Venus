@@ -1,14 +1,19 @@
 {
-  "name": "react-example",
+  "name": "venus-beach-house",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --port=3000 --host=0.0.0.0",
+    "dev": "node scripts/dev.js",
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "dev:web": "vite --port=3000 --host=0.0.0.0",
+    "start": "node server/index.js",
+    "test": "node --test tests/*.test.js",
+    "admin:password": "node scripts/admin-password.js",
+    "backup": "node scripts/backup.js"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -31,5 +36,8 @@
     "typescript": "~5.8.2",
     "vite": "^6.2.3",
     "@types/express": "^4.17.21"
+  },
+  "engines": {
+    "node": ">=24.0.0"
   }
 }

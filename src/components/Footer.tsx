@@ -1,8 +1,18 @@
-import React from 'react';
-import { HOUSE_INFO } from '../data/houseData';
-import { Instagram, MessageCircle, MapPin, Mail, Sparkles, Heart, ShieldCheck } from 'lucide-react';
+import { useService } from "../service";
+import React from "react";
+import { HOUSE_INFO } from "../data/houseData";
+import {
+  Instagram,
+  MessageCircle,
+  MapPin,
+  Mail,
+  Sparkles,
+  Heart,
+  ShieldCheck,
+} from "lucide-react";
 
 export const Footer: React.FC = () => {
+  const { data } = useService();
   return (
     <footer className="bg-stone-900 text-stone-300 pt-14 pb-20 md:pb-12 border-t border-stone-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -17,12 +27,18 @@ export const Footer: React.FC = () => {
                 referrerPolicy="no-referrer"
               />
               <div>
-                <h4 className="font-serif font-bold text-lg text-white">Vênus Beach House</h4>
-                <p className="text-xs text-amber-400 font-medium">Sua casa de praia no Conde - PB</p>
+                <h4 className="font-serif font-bold text-lg text-white">
+                  Vênus Beach House
+                </h4>
+                <p className="text-xs text-amber-400 font-medium">
+                  Sua casa de praia no Conde - PB
+                </p>
               </div>
             </div>
             <p className="text-xs text-stone-400 leading-relaxed">
-              Aqui você viverá momentos de alegria, confraternização e união. Um refúgio completo com piscina, churrasqueira, home office e pertinho do mar.
+              Aqui você viverá momentos de alegria, confraternização e união. Um
+              refúgio completo com piscina, churrasqueira, home office e
+              pertinho do mar.
             </p>
             {/* Social Buttons */}
             <div className="flex items-center gap-2.5 pt-2">
@@ -36,7 +52,7 @@ export const Footer: React.FC = () => {
                 <Instagram className="w-4 h-4" />
               </a>
               <a
-                href={`https://wa.me/55${HOUSE_INFO.whatsappNumber}`}
+                href={`https://wa.me/${data?.settings.whatsappNumber || `55${HOUSE_INFO.whatsappNumber}`}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="WhatsApp da Vênus Beach House"
@@ -45,7 +61,7 @@ export const Footer: React.FC = () => {
                 <MessageCircle className="w-4 h-4" />
               </a>
               <a
-                href={HOUSE_INFO.googleMapsUrl}
+                href={data?.settings.googleMapsUrl || HOUSE_INFO.googleMapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Localização no Google Maps"
@@ -54,7 +70,7 @@ export const Footer: React.FC = () => {
                 <MapPin className="w-4 h-4" />
               </a>
               <a
-                href={`mailto:${HOUSE_INFO.email}`}
+                href={`mailto:${data?.settings.email || HOUSE_INFO.email}`}
                 aria-label="E-mail de contato"
                 className="p-2.5 bg-stone-800 hover:bg-amber-600 text-stone-200 hover:text-white rounded-xl transition-all"
               >
@@ -70,37 +86,58 @@ export const Footer: React.FC = () => {
             </h5>
             <ul className="space-y-2 text-xs">
               <li>
-                <a href="#inicio" className="hover:text-amber-400 transition-colors">
+                <a
+                  href="#inicio"
+                  className="hover:text-amber-400 transition-colors"
+                >
                   Início
                 </a>
               </li>
               <li>
-                <a href="#sobre" className="hover:text-amber-400 transition-colors">
+                <a
+                  href="#sobre"
+                  className="hover:text-amber-400 transition-colors"
+                >
                   A Casa
                 </a>
               </li>
               <li>
-                <a href="#comodos" className="hover:text-amber-400 transition-colors">
+                <a
+                  href="#comodos"
+                  className="hover:text-amber-400 transition-colors"
+                >
                   Cômodos & Estrutura
                 </a>
               </li>
               <li>
-                <a href="#praias" className="hover:text-amber-400 transition-colors">
+                <a
+                  href="#praias"
+                  className="hover:text-amber-400 transition-colors"
+                >
                   Praias de Conde (Tabatinga, Coqueirinho...)
                 </a>
               </li>
               <li>
-                <a href="#comodidades" className="hover:text-amber-400 transition-colors">
+                <a
+                  href="#comodidades"
+                  className="hover:text-amber-400 transition-colors"
+                >
                   Comodidades
                 </a>
               </li>
               <li>
-                <a href="#localizacao" className="hover:text-amber-400 transition-colors">
+                <a
+                  href="#localizacao"
+                  className="hover:text-amber-400 transition-colors"
+                >
                   Google Maps & Rotas
                 </a>
               </li>
               <li>
-                <a href="#contato" className="hover:text-amber-400 transition-colors">
+                <a
+                  href="#contato"
+                  className="hover:text-amber-400 transition-colors"
+                >
                   Fale Conosco
                 </a>
               </li>
@@ -114,19 +151,24 @@ export const Footer: React.FC = () => {
             </h5>
             <ul className="space-y-2 text-xs text-stone-400">
               <li className="flex items-center gap-1.5">
-                <span className="text-amber-400">🕒</span> Check-in a partir das 14:00
+                <span className="text-amber-400">🕒</span> Check-in a partir das
+                14:00
               </li>
               <li className="flex items-center gap-1.5">
-                <span className="text-amber-400">🕚</span> Check-out até às 11:00
+                <span className="text-amber-400">🕚</span> Check-out até às
+                11:00
               </li>
               <li className="flex items-center gap-1.5">
-                <span className="text-amber-400">🐾</span> Animais de estimação permitidos
+                <span className="text-amber-400">🐾</span> Animais de estimação
+                permitidos
               </li>
               <li className="flex items-center gap-1.5">
-                <span className="text-amber-400">🚗</span> Garagem privativa para 1 carro
+                <span className="text-amber-400">🚗</span> Garagem privativa
+                para 1 carro
               </li>
               <li className="flex items-center gap-1.5">
-                <span className="text-amber-400">🔇</span> Lei do silêncio após as 22h
+                <span className="text-amber-400">🔇</span> Lei do silêncio após
+                as 22h
               </li>
             </ul>
           </div>
@@ -138,9 +180,9 @@ export const Footer: React.FC = () => {
             </h5>
             <div className="space-y-2.5 text-xs text-stone-400">
               <p>
-                <strong className="text-white">WhatsApp:</strong>{' '}
+                <strong className="text-white">WhatsApp:</strong>{" "}
                 <a
-                  href={`https://wa.me/55${HOUSE_INFO.whatsappNumber}`}
+                  href={`https://wa.me/${data?.settings.whatsappNumber || `55${HOUSE_INFO.whatsappNumber}`}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-amber-400 hover:underline"
@@ -149,16 +191,16 @@ export const Footer: React.FC = () => {
                 </a>
               </p>
               <p>
-                <strong className="text-white">E-mail:</strong>{' '}
+                <strong className="text-white">E-mail:</strong>{" "}
                 <a
-                  href={`mailto:${HOUSE_INFO.email}`}
+                  href={`mailto:${data?.settings.email || HOUSE_INFO.email}`}
                   className="text-amber-400 hover:underline break-all"
                 >
-                  {HOUSE_INFO.email}
+                  {data?.settings.email || HOUSE_INFO.email}
                 </a>
               </p>
               <p>
-                <strong className="text-white">Instagram:</strong>{' '}
+                <strong className="text-white">Instagram:</strong>{" "}
                 <a
                   href={HOUSE_INFO.instagramUrl}
                   target="_blank"
@@ -169,7 +211,8 @@ export const Footer: React.FC = () => {
                 </a>
               </p>
               <p>
-                <strong className="text-white">Local:</strong> Conde, Litoral Sul - PB
+                <strong className="text-white">Local:</strong> Conde, Litoral
+                Sul - PB
               </p>
             </div>
           </div>
@@ -177,7 +220,10 @@ export const Footer: React.FC = () => {
 
         {/* Bottom legal & tribute */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-500">
-          <p>© {new Date().getFullYear()} Vênus Beach House. Todos os direitos reservados.</p>
+          <p>
+            © {new Date().getFullYear()} Vênus Beach House. Todos os direitos
+            reservados.
+          </p>
           <div className="flex items-center gap-1 text-stone-400">
             <span>Feito com carinho para suas melhores férias no Conde</span>
             <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />

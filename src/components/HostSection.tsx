@@ -1,10 +1,24 @@
-import React from 'react';
-import { HOUSE_INFO } from '../data/houseData';
-import { Star, ShieldCheck, Clock, MessageSquare, Heart, Sparkles } from 'lucide-react';
-import { SmartImage } from './SmartImage';
+import { useService, whatsapp } from "../service";
+import React from "react";
+import { HOUSE_INFO } from "../data/houseData";
+import {
+  Star,
+  ShieldCheck,
+  Clock,
+  MessageSquare,
+  Heart,
+  Sparkles,
+} from "lucide-react";
+import { SmartImage } from "./SmartImage";
 
 export const HostSection: React.FC = () => {
-  const whatsappUrl = `https://wa.me/55${HOUSE_INFO.whatsappNumber}?text=Ol%C3%A1!%20Adorei%20a%20V%C3%AAnus%20Beach%20House%20e%20gostaria%20de%20conversar%20sobre%20uma%20reserva.`;
+  const { data } = useService();
+  const whatsappUrl = data
+    ? whatsapp(
+        data.settings.whatsappNumber,
+        "Olá! Gostaria de conversar sobre uma reserva.",
+      )
+    : "#contato";
 
   return (
     <section className="py-10 border-t border-stone-200">
@@ -14,7 +28,9 @@ export const HostSection: React.FC = () => {
             <div className="relative shrink-0">
               <SmartImage
                 src={HOUSE_INFO.catProfileImage}
-                fallbackSources={['/images/venus_cat_profile_1789476877938.jpg']}
+                fallbackSources={[
+                  "/images/venus_cat_profile_1789476877938.jpg",
+                ]}
                 alt="Vênus - Anfitriã Oficial e Mascote"
                 className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover ring-4 ring-amber-400/80 shadow-md"
               />
@@ -29,15 +45,16 @@ export const HostSection: React.FC = () => {
                 </h3>
               </div>
               <p className="text-xs sm:text-sm text-stone-600 mt-1">
-                Anfitriã oficial da casa · Inspirando conexão, afeto e descanso sob o sol da Paraíba
+                Anfitriã oficial da casa · Inspirando conexão, afeto e descanso
+                sob o sol da Paraíba
               </p>
               <div className="flex items-center gap-3 mt-2 text-xs font-semibold text-amber-800">
                 <span className="flex items-center gap-1">
                   <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-                  Superhost Verificado
+                  Atendimento direto
                 </span>
                 <span>·</span>
-                <span>24 Avaliações 5 Estrelas</span>
+                <span>Casa de praia</span>
               </div>
             </div>
           </div>
@@ -57,21 +74,27 @@ export const HostSection: React.FC = () => {
         <div className="pt-6 grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-stone-700">
           <div className="md:col-span-2 space-y-3 leading-relaxed">
             <p className="font-serif italic text-stone-800 text-base">
-              "Aqui você viverá momentos de alegria, confraternização e união. Será um refúgio para relaxar e se divertir junto aos amigos e a família."
+              "Aqui você viverá momentos de alegria, confraternização e união.
+              Será um refúgio para relaxar e se divertir junto aos amigos e a
+              família."
             </p>
             <p>
-              A Vênus Beach House nasceu do desejo de proporcionar um espaço acolhedor, vibrante e repleto de boas energias no litoral sul da Paraíba. Cada cômodo possui sua identidade própria — desde a arte mística da sala e a vibe cósmica dos quartos até a piscina privativa com churrasqueira e a calma da rede na área externa.
+              A Vênus Beach House nasceu do desejo de proporcionar um espaço
+              acolhedor, vibrante e repleto de boas energias no litoral sul da
+              Paraíba. Cada cômodo possui sua identidade própria — desde a arte
+              mística da sala e a vibe cósmica dos quartos até a piscina
+              privativa com churrasqueira e a calma da rede na área externa.
             </p>
           </div>
 
           <div className="space-y-3 bg-white p-4 rounded-2xl border border-stone-200/70 text-xs">
             <div className="flex items-center gap-2.5 text-stone-700">
               <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>Identidade e acomodação 100% verificadas</span>
+              <span>Dúvidas sobre a hospedagem? Fale conosco.</span>
             </div>
             <div className="flex items-center gap-2.5 text-stone-700">
               <Clock className="w-4 h-4 text-amber-600 shrink-0" />
-              <span>Taxa de resposta: 100% (em até 1 hora)</span>
+              <span>Consulte os horários de atendimento</span>
             </div>
             <div className="flex items-center gap-2.5 text-stone-700">
               <Heart className="w-4 h-4 text-rose-500 shrink-0" />

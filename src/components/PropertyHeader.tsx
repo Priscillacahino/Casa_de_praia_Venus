@@ -1,10 +1,22 @@
-import React, { useState } from 'react';
-import { Star, MapPin, Share2, Heart, ShieldCheck, Check, Sparkles } from 'lucide-react';
-import { HOUSE_INFO } from '../data/houseData';
+import { RatingSummary, useService } from "../service";
+import React, { useState } from "react";
+import {
+  Star,
+  MapPin,
+  Share2,
+  Heart,
+  ShieldCheck,
+  Check,
+  Sparkles,
+} from "lucide-react";
+import { HOUSE_INFO } from "../data/houseData";
 
 export const PropertyHeader: React.FC = () => {
+  const { data } = useService();
   const [copied, setCopied] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(
+    () => localStorage.getItem("venus_favorite") === "yes",
+  );
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -19,7 +31,12 @@ export const PropertyHeader: React.FC = () => {
         // Fallback to clipboard
       }
     }
-    await navigator.clipboard.writeText(window.location.href);
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+    } catch {
+      window.prompt("Copie o link:", window.location.href);
+      return;
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
@@ -34,7 +51,7 @@ export const PropertyHeader: React.FC = () => {
         </span>
         <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/70 px-2.5 py-0.5 rounded-full">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-          Reserva Direta Sem Taxas Extras
+          Reserva Direta
         </span>
       </div>
 
@@ -70,20 +87,26 @@ export const PropertyHeader: React.FC = () => {
           </button>
 
           <button
-            onClick={() => setIsFavorite(!isFavorite)}
+            onClick={() => {
+              setIsFavorite(!isFavorite);
+              localStorage.setItem(
+                "venus_favorite",
+                !isFavorite ? "yes" : "no",
+              );
+            }}
             className={`inline-flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-medium border rounded-xl transition-all shadow-2xs ${
               isFavorite
-                ? 'bg-rose-50 border-rose-200 text-rose-600'
-                : 'bg-white hover:bg-stone-50 border-stone-300 text-stone-700'
+                ? "bg-rose-50 border-rose-200 text-rose-600"
+                : "bg-white hover:bg-stone-50 border-stone-300 text-stone-700"
             }`}
             title="Salvar nos favoritos"
           >
             <Heart
               className={`w-4 h-4 transition-colors ${
-                isFavorite ? 'fill-rose-500 text-rose-500' : 'text-stone-600'
+                isFavorite ? "fill-rose-500 text-rose-500" : "text-stone-600"
               }`}
             />
-            <span>{isFavorite ? 'Salvo' : 'Salvar'}</span>
+            <span>{isFavorite ? "Salvo" : "Salvar"}</span>
           </button>
         </div>
       </div>
@@ -92,17 +115,15 @@ export const PropertyHeader: React.FC = () => {
       <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-xs sm:text-sm text-stone-600 mt-3 pt-3 border-t border-stone-200/60">
         <div className="flex items-center gap-1 font-semibold text-stone-900">
           <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-          <span>{HOUSE_INFO.rating.toFixed(2)}</span>
-          <span className="text-stone-400 font-normal">·</span>
-          <a href="#avaliacoes" className="underline hover:text-amber-800 transition-colors">
-            {HOUSE_INFO.reviewCount} avaliações
+          <a href="#avaliacoes">
+            <RatingSummary />
           </a>
         </div>
 
         <span className="text-stone-300 hidden sm:inline">·</span>
 
         <div className="flex items-center gap-1 font-medium text-stone-800">
-          <span>🏆 Superhost</span>
+          <span>Atendimento direto</span>
         </div>
 
         <span className="text-stone-300 hidden sm:inline">·</span>
@@ -118,7 +139,9 @@ export const PropertyHeader: React.FC = () => {
         <span className="text-stone-300 hidden sm:inline">·</span>
 
         <span className="text-stone-600 font-medium">
-          Até {HOUSE_INFO.maxGuests} hóspedes · {HOUSE_INFO.bedrooms} quartos · {HOUSE_INFO.beds} camas · {HOUSE_INFO.baths} banheiro
+          Até {data?.settings.maxGuests || HOUSE_INFO.maxGuests} hóspedes ·{" "}
+          {HOUSE_INFO.bedrooms} quartos · {HOUSE_INFO.beds} camas ·{" "}
+          {HOUSE_INFO.baths} banheiro
         </span>
       </div>
     </div>

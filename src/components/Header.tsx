@@ -1,13 +1,27 @@
-import React from 'react';
-import { MessageCircle, MapPin, Sparkles, Compass, Home, Phone } from 'lucide-react';
-import { HOUSE_INFO } from '../data/houseData';
+import { useService, whatsapp } from "../service";
+import React from "react";
+import {
+  MessageCircle,
+  MapPin,
+  Sparkles,
+  Compass,
+  Home,
+  Phone,
+} from "lucide-react";
+import { HOUSE_INFO } from "../data/houseData";
 
 interface HeaderProps {
   onOpenGallery: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ onOpenGallery }) => {
-  const whatsappUrl = `https://wa.me/55${HOUSE_INFO.whatsappNumber}?text=Ol%C3%A1!%20Encontrei%20a%20V%C3%AAnus%20Beach%20House%20e%20gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20disponibilidade%20e%20reservas.`;
+  const { data } = useService();
+  const whatsappUrl = data
+    ? whatsapp(
+        data.settings.whatsappNumber,
+        "Olá! Gostaria de informações sobre disponibilidade e reservas.",
+      )
+    : "#contato";
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200/80 transition-all shadow-xs">
@@ -80,10 +94,10 @@ export const Header: React.FC<HeaderProps> = ({ onOpenGallery }) => {
             Avaliações
           </a>
           <a
-            href="#contato"
+            href="#pagamento"
             className="px-3 py-1.5 rounded-full text-xs font-medium text-stone-700 hover:text-stone-950 hover:bg-stone-100 transition-colors"
           >
-            Contato
+            Pagamento
           </a>
         </nav>
 

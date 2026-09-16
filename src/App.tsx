@@ -1,38 +1,34 @@
-import React, { useState } from 'react';
-import { Header } from './components/Header';
-import { HeroGallery } from './components/HeroGallery';
-import { PropertyHeader } from './components/PropertyHeader';
-import { AboutSection } from './components/AboutSection';
-import { RoomsSection } from './components/RoomsSection';
-import { AmenitiesSection } from './components/AmenitiesSection';
-import { BeachesSection } from './components/BeachesSection';
-import { PricingSection } from './components/PricingSection';
-import { BookingSection } from './components/BookingSection';
-import { MapSection } from './components/MapSection';
-import { HostSection } from './components/HostSection';
-import { ReviewsSection } from './components/ReviewsSection';
-import { BookingCard } from './components/BookingCard';
-import { ContactSection } from './components/ContactSection';
-import { Footer } from './components/Footer';
-import { PhotoGalleryModal } from './components/PhotoGalleryModal';
-import { MessageCircle } from 'lucide-react';
-import { HOUSE_INFO } from './data/houseData';
+import React, { useState } from "react";
+import { Header } from "./components/Header";
+import { HeroGallery } from "./components/HeroGallery";
+import { PropertyHeader } from "./components/PropertyHeader";
+import { AboutSection } from "./components/AboutSection";
+import { RoomsSection } from "./components/RoomsSection";
+import { AmenitiesSection } from "./components/AmenitiesSection";
+import { BeachesSection } from "./components/BeachesSection";
+import { PricingSection } from "./components/PricingSection";
+import { BookingSection } from "./components/BookingSection";
+import { MapSection } from "./components/MapSection";
+import { HostSection } from "./components/HostSection";
+import { ReviewsSection } from "./components/ReviewsSection";
+import { BookingCard } from "./components/BookingCard";
+import { ContactSection } from "./components/ContactSection";
+import { Footer } from "./components/Footer";
+import { PhotoGalleryModal } from "./components/PhotoGalleryModal";
+import { MessageCircle } from "lucide-react";
+import { PaymentSection } from "./components/Compliance";
+import { Admin } from "./components/Admin";
+import { MobileInstall } from "./components/MobileInstall";
+import { useService, whatsapp } from "./service";
+import { HOUSE_INFO } from "./data/houseData";
 
 export default function App() {
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [initialPhotoIndex, setInitialPhotoIndex] = useState(0);
 
-  // Synchronized date selection across components
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const checkoutDate = new Date(tomorrow);
-  checkoutDate.setDate(checkoutDate.getDate() + 2);
-
-  const formatDateForInput = (d: Date) => d.toISOString().split('T')[0];
-
-  const [selectedCheckIn, setSelectedCheckIn] = useState<string>(formatDateForInput(tomorrow));
-  const [selectedCheckOut, setSelectedCheckOut] = useState<string>(formatDateForInput(checkoutDate));
+  const { data, error, reload } = useService();
+  const [selectedCheckIn, setSelectedCheckIn] = useState<string>("");
+  const [selectedCheckOut, setSelectedCheckOut] = useState<string>("");
 
   const handleOpenGallery = (index: number = 0) => {
     setInitialPhotoIndex(index);
@@ -44,15 +40,32 @@ export default function App() {
     setSelectedCheckOut(checkOut);
   };
 
-  const whatsappFloatingUrl = `https://wa.me/55${HOUSE_INFO.whatsappNumber}?text=Ol%C3%A1!%20Gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20a%20V%C3%AAnus%20Beach%20House.`;
+  if (window.location.pathname === "/admin") return <Admin />;
+  const whatsappFloatingUrl = data
+    ? whatsapp(
+        data.settings.whatsappNumber,
+        "Olá! Gostaria de informações sobre a Vênus Beach House.",
+      )
+    : "#contato";
 
   return (
-    <div id="inicio" className="min-h-screen bg-[#faf9f6] text-stone-900 flex flex-col selection:bg-amber-500 selection:text-white">
+    <div
+      id="inicio"
+      className="min-h-screen bg-[#faf9f6] text-stone-900 flex flex-col selection:bg-amber-500 selection:text-white"
+    >
       {/* Top Airbnb-style Navbar */}
       <Header onOpenGallery={() => handleOpenGallery(0)} />
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex-1 w-full pb-16">
+        {error && (
+          <div role="alert" className="surface my-4">
+            Não foi possível carregar os serviços de reservas.{" "}
+            <button className="underline" onClick={() => reload()}>
+              Tentar novamente
+            </button>
+          </div>
+        )}
         {/* Airbnb 5-Photo Mosaic Hero */}
         <HeroGallery onOpenGallery={handleOpenGallery} />
 
@@ -86,6 +99,7 @@ export default function App() {
             />
 
             {/* Google Maps Location Embed & Link */}
+            <PaymentSection />
             <MapSection />
 
             {/* Host Section with Cat Mascot Profile */}
@@ -116,6 +130,25 @@ export default function App() {
             onDatesChange={handleDatesChange}
           />
         </div>
+        <MobileInstall />
+        <section id="privacidade" className="py-8 border-t text-sm space-y-2">
+          <h2 className="font-bold">Privacidade</h2>
+          <p>
+            Os dados informados nos pedidos e mensagens são usados pela
+            administração da Vênus Beach House para atender ao contato e
+            organizar a hospedagem. Pedidos e contatos ficam restritos à
+            administração. Avaliações autorizadas podem ser publicadas com o
+            nome informado.
+          </p>
+          <p>
+            O acesso ao WhatsApp e ao Google Maps abre serviços de terceiros.
+            Para solicitar correção ou exclusão de seus dados, use o contato da
+            anfitriã.
+          </p>
+          <a href="/admin" className="underline">
+            Acesso da administração
+          </a>
+        </section>
       </main>
 
       {/* Floating WhatsApp Quick Contact Badge */}
@@ -136,8 +169,12 @@ export default function App() {
           <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-300 rounded-full animate-ping" />
         </div>
         <div className="hidden sm:flex flex-col text-left">
-          <span className="text-[10px] uppercase font-bold text-white/90 leading-tight">Fale Conosco</span>
-          <span className="text-xs font-extrabold text-white leading-tight">WhatsApp</span>
+          <span className="text-[10px] uppercase font-bold text-white/90 leading-tight">
+            Fale Conosco
+          </span>
+          <span className="text-xs font-extrabold text-white leading-tight">
+            WhatsApp
+          </span>
         </div>
         <MessageCircle className="w-5 h-5 fill-white sm:hidden" />
       </a>
