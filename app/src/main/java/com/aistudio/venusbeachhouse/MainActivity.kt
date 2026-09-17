@@ -8,6 +8,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -68,18 +70,44 @@ fun VenusBeachHouseApp(viewModel: VenusViewModel) {
         topBar = {
             TopAppBar(
                 title = {
-                    Column {
-                        Text(
-                            text = "Vênus Beach House",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = StoneText
-                        )
-                        Text(
-                            text = "Conde, Litoral Sul da Paraíba",
-                            fontSize = 11.sp,
-                            color = AmberDark
-                        )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(HouseData.HOUSE_INFO.instagramUrl))
+                                context.startActivity(intent)
+                            }
+                            .padding(end = 4.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(AmberContainer)
+                                .border(1.5.dp, AmberPrimary, CircleShape)
+                        ) {
+                            AssetImage(
+                                assetPath = HouseData.HOUSE_INFO.catProfileAsset,
+                                contentDescription = "Logotipo Gatinha Vênus @venuscasadepraiapb",
+                                modifier = Modifier.fillMaxSize(),
+                                shape = CircleShape
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = "Vênus Beach House",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = StoneText
+                            )
+                            Text(
+                                text = "@venuscasadepraiapb • Conde - PB",
+                                fontSize = 10.sp,
+                                color = AmberDark
+                            )
+                        }
                     }
                 },
                 actions = {

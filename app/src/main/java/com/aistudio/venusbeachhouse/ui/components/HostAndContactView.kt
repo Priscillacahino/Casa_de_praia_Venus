@@ -58,7 +58,12 @@ fun HostAndContactView(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = AmberContainer.copy(alpha = 0.5f)),
             border = CardDefaults.outlinedCardBorder(),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(house.instagramUrl))
+                    context.startActivity(intent)
+                }
         ) {
             Row(
                 modifier = Modifier.padding(16.dp),
@@ -66,33 +71,36 @@ fun HostAndContactView(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(68.dp)
+                        .size(72.dp)
                         .clip(CircleShape)
-                        .border(2.dp, AmberPrimary, CircleShape)
+                        .background(Color.White)
+                        .border(2.5.dp, AmberPrimary, CircleShape)
                 ) {
                     AssetImage(
                         assetPath = house.catProfileAsset,
-                        contentDescription = "Vênus Mascote",
+                        contentDescription = "Logotipo da Gatinha Vênus - @venuscasadepraiapb",
                         modifier = Modifier.fillMaxSize(),
-                        shape = RoundedCornerShape(50)
+                        shape = CircleShape
                     )
                 }
                 Spacer(modifier = Modifier.width(14.dp))
                 Column(modifier = Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "Vênus Astronauta 🐾🚀",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = AmberDark,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                     Text(
-                        text = "Vênus Astronauta 🐾🚀",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = AmberDark,
-                        fontWeight = FontWeight.Bold
+                        text = "Logotipo & Mascote Oficial (@venuscasadepraiapb)",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFFC13584)
                     )
                     Text(
-                        text = "Mascote & Anfitriã Oficial",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = StoneText
-                    )
-                    Text(
-                        text = "A gatinha cósmica que inspira a paz, o descanso e as boas energias deste refúgio praiano!",
+                        text = "A gatinha cósmica do perfil do Instagram que inspira a paz, o descanso e as boas energias deste refúgio praiano!",
                         fontSize = 11.sp,
                         color = StoneSubtext,
                         lineHeight = 15.sp,

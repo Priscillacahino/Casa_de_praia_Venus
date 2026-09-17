@@ -1,5 +1,7 @@
 package com.aistudio.venusbeachhouse.ui.components
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -31,6 +34,7 @@ fun PropertyOverview(
     modifier: Modifier = Modifier
 ) {
     val house = HouseData.HOUSE_INFO
+    val context = LocalContext.current
 
     Column(
         modifier = modifier
@@ -104,26 +108,90 @@ fun PropertyOverview(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
-        // Property Title & Subtitle
-        Text(
-            text = house.name,
-            style = MaterialTheme.typography.headlineMedium,
-            color = StoneText
-        )
-        Text(
-            text = house.tagline,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            color = AmberDark,
-            modifier = Modifier.padding(top = 2.dp)
-        )
+        // Property Brand Header with Official Cat Logo from Instagram
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            border = CardDefaults.outlinedCardBorder(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(62.dp)
+                        .clip(CircleShape)
+                        .background(AmberContainer)
+                        .border(2.dp, AmberPrimary, CircleShape)
+                        .clickable {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(house.instagramUrl))
+                            context.startActivity(intent)
+                        }
+                ) {
+                    AssetImage(
+                        assetPath = house.catProfileAsset,
+                        contentDescription = "Logotipo da Gatinha Vênus (@venuscasadepraiapb)",
+                        modifier = Modifier.fillMaxSize(),
+                        shape = CircleShape
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(14.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = house.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = StoneText
+                    )
+                    Text(
+                        text = house.tagline,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = AmberDark
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .padding(top = 4.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(house.instagramUrl))
+                                context.startActivity(intent)
+                            }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CameraAlt,
+                            contentDescription = "Instagram",
+                            tint = Color(0xFFC13584),
+                            modifier = Modifier.size(13.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = house.instagramHandle,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFFC13584)
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
 
         // Location line
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(top = 6.dp)
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.LocationOn,
@@ -191,8 +259,8 @@ fun PropertyOverview(
 
         HighlightItem(
             icon = Icons.Default.Pets,
-            title = "Pet Friendly 🐾",
-            desc = "Seu animalzinho de pequeno/médio porte é muito bem-vindo para curtir com você."
+            title = "Mascote Vênus & Pet Friendly 🐾",
+            desc = "Inspirada na gatinha astronauta do perfil oficial @venuscasadepraiapb. Seu pet de pequeno/médio porte é muito bem-vindo!"
         )
 
         Spacer(modifier = Modifier.height(16.dp))
