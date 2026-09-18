@@ -1,0 +1,5 @@
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
+import { createDecipheriv } from "node:crypto";
+import { dirname } from "node:path";
+if(process.loadEnvFile){try{process.loadEnvFile()}catch{}}
+const [source,destination="./data/venus-restored.sqlite"]=process.argv.slice(2);if(!source||!existsSync(source))throw new Error("Uso: npm run backup:restore -- <arquivo.sqlite.enc> [destino.sqlite]");const key=Buffer.from(process.env.BACKUP_ENCRYPTION_KEY||"","base64");if(key.length!==32)throw new Error("Configure BACKUP_ENCRYPTION_KEY com a mesma chave do backup.");const input=readFileSync(source);if(input.subarray(0,9).toString()!=="VENUSBAK1")throw new Error("Formato de backup inválido.");const iv=input.subarray(9,21),tag=input.subarray(21,37),payload=input.subarray(37),decipher=createDecipheriv("aes-256-gcm",key,iv);decipher.setAuthTag(tag);const plain=Buffer.concat([decipher.update(payload),decipher.final()]);mkdirSync(dirname(destination),{recursive:true,mode:0o700});writeFileSync(destination,plain,{mode:0o600});console.log(`Backup restaurado para: ${destination}. Valide a integridade antes de substituir produção.`);

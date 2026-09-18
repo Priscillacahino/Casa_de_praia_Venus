@@ -1,10 +1,21 @@
 {
-  "name": "venus-beach-house-android",
-  "version": "1.0.0",
-  "description": "Vênus Beach House - Aplicativo Android nativo em Kotlin e Jetpack Compose",
+  "name": "venus-beach-house",
+  "version": "2.0.0",
   "private": true,
+  "type": "module",
+  "description": "Vênus Beach House — Android + API financeira controlada + Guia Vênus PB",
+  "engines": { "node": ">=24.0.0" },
   "scripts": {
-    "build": "echo 'Android build verified successfully'",
-    "dev": "echo 'Android app running'"
+    "start": "node server/index.js",
+    "dev": "node server/index.js",
+    "test": "node --test tests/*.test.js",
+    "lint": "node scripts/verify.js",
+    "build": "node scripts/verify.js",
+    "admin:password": "node scripts/admin-password.js",
+    "admin:totp": "node scripts/generate-totp.js",
+    "audit:verify": "node scripts/verify-audit.js",
+    "backup": "node scripts/backup.js",
+    "backup:restore": "node scripts/restore-backup.js",
+    "privacy:retention": "node scripts/privacy-retention.js"
   }
 }

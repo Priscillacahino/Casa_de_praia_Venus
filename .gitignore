@@ -1,15 +1,39 @@
+# Node / web
 node_modules/
-build/
 dist/
 coverage/
-.DS_Store
 *.log
-.env*
-!.env.example
 
+# Environment / secrets
 .env
 .env.*
 !.env.example
+
+# Runtime / finance / personal data
 data/
 backups/
-*.sqlite*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.db
+*.enc
+
+# Android / Gradle / IDE
+.gradle/
+.idea/
+**/build/
+local.properties
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Signing material
+*.jks
+*.keystore
+keystore.properties
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/

@@ -1,39 +1,75 @@
-# Implantação e operação
+# Deploy seguro — Vênus Beach House
 
-## Requisitos concretos
+## 1. Pré-requisitos
 
-- Servidor/container Node 24, uma instância, com volume persistente em `/app/data`.
-- HTTPS na frente da aplicação. `APP_URL` deve ser a origem exata, sem barra final (ex.: `https://casa.exemplo.com`).
-- `ADMIN_PASSWORD_HASH` gerado localmente por `npm run admin:password`.
-- `NODE_ENV=production`; `DATABASE_PATH=/app/data/venus.sqlite`; `PORT=3001`.
-- Configure `TRUST_PROXY_HOPS` apenas após verificar a topologia do proxy. Não confie em cabeçalhos encaminhados arbitrariamente. Sem esse ajuste o limitador pode agrupar visitantes pelo IP do proxy.
-- Backup externo protegido, monitoramento de `/api/health` e capacidade de restauração.
+- Node.js 24+
+- HTTPS real
+- volume persistente para `data/`
+- gerenciador de segredos do provedor
+- backup externo criptografado
 
-O Dockerfile prepara o frontend e a API. Crie volumes com permissão de escrita para UID 1000. Mantenha os volumes entre reinícios e atualizações. Não escale esta versão para várias instâncias com cópias independentes do SQLite. Para Vercel serverless ou múltiplas instâncias, migre para PostgreSQL gerenciado antes de publicar; é uma mudança de persistência, não uma simples variável.
+O backend endurecido não usa dependências NPM de runtime. `node:sqlite` é fornecido pelo Node 24.
 
-## Banco e backup
+## 2. Segredos
 
-O esquema é criado automaticamente (`server/db.js`, versão 1). `npm run backup` usa a API de backup SQLite e não uma cópia inconsistente do arquivo aberto. Copie os backups para armazenamento externo com acesso restrito. O repositório ignora dados, backups e segredos.
+Copie `.env.example` para `.env` apenas no ambiente local. Em produção, prefira variáveis/secret manager do provedor.
 
-Restauração: pare a aplicação; preserve uma cópia do diretório atual; use um backup conferido como `venus.sqlite` em um diretório de dados novo, sem arquivos WAL/SHM de outra versão; configure `DATABASE_PATH` para ele e reinicie. Confira `PRAGMA integrity_check` e algumas reservas antes de reabrir operação. Faça esse ensaio em ambiente separado antes de depender do backup em produção.
+Obrigatórios em produção:
 
-## Conferência após publicar
+- `APP_URL=https://seu-dominio`
+- `NODE_ENV=production`
+- `DATABASE_PATH=/caminho/persistente/venus.sqlite`
+- `ADMIN_PASSWORD_HASH` gerado por `npm run admin:password`
+- `ADMIN_TOTP_SECRET` gerado por `npm run admin:totp`
+- `BACKUP_ENCRYPTION_KEY` com 32 bytes aleatórios em Base64
 
-1. Conferir login/logout, acesso negado às rotas administrativas sem sessão e cookie Secure.
-2. Confirmar que `/api/public` e `/api/availability` não expõem nomes, e-mails ou telefones dos hóspedes.
-3. Cadastrar tarifas reais, sinal, limpeza, capacidade e bloqueios externos.
-4. Abrir dois navegadores e tentar confirmar pedidos sobrepostos. O segundo deve ser recusado.
-5. Confirmar valores em centavos, mínimo de noites, troca de tarifas e saída sem diária adicional.
-6. Conferir link do WhatsApp no celular e destino do Maps. Não enviar mensagens a clientes durante testes sem autorização.
-7. Instalar PWA em Android e iPhone e testar falta de conexão. Nenhum envio deve ser anunciado como concluído sem resposta da API.
-8. Conferir exportações CSV/ICS e restaurar um backup em ambiente isolado.
+Não configure `TRUST_PROXY_HOPS` por tentativa. Informe apenas a quantidade real de proxies reversos confiáveis.
 
-## Integrações e decisões pendentes
+## 3. Antes de subir
 
-- O número e o link Maps vieram do código original; precisam de confirmação da proprietária.
-- Para mapa incorporado, cadastrar o `src` do iframe obtido em Compartilhar → Incorporar um mapa. Um link curto não foi convertido em coordenadas presumidas.
-- WhatsApp nesta versão é contato iniciado pelo visitante. Automação Business exige integração adicional com credenciais e configuração próprias; não foi simulada.
-- ICS é arquivo para importação manual, não sincronização bidirecional.
-- As tarifas originais de exemplo foram removidas; cadastre os valores reais antes de ativar pedidos.
+```bash
+npm test
+npm run lint
+npm run audit:verify
+```
 
-Referências técnicas consultadas: [PWA instalável](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable), [Google Maps URLs](https://developers.google.com/maps/documentation/urls/get-started), [Node SQLite](https://nodejs.org/api/sqlite.html).
+Em banco novo, `audit:verify` pode retornar zero eventos e isso é esperado.
+
+## 4. Inicialização
+
+```bash
+npm start
+```
+
+Rotas principais:
+
+- `/` — aplicação pública
+- `/admin` — administração
+- `/guia` — Guia Vênus integrado
+- `/api/health` — health check
+
+## 5. Backup
+
+```bash
+npm run backup
+```
+
+Em produção, o comando falha se `BACKUP_ENCRYPTION_KEY` não estiver configurada. Copie o `.enc` para armazenamento externo com controle de acesso e política de retenção. Periodicamente restaure em ambiente isolado:
+
+```bash
+npm run backup:restore -- backups/arquivo.sqlite.enc data/teste-restaurado.sqlite
+```
+
+Valide `PRAGMA integrity_check` e o funcionamento do sistema antes de considerar o backup recuperável.
+
+## 6. Android
+
+O workflow CI provisiona Gradle 8.9 e JDK 17. Para apontar o botão de reserva do APK para o site seguro:
+
+```properties
+VENUS_BOOKING_URL=https://seu-dominio/#reserva
+```
+
+Coloque a propriedade em `~/.gradle/gradle.properties` ou em configuração segura de CI; não é segredo, mas deve apontar para HTTPS.
+
+A chave de assinatura de release nunca deve entrar no repositório.
