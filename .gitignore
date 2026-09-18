@@ -10,8 +10,8 @@ coverage/
 !.env.example
 
 # Runtime / finance / personal data
-data/
-backups/
+/data/
+/backups/
 *.sqlite
 *.sqlite-*
 *.sqlite3
