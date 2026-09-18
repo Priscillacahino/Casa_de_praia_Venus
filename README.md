@@ -1,215 +1,139 @@
-# 🏖️ Casa de Praia Vênus — Experiência Digital em Evolução
+# Vênus Beach House 🏖️
+
+Aplicação em evolução para apoiar a futura operação da **Vênus Beach House**, em Conde-PB, reunindo experiência do hóspede, solicitação de reservas, controles administrativos e o **Guia Vênus PB**.
+
+> **Status: pré-produção.** O código contém controles técnicos para reservas e registros financeiros, mas pagamentos reais só devem ser habilitados depois de concluir o *production gate* descrito em `docs/AUDITORIA_RIGOROSA_2026-09-18.md`.
+
+## Dois aplicativos em um
+
+A experiência passa a unir dois projetos sem misturar suas responsabilidades:
+
+- **Casa Vênus:** informações da hospedagem, contato, consulta de reserva e fluxo administrativo;
+- **Guia Vênus PB:** João Pessoa, Cabedelo e Conde, sincronizado do repositório `Priscillacahino/guia_lugares_pb`, com leitura dentro do aplicativo e download offline.
+
+O guia continua independente, então pode evoluir sem duplicar manualmente dezenas de locais dentro do projeto da casa.
+
+## Arquitetura
+
+```text
+Hóspede
+ ├─ Android (Kotlin + Jetpack Compose)
+ │   ├─ Casa / cômodos / praias / contato
+ │   ├─ Reserva segura → portal web quando configurado
+ │   └─ Guia Vênus → cache + WebView restrita + download
+ │
+ └─ Web/PWA
+     ├─ Cotação → API (fonte autoritativa)
+     ├─ Solicitação idempotente
+     └─ Guia Vênus → /guia
 
-> **Projeto pessoal em evolução, validação e adaptação.** Funcionalidades, fluxos, regras, conteúdos, valores e integrações ainda podem ser alterados antes de qualquer utilização comercial real.
+Administração
+ └─ /admin
+     ├─ MFA/TOTP em produção
+     ├─ tarifas e configuração
+     ├─ PDF assinado + validação humana
+     ├─ pagamento/estorno conciliado
+     ├─ moderação de avaliações
+     └─ auditoria + CSV + ICS
 
-A **Casa de Praia Vênus** é um projeto criado para planejar e experimentar a futura experiência digital de uma operação de hospedagem no Litoral Sul da Paraíba.
+Backend Node 24 + SQLite
+ ├─ regras de preço/disponibilidade
+ ├─ transações e unicidade bancária
+ ├─ compliance do termo
+ ├─ trilha encadeada por hash
+ ├─ backup criptografável
+ └─ retenção/anomização controlada
+```
 
-Mais do que desenvolver um aplicativo, a proposta é estruturar a jornada do hóspede desde o primeiro contato com a casa até o pós-estadia, explorando **Customer Experience, organização de processos, UX/UI e tecnologia**.
+## Motor de reservas V2
 
----
+O projeto agora inclui um fluxo de solicitação mais próximo de operação real:
 
-## 🎯 Objetivo do projeto
+- política configurável de antecedência, duração máxima e capacidade;
+- prioridade temporária de datas com expiração automática;
+- fila segura para solicitações concorrentes;
+- código privado de acompanhamento do hóspede, sem conta e sem token na URL;
+- consulta de situação, valores recebidos e saldo;
+- dados bancários liberados apenas para uma reserva elegível;
+- histórico operacional por reserva.
 
-Planejar uma experiência digital capaz de apoiar etapas como:
+Detalhes: `docs/MOTOR_RESERVAS_V2_2026-09-18.md`.
 
-**Descoberta**  
-↓  
-**Conhecimento da casa**  
-↓  
-**Consideração**  
-↓  
-**Simulação de hospedagem**  
-↓  
-**Solicitação de reserva**  
-↓  
-**Pré-estadia**  
-↓  
-**Experiência durante a hospedagem**  
-↓  
-**Pós-estadia e avaliação**
+## Princípios financeiros
 
-O projeto está sendo desenvolvido antes da operação definitiva da hospedagem, permitindo testar ideias, organizar processos e identificar melhorias com antecedência.
+- valores em **centavos inteiros**;
+- preço calculado e revalidado no servidor;
+- o Android não possui tabela de preço hardcoded;
+- comprovante não equivale a pagamento recebido;
+- pagamento só é registrado como liquidado depois de conferência bancária;
+- referência bancária é única;
+- uma reserva só pode ser confirmada após termo vigente + PDF validado + sinal mínimo de 20% + nova checagem de conflito;
+- estorno não pode tornar o saldo negativo e pagamento não pode ultrapassar o total contratado.
 
----
+## Segurança incorporada
 
-## 🔄 Status atual
+- senha administrativa com `scrypt`;
+- MFA/TOTP obrigatório em produção;
+- sessão HttpOnly + SameSite Strict;
+- proteção por origem em operações de escrita;
+- rate limiting para login e alterações;
+- CSP, HSTS em produção, `nosniff`, bloqueio de framing e permissões de navegador restritas;
+- auditoria com identificador de requisição e cadeia de hashes;
+- backup AES-256-GCM quando chave configurada — obrigatório em produção;
+- Android sem Auto Backup e sem tráfego HTTP claro;
+- release Android com minificação/shrink;
+- nenhuma senha, banco, backup, keystore ou `.env` deve ser versionado.
 
-O projeto permanece **em evolução**.
+## Rodar o backend
 
-Atualmente estão sendo trabalhados e revisados:
+Requer **Node.js 24+**. O backend endurecido não depende de pacotes NPM externos em runtime.
 
-- apresentação da casa;
-- experiência mobile;
-- aplicativo Android;
-- jornada de reserva;
-- simulador de diárias;
-- informações para hóspedes;
-- guia de praias e locais;
-- comunicação com a anfitriã;
-- regras e termos;
-- conteúdos;
-- experiência pré e pós-estadia;
-- integrações futuras.
+```bash
+cp .env.example .env
+npm run admin:password
+npm run admin:totp
+npm run reservation:secret
+npm test
+npm run lint
+npm start
+```
 
-Algumas funcionalidades existentes são **demonstrativas** e ainda dependem de validação antes de uma operação real.
+Em produção, configure os segredos no provedor — não no repositório. `RESERVATION_TOKEN_SECRET` deve ser exclusivo do acompanhamento das reservas.
 
----
+Rotas:
 
-## 🧭 Perspectiva de Customer Experience
+- `/` — experiência web do hóspede
+- `/admin` — painel administrativo
+- `/guia` — Guia Vênus integrado
+- `/guia?download=1` — download do guia
+- `/api/health` — health check
 
-A construção da solução considera diferentes momentos da jornada do hóspede.
+## Android
 
-### Antes da reserva
+O aplicativo móvel usa Kotlin + Jetpack Compose. Para o botão **Abrir reserva segura** apontar ao portal real, configure:
 
-- informações claras sobre a casa;
-- fotos e comodidades;
-- localização e região;
-- regras;
-- estimativa de valores;
-- facilidade de contato.
+```properties
+VENUS_BOOKING_URL=https://seu-dominio/#reserva
+```
 
-### Entre a reserva e a chegada
+O workflow de CI usa JDK 17 + Gradle 8.9. A chave de assinatura de produção deve ficar fora do GitHub.
 
-- confirmação;
-- informações de acesso;
-- orientações;
-- organização das expectativas;
-- suporte.
+## Guia Vênus
 
-### Durante a hospedagem
+Fonte oficial:
 
-- informações úteis sobre a casa;
-- guia da região;
-- canais de atendimento;
-- orientações rápidas;
-- redução de dúvidas e atritos.
+`https://github.com/Priscillacahino/guia_lugares_pb`
 
-### Após a hospedagem
+O módulo baixa somente por HTTPS, valida o conteúdo básico, mantém cache privado e restringe a WebView. Links externos são abertos no navegador do dispositivo.
 
-- avaliação da experiência;
-- coleta de feedback;
-- identificação de melhorias;
-- possibilidade de relacionamento futuro.
+## Auditoria e documentação
 
----
+- `docs/AUDITORIA_RIGOROSA_2026-09-18.md` — achados, correções e riscos residuais
+- `docs/THREAT_MODEL.md` — modelo de ameaças
+- `docs/DEPLOY.md` — publicação segura e backups
+- `SECURITY.md` — regras de segurança do repositório
+- `docs/termo-compromisso-minuta.txt` — minuta existente; continua condicionada à revisão jurídica
 
-## 📱 Aplicativo Android
+## Antes de operar com dinheiro real
 
-O projeto possui uma versão Android nativa desenvolvida em **Kotlin com Jetpack Compose**.
-
-Entre os recursos atualmente explorados estão:
-
-- apresentação da casa;
-- galeria de fotos;
-- tour pelos ambientes;
-- comodidades;
-- guia de praias;
-- simulador de diárias;
-- fluxo de solicitação de reserva;
-- avaliações;
-- informações de contato;
-- integração com WhatsApp;
-- localização e mapas.
-
-> A existência dessas funcionalidades no protótipo ou aplicativo não significa que todas estejam liberadas para uso comercial.
-
----
-
-## 🏠 Experiência da casa
-
-A solução busca apresentar os ambientes de forma mais próxima e personalizada, destacando características, comodidades e possibilidades de uso.
-
-Entre os espaços trabalhados estão:
-
-- quartos;
-- sala;
-- cozinha;
-- varanda;
-- piscina;
-- churrasqueira;
-- área para trabalho remoto.
-
----
-
-## 🗺️ Guia da região
-
-O projeto também explora um guia de praias e locais próximos para apoiar a experiência do hóspede.
-
-A proposta é disponibilizar informações úteis de forma simples, com links para fontes oficiais ou redes sociais verificadas sempre que possível.
-
-Locais com informações não confirmadas devem permanecer fora da publicação até validação.
-
----
-
-## 💰 Simulação e reserva
-
-O protótipo inclui recursos para simular:
-
-- check-in;
-- check-out;
-- quantidade de hóspedes;
-- pets;
-- diárias;
-- taxa de limpeza;
-- valor total;
-- sinal.
-
-A solicitação de reserva pode ser encaminhada por WhatsApp.
-
-> Valores, condições, formas de pagamento e regras permanecem sujeitos a revisão e validação antes do início da operação real.
-
----
-
-## 🧪 O que ainda precisa evoluir
-
-Antes de considerar a solução pronta para operação real, ainda são previstas etapas como:
-
-- validação das regras comerciais;
-- revisão jurídica dos termos;
-- definição dos dados bancários;
-- testes completos dos fluxos;
-- revisão de acessibilidade;
-- testes com usuários;
-- validação de informações externas;
-- revisão de segurança e privacidade;
-- definição do processo operacional de hospedagem;
-- revisão de contingências;
-- integração definitiva entre canais.
-
----
-
-## 🛠️ Arquitetura e tecnologias
-
-- **Linguagem:** Kotlin 2.0+
-- **Interface:** Jetpack Compose
-- **Design:** Material Design 3
-- **Gerenciamento de estado:** ViewModel e StateFlow
-- **Imagens:** Coil Compose
-- **Build:** Gradle Kotlin DSL
-- **Versionamento:** Git e GitHub
-
----
-
-## ▶️ Como executar no Android Studio
-
-1. Abra a pasta raiz do repositório no Android Studio.
-2. Aguarde a sincronização do Gradle.
-3. Conecte um dispositivo Android ou inicie um emulador compatível.
-4. Execute o aplicativo pelo comando **Run 'app'**.
-
----
-
-## 📌 Natureza do projeto
-
-A Casa de Praia Vênus é um **projeto pessoal e experimental em evolução**.
-
-O repositório registra ideias, protótipos, decisões, conteúdos e implementações que podem ser alterados conforme novas validações forem realizadas.
-
-O objetivo atual é construir uma base sólida para uma futura operação, sem apresentar como definitivas funcionalidades ou condições que ainda estejam em desenvolvimento.
-
----
-
-## 👩‍💻 Responsável pelo projeto
-
-**Priscilla Cahino**  
-Planejamento da experiência, processos, conteúdo e evolução digital do projeto
+A revisão jurídica, o domínio HTTPS, os segredos/MFA, os dados bancários, o teste de backup/restore, o APK release e os testes em dispositivo real são **bloqueios de produção**, não itens opcionais.
