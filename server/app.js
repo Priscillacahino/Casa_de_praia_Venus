@@ -6,7 +6,8 @@ import {
 } from "node:crypto";
 import {
   AppError, today, date, datesBetween, text, integer, contact,
-  calculateQuote, assertAvailable, transaction, csv,
+  bookingPolicy, calculateQuote, assertAvailable, cleanupExpiredHolds, findHoldConflict,
+  getReservationHold, grantReservationHold, releaseReservationHold, transaction, csv,
 } from "./domain.js";
 import {
   TERM_HASH, TERM_TEXT, TERM_VERSION, legal, banking, readiness,
@@ -131,9 +132,11 @@ export function createApp(db, options = {}) {
   const origin = options.origin ?? process.env.APP_URL;
   const passwordHash = options.passwordHash ?? process.env.ADMIN_PASSWORD_HASH;
   const totpSecret = options.totpSecret ?? process.env.ADMIN_TOTP_SECRET;
+  const reservationTokenSecret = options.reservationTokenSecret ?? process.env.RESERVATION_TOKEN_SECRET
+    ?? (production ? "" : sha256(passwordHash || "venus-development-reservation-token"));
   const staticDir = options.staticDir ? resolve(options.staticDir) : null;
-  if (production && (!origin || !origin.startsWith("https://") || !passwordHash || !totpSecret)) {
-    throw new Error("Configure APP_URL HTTPS, ADMIN_PASSWORD_HASH e ADMIN_TOTP_SECRET antes de iniciar em produção.");
+  if (production && (!origin || !origin.startsWith("https://") || !passwordHash || !totpSecret || reservationTokenSecret.length < 32)) {
+    throw new Error("Configure APP_URL HTTPS, ADMIN_PASSWORD_HASH, ADMIN_TOTP_SECRET e RESERVATION_TOKEN_SECRET antes de iniciar em produção.");
   }
 
   const routes = [];
@@ -161,8 +164,46 @@ export function createApp(db, options = {}) {
     if (!row || row.expires < Date.now()) throw new AppError("Entre na administração para continuar.", 401);
   };
 
+  const reservationToken = (row) => createHmac("sha256", reservationTokenSecret)
+    .update(`reservation:${row.id}:${row.request_key || ""}`)
+    .digest("base64url");
+  const verifyReservationToken = (row, supplied) => {
+    if (!row?.request_key || typeof supplied !== "string") return false;
+    const expected = Buffer.from(reservationToken(row));
+    const received = Buffer.from(supplied);
+    return expected.length === received.length && timingSafeEqual(expected, received);
+  };
+  const reservationEvent = (reservationId, event, actor = "system", details = {}) => {
+    db.prepare("INSERT INTO reservation_events(reservation_id,event,actor,details_json) VALUES(?,?,?,?)")
+      .run(reservationId, event, actor, JSON.stringify(details));
+  };
+  const paidFor = (reservationId) => db.prepare(
+    "SELECT COALESCE(SUM(amount_cents),0) AS total FROM payments WHERE reservation_id=? AND settled=1",
+  ).get(reservationId).total;
+  const publicReservationState = (row) => {
+    const quote = JSON.parse(row.quote || "{}");
+    const paidCents = paidFor(row.id);
+    const hold = getReservationHold(db, row.id);
+    return {
+      id: row.id,
+      status: row.status,
+      checkIn: row.check_in,
+      checkOut: row.check_out,
+      guests: row.guests,
+      hasPet: row.has_pet === 1,
+      quote: {
+        nights: quote.nights || 0, totalCents: quote.totalCents || 0,
+        depositCents: quote.depositCents || 0, depositPercent: quote.depositPercent || 20,
+      },
+      paidCents,
+      balanceCents: Math.max(0, (quote.totalCents || 0) - paidCents),
+      depositReceived: paidCents >= (quote.depositCents || 0),
+      hold: hold ? { active: true, expiresAt: hold.expiresAtIso } : { active: false, expiresAt: null },
+    };
+  };
+
   // Public endpoints.
-  register("GET", "/api/health", (ctx) => json(ctx.res, 200, { ok: true, version: 3 }));
+  register("GET", "/api/health", (ctx) => json(ctx.res, 200, { ok: true, version: 4 }));
   register("GET", "/api/public", (ctx) => {
     const reviews = db.prepare("SELECT id,name,rating,comment,created_at FROM reviews WHERE approved=1 ORDER BY created_at DESC LIMIT 100").all();
     const stats = db.prepare("SELECT COUNT(*) AS count, AVG(rating) AS average FROM reviews WHERE approved=1").get();
@@ -179,9 +220,14 @@ export function createApp(db, options = {}) {
     const start = date(ctx.url.searchParams.get("start"));
     const end = date(ctx.url.searchParams.get("end"));
     datesBetween(start, end);
-    const ranges = db.prepare(`SELECT check_in,check_out FROM reservations
+    cleanupExpiredHolds(db);
+    const hard = db.prepare(`SELECT check_in,check_out FROM reservations
       WHERE status IN ('confirmed','blocked') AND check_in < ? AND check_out > ?`).all(end, start);
-    json(ctx.res, 200, { ranges });
+    const held = db.prepare(`SELECT r.check_in,r.check_out FROM reservation_holds h
+      JOIN reservations r ON r.id=h.reservation_id
+      WHERE r.status='requested' AND h.expires_at>? AND r.check_in < ? AND r.check_out > ?`).all(Date.now(), end, start);
+    const unique = new Map([...hard, ...held].map((r) => [`${r.check_in}|${r.check_out}`, r]));
+    json(ctx.res, 200, { ranges: [...unique.values()] });
   });
   register("POST", "/api/quote", (ctx) => {
     assertAvailable(db, ctx.body.checkIn, ctx.body.checkOut);
@@ -195,13 +241,24 @@ export function createApp(db, options = {}) {
     const requestKey = text(ctx.req.headers["idempotency-key"], "Identificador", 16, 100);
     const requestHash = sha256(JSON.stringify(b));
     const result = transaction(db, () => {
-      const existing = db.prepare("SELECT id,quote,status,request_hash FROM reservations WHERE request_key=?").get(requestKey);
+      cleanupExpiredHolds(db);
+      const existing = db.prepare("SELECT * FROM reservations WHERE request_key=?").get(requestKey);
       if (existing) {
         if (existing.request_hash !== requestHash) throw new AppError("Esta solicitação já foi enviada com outros dados. Atualize a página.", 409);
-        return { id: existing.id, quote: JSON.parse(existing.quote), status: existing.status };
+        let hold = getReservationHold(db, existing.id);
+        if (!hold && existing.status === "requested" && !findHoldConflict(db, existing.check_in, existing.check_out, existing.id)) {
+          hold = grantReservationHold(db, existing.id, bookingPolicy(db).requestHoldMinutes);
+          if (hold) reservationEvent(existing.id, "hold.regranted", "guest", { expiresAt: hold.expiresAtIso });
+        }
+        return {
+          id: existing.id, quote: JSON.parse(existing.quote), status: existing.status,
+          manageToken: reservationToken(existing),
+          holdGranted: !!hold, holdExpiresAt: hold?.expiresAtIso || null,
+        };
       }
       integer(b.guests, "Hóspedes", 1, settings().maxGuests);
-      assertAvailable(db, b.checkIn, b.checkOut);
+      // Solicitações concorrentes podem entrar na fila; somente reservas confirmadas/bloqueios impedem o pedido.
+      assertAvailable(db, b.checkIn, b.checkOut, "", { includeHolds: false });
       const quote = calculateQuote(db, b.checkIn, b.checkOut);
       if (b.expectedTotalCents !== quote.totalCents) throw new AppError("A tarifa foi atualizada. Consulte o valor novamente.", 409);
       const id = randomUUID();
@@ -212,10 +269,27 @@ export function createApp(db, options = {}) {
         b.checkIn, b.checkOut, b.guests, b.hasPet === true ? 1 : 0,
         text(b.notes || "", "Observações", 0, 2000), JSON.stringify(quote),
       );
-      audit(ctx, "reservation.requested", id, { checkIn: b.checkIn, checkOut: b.checkOut }, "guest");
-      return { id, quote, status: "requested" };
+      const row = db.prepare("SELECT * FROM reservations WHERE id=?").get(id);
+      const hold = findHoldConflict(db, b.checkIn, b.checkOut, id)
+        ? null
+        : grantReservationHold(db, id, bookingPolicy(db).requestHoldMinutes);
+      reservationEvent(id, "reservation.requested", "guest", {
+        checkIn: b.checkIn, checkOut: b.checkOut, holdGranted: !!hold,
+      });
+      audit(ctx, "reservation.requested", id, { checkIn: b.checkIn, checkOut: b.checkOut, holdGranted: !!hold }, "guest");
+      return {
+        id, quote, status: "requested", manageToken: reservationToken(row),
+        holdGranted: !!hold, holdExpiresAt: hold?.expiresAtIso || null,
+      };
     });
     json(ctx.res, 201, result);
+  });
+
+  register("GET", "/api/reservations/:id/status", (ctx) => {
+    const row = db.prepare("SELECT * FROM reservations WHERE id=? AND status!='blocked'").get(ctx.params.id);
+    const token = String(ctx.req.headers["x-reservation-token"] || "");
+    if (!row || !verifyReservationToken(row, token)) throw new AppError("Reserva não encontrada.", 404);
+    json(ctx.res, 200, publicReservationState(row));
   });
   register("POST", "/api/messages", (ctx) => {
     const b = ctx.body;
@@ -242,11 +316,30 @@ export function createApp(db, options = {}) {
     const b = banking(db), l = legal(db);
     const enabled = l?.approved === 1 && l.term_hash === TERM_HASH;
     const empty = { bank: "", holder: "", holderDocument: "", branch: "", account: "", accountType: "", pixKey: "" };
+    // A rota pública informa apenas os métodos. Dados bancários exigem uma solicitação autenticada por token.
     json(ctx.res, 200, {
       pixAvailable: enabled && !!b.pixKey,
       transferAvailable: enabled && !!(b.bank && b.holder && b.account && b.branch),
       legalApproved: enabled,
-      bank: enabled ? b : empty,
+      bank: empty,
+    });
+  });
+
+  register("GET", "/api/reservations/:id/payment-options", (ctx) => {
+    const row = db.prepare("SELECT * FROM reservations WHERE id=? AND status!='blocked'").get(ctx.params.id);
+    const token = String(ctx.req.headers["x-reservation-token"] || "");
+    if (!row || !verifyReservationToken(row, token)) throw new AppError("Reserva não encontrada.", 404);
+    const b = banking(db), l = legal(db);
+    const enabled = l?.approved === 1 && l.term_hash === TERM_HASH;
+    const hold = getReservationHold(db, row.id);
+    const allowed = enabled && (row.status === "confirmed" || (row.status === "requested" && !!hold));
+    const empty = { bank: "", holder: "", holderDocument: "", branch: "", account: "", accountType: "", pixKey: "" };
+    json(ctx.res, 200, {
+      pixAvailable: allowed && !!b.pixKey,
+      transferAvailable: allowed && !!(b.bank && b.holder && b.account && b.branch),
+      legalApproved: enabled,
+      reservationEligible: allowed,
+      bank: allowed ? b : empty,
     });
   });
 
@@ -280,12 +373,18 @@ export function createApp(db, options = {}) {
   }, true);
 
   register("GET", "/api/admin/data", (ctx) => {
-    const reservations = db.prepare("SELECT * FROM reservations ORDER BY check_in DESC").all().map((r) => ({
-      ...r,
-      quote: JSON.parse(r.quote),
-      requirements: readiness(db, r),
-      paidCents: db.prepare("SELECT COALESCE(SUM(amount_cents),0) AS paid FROM payments WHERE reservation_id=? AND settled=1").get(r.id).paid,
-    }));
+    cleanupExpiredHolds(db);
+    const reservations = db.prepare("SELECT * FROM reservations ORDER BY check_in DESC").all().map((r) => {
+      const hold = getReservationHold(db, r.id);
+      return {
+        ...r,
+        quote: JSON.parse(r.quote),
+        requirements: readiness(db, r),
+        paidCents: paidFor(r.id),
+        holdExpiresAt: hold?.expiresAtIso || null,
+        events: db.prepare("SELECT event,actor,details_json,created_at FROM reservation_events WHERE reservation_id=? ORDER BY id DESC LIMIT 20").all(r.id),
+      };
+    });
     json(ctx.res, 200, {
       settings: settings(),
       rates: db.prepare("SELECT * FROM rates ORDER BY start_date").all(),
@@ -317,7 +416,12 @@ export function createApp(db, options = {}) {
     const value = {
       pricingEnabled: b.pricingEnabled === true,
       cleaningFeeCents: integer(b.cleaningFeeCents, "Limpeza"), depositPercent: 20,
-      maxGuests: integer(b.maxGuests, "Hóspedes", 1, 50), whatsappNumber, email,
+      maxGuests: integer(b.maxGuests, "Hóspedes", 1, 50),
+      minLeadDays: integer(b.minLeadDays, "Antecedência mínima", 0, 365),
+      maxAdvanceDays: integer(b.maxAdvanceDays, "Antecedência máxima", 1, 3650),
+      maxNights: integer(b.maxNights, "Máximo de noites", 1, 366),
+      requestHoldMinutes: integer(b.requestHoldMinutes, "Bloqueio temporário", 5, 1440),
+      whatsappNumber, email,
       googleMapsUrl: url(b.googleMapsUrl, ["maps.app.goo.gl", "www.google.com", "maps.google.com", "google.com"]),
       mapsEmbedUrl: url(b.mapsEmbedUrl, ["www.google.com", "maps.google.com"], true),
     };
@@ -365,6 +469,30 @@ export function createApp(db, options = {}) {
     json(ctx.res, 201, { id });
   }, true);
 
+  register("POST", "/api/admin/reservations/:id/hold", (ctx) => {
+    const minutes = integer(ctx.body.minutes ?? bookingPolicy(db).requestHoldMinutes, "Duração do bloqueio", 5, 1440);
+    const hold = transaction(db, () => {
+      const row = db.prepare("SELECT * FROM reservations WHERE id=?").get(ctx.params.id);
+      if (!row) throw new AppError("Reserva não encontrada.", 404);
+      assertAvailable(db, row.check_in, row.check_out, row.id);
+      const created = grantReservationHold(db, row.id, minutes);
+      if (!created) throw new AppError("Outra solicitação possui prioridade temporária para este período.", 409);
+      reservationEvent(row.id, "hold.granted", "admin", { expiresAt: created.expiresAtIso, minutes });
+      audit(ctx, "reservation.hold_granted", row.id, { expiresAt: created.expiresAtIso, minutes });
+      return created;
+    });
+    json(ctx.res, 200, { holdExpiresAt: hold.expiresAtIso });
+  }, true);
+
+  register("DELETE", "/api/admin/reservations/:id/hold", (ctx) => {
+    const row = db.prepare("SELECT id FROM reservations WHERE id=?").get(ctx.params.id);
+    if (!row) throw new AppError("Reserva não encontrada.", 404);
+    releaseReservationHold(db, ctx.params.id);
+    reservationEvent(ctx.params.id, "hold.released", "admin");
+    audit(ctx, "reservation.hold_released", ctx.params.id);
+    json(ctx.res, 200, { ok: true });
+  }, true);
+
   register("PATCH", "/api/admin/reservations/:id", (ctx) => {
     const id = ctx.params.id, status = ctx.body.status;
     if (!["confirmed", "cancelled"].includes(status)) throw new AppError("Situação inválida.");
@@ -379,6 +507,8 @@ export function createApp(db, options = {}) {
         assertAvailable(db, row.check_in, row.check_out, id);
       }
       db.prepare("UPDATE reservations SET status=? WHERE id=?").run(status, id);
+      releaseReservationHold(db, id);
+      reservationEvent(id, `reservation.${status}`, "admin");
       audit(ctx, `reservation.${status}`, id);
     });
     json(ctx.res, 200, { ok: true });

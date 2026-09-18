@@ -19,6 +19,14 @@ export function date(value) {
   return value;
 }
 
+export function addDays(value, amount) {
+  date(value);
+  if (!Number.isSafeInteger(amount) || Math.abs(amount) > 10000) {
+    throw new AppError("Intervalo de datas inválido.");
+  }
+  return new Date(Date.parse(value) + amount * 86400000).toISOString().slice(0, 10);
+}
+
 export function datesBetween(start, end) {
   date(start);
   date(end);
@@ -56,9 +64,39 @@ export function contact(body) {
   return { name, email, phone };
 }
 
+export function bookingPolicy(db) {
+  const settings = JSON.parse(db.prepare("SELECT value FROM settings WHERE id=1").get().value);
+  const number = (value, fallback, min, max) =>
+    Number.isSafeInteger(value) && value >= min && value <= max ? value : fallback;
+  return {
+    minLeadDays: number(settings.minLeadDays, 0, 0, 365),
+    maxAdvanceDays: number(settings.maxAdvanceDays, 1825, 1, 3650),
+    maxNights: number(settings.maxNights, 30, 1, 366),
+    requestHoldMinutes: number(settings.requestHoldMinutes, 30, 5, 1440),
+  };
+}
+
+export function assertBookingWindow(db, start, end, { referenceDate = today() } = {}) {
+  const days = datesBetween(start, end);
+  const policy = bookingPolicy(db);
+  const earliest = addDays(referenceDate, policy.minLeadDays);
+  const latest = addDays(referenceDate, policy.maxAdvanceDays);
+  if (start < earliest) {
+    const label = policy.minLeadDays === 0 ? "hoje" : `${policy.minLeadDays} dia(s) de antecedência`;
+    throw new AppError(`O check-in precisa respeitar ${label}.`, 422);
+  }
+  if (start > latest) {
+    throw new AppError(`Reservas podem ser solicitadas com até ${policy.maxAdvanceDays} dias de antecedência.`, 422);
+  }
+  if (days.length > policy.maxNights) {
+    throw new AppError(`A estadia pode ter no máximo ${policy.maxNights} noites.`, 422);
+  }
+  return { ...policy, nights: days.length };
+}
+
 export function calculateQuote(db, start, end, { checkPast = true } = {}) {
   const days = datesBetween(start, end);
-  if (checkPast && start < today()) throw new AppError("O check-in não pode estar no passado.");
+  if (checkPast) assertBookingWindow(db, start, end);
 
   const settings = JSON.parse(db.prepare("SELECT value FROM settings WHERE id=1").get().value);
   if (!settings.pricingEnabled) {
@@ -102,13 +140,68 @@ export function calculateQuote(db, start, end, { checkPast = true } = {}) {
   };
 }
 
-export function assertAvailable(db, start, end, exceptId = "") {
+export function cleanupExpiredHolds(db, now = Date.now()) {
+  db.prepare("DELETE FROM reservation_holds WHERE expires_at <= ?").run(now);
+}
+
+export function getReservationHold(db, reservationId, now = Date.now()) {
+  cleanupExpiredHolds(db, now);
+  const row = db.prepare(
+    "SELECT reservation_id,expires_at,created_at FROM reservation_holds WHERE reservation_id=? AND expires_at>?",
+  ).get(reservationId, now);
+  if (!row) return null;
+  return {
+    reservationId: row.reservation_id,
+    expiresAt: row.expires_at,
+    expiresAtIso: new Date(row.expires_at).toISOString(),
+    createdAt: row.created_at,
+  };
+}
+
+export function findHoldConflict(db, start, end, exceptId = "", now = Date.now()) {
+  datesBetween(start, end);
+  cleanupExpiredHolds(db, now);
+  return db.prepare(`
+    SELECT r.id,r.check_in,r.check_out,h.expires_at
+    FROM reservation_holds h
+    JOIN reservations r ON r.id=h.reservation_id
+    WHERE r.status='requested'
+      AND h.expires_at>?
+      AND r.check_in < ? AND r.check_out > ?
+      AND r.id != ?
+    ORDER BY h.expires_at ASC
+    LIMIT 1
+  `).get(now, end, start, exceptId) || null;
+}
+
+export function grantReservationHold(db, reservationId, minutes, { now = Date.now(), replace = false } = {}) {
+  const row = db.prepare("SELECT id,status,check_in,check_out FROM reservations WHERE id=?").get(reservationId);
+  if (!row) throw new AppError("Reserva não encontrada.", 404);
+  if (row.status !== "requested") throw new AppError("Somente solicitações pendentes podem receber bloqueio temporário.", 409);
+  integer(minutes, "Duração do bloqueio", 5, 1440);
+  const conflict = findHoldConflict(db, row.check_in, row.check_out, reservationId, now);
+  if (conflict && !replace) return null;
+  if (conflict) throw new AppError("Outra solicitação possui prioridade temporária para este período.", 409);
+  const expiresAt = now + minutes * 60000;
+  db.prepare(`INSERT INTO reservation_holds(reservation_id,expires_at)
+    VALUES(?,?) ON CONFLICT(reservation_id) DO UPDATE SET expires_at=excluded.expires_at`).run(reservationId, expiresAt);
+  return getReservationHold(db, reservationId, now);
+}
+
+export function releaseReservationHold(db, reservationId) {
+  db.prepare("DELETE FROM reservation_holds WHERE reservation_id=?").run(reservationId);
+}
+
+export function assertAvailable(db, start, end, exceptId = "", { includeHolds = true, now = Date.now() } = {}) {
   datesBetween(start, end);
   const conflict = db.prepare(
     "SELECT id FROM reservations WHERE status IN ('confirmed','blocked') AND check_in < ? AND check_out > ? AND id != ? LIMIT 1",
   ).get(end, start, exceptId);
   if (conflict) {
     throw new AppError("O período já está reservado ou bloqueado. Escolha outras datas.", 409);
+  }
+  if (includeHolds && findHoldConflict(db, start, end, exceptId, now)) {
+    throw new AppError("O período está temporariamente em atendimento para outra solicitação. Tente novamente mais tarde.", 409);
   }
 }
 

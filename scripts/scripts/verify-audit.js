@@ -1,4 +1,0 @@
-import { createHash } from "node:crypto";
-import { openDatabase } from "../server/db.js";
-if(process.loadEnvFile){try{process.loadEnvFile()}catch{}}
-const hash=v=>createHash("sha256").update(v).digest("hex");const db=openDatabase(process.env.DATABASE_PATH||"./data/venus.sqlite");const rows=db.prepare("SELECT * FROM audit ORDER BY id").all();let previous="";for(const row of rows){if(!row.entry_hash)continue;const payload=JSON.stringify({action:row.action,resource:row.resource,actor:row.actor,requestId:row.request_id,details:row.details_json,previous});const expected=hash(payload);if((row.previous_hash||"")!==previous||row.entry_hash!==expected){console.error(`Falha de integridade no evento de auditoria ${row.id}.`);db.close();process.exit(1)}previous=row.entry_hash||""}console.log(`Trilha íntegra: ${rows.length} evento(s) verificado(s).`);db.close();
