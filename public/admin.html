@@ -24,8 +24,10 @@
 
   <section id="dashboard" class="section hidden">
     <div class="section-head"><span class="eyebrow">Operação</span><h2>Painel de controle</h2></div>
-    <div class="actions"><button class="button" id="reload">Atualizar</button><a class="button" href="/api/admin/export.csv">Exportar CSV</a><a class="button" href="/api/admin/calendar.ics">Agenda ICS</a><button class="button" id="showAudit">Trilha de auditoria</button></div>
+    <div class="actions"><button class="button" id="reload">Atualizar</button><a class="button" href="/api/admin/export.csv">Exportar reservas</a><a class="button" href="/api/admin/finance.csv">Exportar conciliação</a><a class="button" href="/api/admin/calendar.ics">Agenda ICS</a><button class="button" id="showAudit">Trilha de auditoria</button></div>
     <div id="summary" class="grid three" style="margin-top:20px"></div>
+
+    <h3>Conciliação financeira</h3><div id="finance"></div>
 
     <h3>Reservas</h3><div id="reservations" class="grid"></div>
 
