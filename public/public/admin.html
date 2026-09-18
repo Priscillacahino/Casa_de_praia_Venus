@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#2b241f">
+  <title>Administração · Vênus Beach House</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/"><span class="brand-mark">♀</span><span><strong>Administração Vênus</strong><small>reservas · financeiro · compliance</small></span></a>
+  <button id="logout" class="button hidden">Sair</button>
+</header>
+<main>
+  <section class="section" id="login">
+    <span class="eyebrow">Acesso restrito</span><h2>Entrar na administração</h2>
+    <form id="loginForm" class="card form" style="max-width:460px">
+      <label>Senha administrativa<input name="password" type="password" autocomplete="current-password" required></label>
+      <label>Código do autenticador (quando configurado)<input name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></label>
+      <button class="button primary full">Entrar</button><div id="loginMsg" class="muted"></div>
+    </form>
+  </section>
+
+  <section id="dashboard" class="section hidden">
+    <div class="section-head"><span class="eyebrow">Operação</span><h2>Painel de controle</h2></div>
+    <div class="actions"><button class="button" id="reload">Atualizar</button><a class="button" href="/api/admin/export.csv">Exportar CSV</a><a class="button" href="/api/admin/calendar.ics">Agenda ICS</a><button class="button" id="showAudit">Trilha de auditoria</button></div>
+    <div id="summary" class="grid three" style="margin-top:20px"></div>
+
+    <h3>Reservas</h3><div id="reservations" class="grid"></div>
+
+    <h3>Regras de reserva e configuração pública</h3>
+    <form id="settingsForm" class="card form">
+      <label class="check"><input name="pricingEnabled" type="checkbox"> Publicar tarifas e permitir cotações</label>
+      <div class="two"><label>Taxa de limpeza (R$)<input name="cleaningFee" type="number" min="0" step="0.01" required></label><label>Máximo de hóspedes<input name="maxGuests" type="number" min="1" max="50" required></label></div>
+      <div class="two"><label>Antecedência mínima (dias)<input name="minLeadDays" type="number" min="0" max="365" required></label><label>Antecedência máxima (dias)<input name="maxAdvanceDays" type="number" min="1" max="3650" required></label></div>
+      <div class="two"><label>Máximo de noites por estadia<input name="maxNights" type="number" min="1" max="366" required></label><label>Prioridade temporária da solicitação (minutos)<input name="requestHoldMinutes" type="number" min="5" max="1440" required></label></div>
+      <div class="two"><label>WhatsApp (somente números)<input name="whatsappNumber" required></label><label>E-mail<input name="email" type="email" required></label></div>
+      <label>Google Maps URL<input name="googleMapsUrl" type="url" required></label><label>Google Maps Embed URL (opcional)<input name="mapsEmbedUrl" type="url"></label>
+      <button class="button primary">Salvar configuração</button>
+    </form>
+
+    <h3>Tarifas</h3>
+    <form id="rateForm" class="card form">
+      <div class="two"><label>Descrição<input name="label" required></label><label>Mínimo de noites<input name="minNights" type="number" min="1" value="2" required></label></div>
+      <div class="two"><label>Início<input name="startDate" type="date" required></label><label>Fim<input name="endDate" type="date" required></label></div>
+      <div class="two"><label>Semana (R$)<input name="weekday" type="number" min="1" step="0.01" required></label><label>Sex/Sáb (R$)<input name="weekend" type="number" min="1" step="0.01" required></label></div>
+      <button class="button primary">Cadastrar tarifa</button>
+    </form>
+
+    <h3>Avaliações pendentes</h3><div id="reviews" class="grid"></div>
+    <h3>Compliance</h3><div id="compliance" class="card"></div>
+    <div id="audit" class="card hidden"><pre style="white-space:pre-wrap;overflow:auto"></pre></div>
+  </section>
+</main>
+<script src="/admin.js" defer></script>
+</body>
+</html>

@@ -19,3 +19,7 @@ Não abra issue pública contendo credenciais, dados pessoais, dados bancários,
 ## Limites atuais
 
 A aplicação não substitui conciliação bancária, contabilidade, revisão jurídica, assinatura eletrônica validada pelo ITI nem controles do provedor de infraestrutura. Esses itens permanecem validações externas antes de operação comercial real.
+
+## Código privado de acompanhamento
+
+`RESERVATION_TOKEN_SECRET` é um segredo de produção separado das credenciais administrativas. Não versionar, não reutilizar como senha e não enviar em URLs. A aplicação envia o código privado da reserva em cabeçalho específico e os dados bancários só são liberados no contexto de uma reserva elegível.
