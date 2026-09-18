@@ -26,7 +26,7 @@ const paymentButton = $("#loadPaymentInstructions");
 
 function saveReservationAccess(id, token) {
   currentReservationAccess = { id, token };
-  localStorage.setItem("venus:lastReservation", JSON.stringify(currentReservationAccess));
+  sessionStorage.setItem("venus:lastReservation", JSON.stringify(currentReservationAccess));
   trackingForm.elements.reservationId.value = id;
   trackingForm.elements.manageToken.value = token;
 }
@@ -150,7 +150,7 @@ paymentButton.addEventListener("click", async () => {
 
 (async () => {
   try {
-    const saved = JSON.parse(localStorage.getItem("venus:lastReservation") || "null");
+    const saved = JSON.parse(sessionStorage.getItem("venus:lastReservation") || "null");
     if (saved?.id && saved?.token) {
       saveReservationAccess(saved.id, saved.token);
       await loadReservationStatus();

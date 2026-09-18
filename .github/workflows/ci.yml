@@ -19,6 +19,7 @@ jobs:
           node-version: '24'
       - run: npm test
       - run: npm run lint
+      - run: npm run backup:selftest
 
   android:
     runs-on: ubuntu-latest

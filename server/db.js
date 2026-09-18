@@ -109,6 +109,13 @@ export function openDatabase(path) {
       token_hash TEXT PRIMARY KEY,
       expires INTEGER NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS rate_limits (
+      key_hash TEXT PRIMARY KEY,
+      scope TEXT NOT NULL,
+      count INTEGER NOT NULL,
+      window_until INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS rate_limits_expiry ON rate_limits(window_until);
     CREATE TABLE IF NOT EXISTS legal_approval(
       id INTEGER PRIMARY KEY CHECK(id=1),
       approved INTEGER NOT NULL DEFAULT 0,
@@ -164,7 +171,7 @@ export function openDatabase(path) {
   };
   db.prepare("INSERT OR IGNORE INTO settings(id,value) VALUES(1,?)").run(JSON.stringify(defaults));
   const currentSettings = JSON.parse(db.prepare("SELECT value FROM settings WHERE id=1").get().value);
-  const mergedSettings = { ...defaults, ...currentSettings, depositPercent: 20 };
+  const mergedSettings = { ...defaults, ...currentSettings };
   db.prepare("UPDATE settings SET value=? WHERE id=1").run(JSON.stringify(mergedSettings));
 
   db.prepare("INSERT OR IGNORE INTO legal_approval(id) VALUES(1)").run();
@@ -187,6 +194,6 @@ export function openDatabase(path) {
     ON payments(method, bank_reference)
     WHERE bank_reference IS NOT NULL AND bank_reference <> '';`);
 
-  db.exec("PRAGMA user_version=4");
+  db.exec("PRAGMA user_version=5");
   return db;
 }

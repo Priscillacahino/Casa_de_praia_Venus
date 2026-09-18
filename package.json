@@ -1,10 +1,12 @@
 {
   "name": "venus-beach-house",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "private": true,
   "type": "module",
   "description": "Vênus Beach House — Android + API financeira controlada + Guia Vênus PB",
-  "engines": { "node": ">=24.0.0" },
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "scripts": {
     "start": "node server/index.js",
     "dev": "node server/index.js",
@@ -17,6 +19,7 @@
     "audit:verify": "node scripts/verify-audit.js",
     "backup": "node scripts/backup.js",
     "backup:restore": "node scripts/restore-backup.js",
-    "privacy:retention": "node scripts/privacy-retention.js"
+    "privacy:retention": "node scripts/privacy-retention.js",
+    "backup:selftest": "node scripts/backup-selftest.js"
   }
 }
