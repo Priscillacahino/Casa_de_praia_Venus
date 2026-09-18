@@ -101,19 +101,34 @@ async function readJson(req) {
 
 async function loadGuideHtml() {
   const cachePath = resolve(process.env.GUIDE_CACHE_PATH || "./data/guia-venus-pb.html");
-  const source = "https://raw.githubusercontent.com/Priscillacahino/guia_lugares_pb/main/guia_offline.html";
-  try {
-    const response = await fetch(source, { signal: AbortSignal.timeout(7000), redirect: "follow" });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const html = await response.text();
+  const source = process.env.GUIDE_SOURCE_URL
+    || "https://raw.githubusercontent.com/Priscillacahino/guia_lugares_pb/main/guia_offline.html";
+  const expectedHash = String(process.env.GUIDE_EXPECTED_SHA256 || "").trim().toLowerCase();
+
+  const validateGuide = (html) => {
     if (html.length < 1000 || html.length > 600000 || !/Guia V[eê]nus/i.test(html)) {
       throw new Error("Conteúdo do guia não passou na validação.");
     }
+    if (expectedHash && !/^[a-f0-9]{64}$/.test(expectedHash)) {
+      throw new Error("GUIDE_EXPECTED_SHA256 inválido.");
+    }
+    if (expectedHash && sha256(html) !== expectedHash) {
+      throw new Error("O Guia Vênus não corresponde ao SHA-256 configurado.");
+    }
+    return html;
+  };
+
+  try {
+    const response = await fetch(source, { signal: AbortSignal.timeout(7000), redirect: "follow" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const html = validateGuide(await response.text());
     mkdirSync(dirname(cachePath), { recursive: true, mode: 0o700 });
     writeFileSync(cachePath, html, { mode: 0o600 });
     return html;
   } catch (error) {
-    if (existsSync(cachePath)) return readFileSync(cachePath, "utf8");
+    if (existsSync(cachePath)) {
+      try { return validateGuide(readFileSync(cachePath, "utf8")); } catch {}
+    }
     throw new AppError("O Guia Vênus está temporariamente indisponível.", 503);
   }
 }
@@ -145,7 +160,23 @@ export function createApp(db, options = {}) {
     routes.push({ method, pattern, handler, auth, ...compiled });
   };
 
-  const limits = new Map();
+  const enforceRateLimit = (ctx, scope, maxAttempts, windowMs) => {
+    const now = Date.now();
+    const keyHash = sha256(`${scope}:${ctx.ip}`);
+    db.prepare("DELETE FROM rate_limits WHERE window_until <= ?").run(now);
+    const row = db.prepare("SELECT count,window_until FROM rate_limits WHERE key_hash=?").get(keyHash);
+    if (!row) {
+      db.prepare("INSERT INTO rate_limits(key_hash,scope,count,window_until) VALUES(?,?,1,?)")
+        .run(keyHash, scope, now + windowMs);
+      return;
+    }
+    const count = row.count + 1;
+    db.prepare("UPDATE rate_limits SET count=? WHERE key_hash=?").run(count, keyHash);
+    if (count > maxAttempts) {
+      ctx.res.setHeader("Retry-After", String(Math.max(1, Math.ceil((row.window_until - now) / 1000))));
+      throw new AppError("Muitas tentativas. Aguarde alguns minutos.", 429);
+    }
+  };
   const audit = (ctx, action, resource, details = {}, actor = "admin") => {
     const previous = db.prepare("SELECT entry_hash FROM audit WHERE entry_hash IS NOT NULL ORDER BY id DESC LIMIT 1").get()?.entry_hash || "";
     const safeDetails = JSON.stringify(details);
@@ -203,7 +234,7 @@ export function createApp(db, options = {}) {
   };
 
   // Public endpoints.
-  register("GET", "/api/health", (ctx) => json(ctx.res, 200, { ok: true, version: 4 }));
+  register("GET", "/api/health", (ctx) => json(ctx.res, 200, { ok: true, version: 5 }));
   register("GET", "/api/public", (ctx) => {
     const reviews = db.prepare("SELECT id,name,rating,comment,created_at FROM reviews WHERE approved=1 ORDER BY created_at DESC LIMIT 100").all();
     const stats = db.prepare("SELECT COUNT(*) AS count, AVG(rating) AS average FROM reviews WHERE approved=1").get();
@@ -415,7 +446,7 @@ export function createApp(db, options = {}) {
     const email = contact({ name: "Admin", email: b.email, phone: "" }).email;
     const value = {
       pricingEnabled: b.pricingEnabled === true,
-      cleaningFeeCents: integer(b.cleaningFeeCents, "Limpeza"), depositPercent: 20,
+      cleaningFeeCents: integer(b.cleaningFeeCents, "Limpeza"), depositPercent: integer(b.depositPercent, "Percentual do sinal", 1, 100),
       maxGuests: integer(b.maxGuests, "Hóspedes", 1, 50),
       minLeadDays: integer(b.minLeadDays, "Antecedência mínima", 0, 365),
       maxAdvanceDays: integer(b.maxAdvanceDays, "Antecedência máxima", 1, 3650),
@@ -655,18 +686,8 @@ export function createApp(db, options = {}) {
           const contentType = String(req.headers["content-type"] || "").split(";")[0].trim();
           if (contentType !== "application/json") throw new AppError("Envie os dados em JSON.", 415);
 
-          const now = Date.now();
-          if (limits.size > 10000) for (const [key, value] of limits) if (value.until < now) limits.delete(key);
           const isLogin = url.pathname === "/api/admin/login";
-          const key = `${ctx.ip}:${isLogin ? "login" : "write"}`;
-          let value = limits.get(key);
-          if (!value || value.until < now) value = { count: 0, until: now + 600000 };
-          limits.set(key, value);
-          value.count++;
-          if (value.count > (isLogin ? 8 : 80)) {
-            res.setHeader("Retry-After", "600");
-            throw new AppError("Muitas tentativas. Aguarde alguns minutos.", 429);
-          }
+          enforceRateLimit(ctx, isLogin ? "login" : "write", isLogin ? 8 : 80, 600000);
           ctx.body = await readJson(req);
         }
 

@@ -18,7 +18,9 @@ export function readiness(db, row) {
     "SELECT COALESCE(SUM(amount_cents),0) AS total FROM payments WHERE reservation_id=? AND settled=1",
   ).get(row.id).total;
   const q = JSON.parse(row.quote || "{}");
-  const required = Math.round((q.totalCents || 0) * 0.2);
+  const required = Number.isSafeInteger(q.depositCents)
+    ? q.depositCents
+    : Math.round((q.totalCents || 0) * ((q.depositPercent || 20) / 100));
   const legalReady = approval?.approved === 1 && approval.term_hash === TERM_HASH;
   const signatureReady = !!doc?.validated_at && doc.term_hash === TERM_HASH;
   return {
@@ -37,7 +39,7 @@ export function assertConfirmationReady(db, row) {
   if (!r.legalReady) throw new AppError("O termo ainda depende de aprovação jurídica desta versão.", 422);
   if (!r.signatureReady) throw new AppError("Anexe o termo assinado e registre a validação antes de confirmar.", 422);
   if (r.requiredDepositCents <= 0 || r.paidCents < r.requiredDepositCents) {
-    throw new AppError("O sinal de 20% ainda não foi confirmado como recebido.", 422);
+    throw new AppError("O sinal mínimo previsto ainda não foi confirmado como recebido.", 422);
   }
 }
 

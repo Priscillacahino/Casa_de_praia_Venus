@@ -70,6 +70,25 @@ test("política de reserva limita janela e duração", () => {
   db.close();
 });
 
+test("limite de tentativas administrativas é persistido no banco", async () => {
+  const db = fixture();
+  const { server, call } = await startApp(db);
+  try {
+    for (let i = 0; i < 8; i++) {
+      const attempt = await call("/admin/login", "POST", { password:"senha-incorreta" });
+      assert.equal(attempt.status, 401);
+    }
+    const blocked = await call("/admin/login", "POST", { password:"senha-incorreta" });
+    assert.equal(blocked.status, 429);
+    const row = db.prepare("SELECT scope,count FROM rate_limits WHERE scope='login'").get();
+    assert.equal(row.scope, "login");
+    assert.ok(row.count >= 9);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+    db.close();
+  }
+});
+
 test("primeira solicitação recebe prioridade; concorrente vira fila e token consulta somente sua reserva", async () => {
   const db = fixture();
   const { server, call, login } = await startApp(db);

@@ -37,6 +37,24 @@ test("calcula centavos, sexta/sábado, limpeza única e saída exclusiva", () =>
   assert.equal(q.depositCents, 20000);
   db.close();
 });
+test("percentual do sinal configurável é preservado na cotação e no compliance", async () => {
+  const { readiness } = await import("../server/compliance.js");
+  const db = fixture();
+  const settings = JSON.parse(db.prepare("SELECT value FROM settings WHERE id=1").get().value);
+  db.prepare("UPDATE settings SET value=? WHERE id=1").run(JSON.stringify({ ...settings, depositPercent: 35 }));
+  const q = calculateQuote(db, "2030-01-03", "2030-01-06");
+  assert.equal(q.depositPercent, 35);
+  assert.equal(q.depositCents, 35000);
+  db.prepare(`INSERT INTO reservations(id,name,email,phone,check_in,check_out,guests,status,quote)
+    VALUES(?,?,?,?,?,?,?,'requested',?)`).run(
+    "deposit-config", "Pessoa Teste", "teste@example.com", "83999999999",
+    "2030-01-03", "2030-01-06", 2, JSON.stringify(q),
+  );
+  const row = db.prepare("SELECT * FROM reservations WHERE id=?").get("deposit-config");
+  assert.equal(readiness(db, row).requiredDepositCents, 35000);
+  db.close();
+});
+
 test("recusa datas inválidas, período excessivo, tarifa ausente e mínimo", () => {
   const db = fixture();
   assert.throws(() => datesBetween("2030-02-30", "2030-03-05"));

@@ -32,7 +32,8 @@
     <h3>Regras de reserva e configuração pública</h3>
     <form id="settingsForm" class="card form">
       <label class="check"><input name="pricingEnabled" type="checkbox"> Publicar tarifas e permitir cotações</label>
-      <div class="two"><label>Taxa de limpeza (R$)<input name="cleaningFee" type="number" min="0" step="0.01" required></label><label>Máximo de hóspedes<input name="maxGuests" type="number" min="1" max="50" required></label></div>
+      <div class="two"><label>Taxa de limpeza (R$)<input name="cleaningFee" type="number" min="0" step="0.01" required></label><label>Sinal mínimo (%)<input name="depositPercent" type="number" min="1" max="100" required></label></div>
+      <label>Máximo de hóspedes<input name="maxGuests" type="number" min="1" max="50" required></label>
       <div class="two"><label>Antecedência mínima (dias)<input name="minLeadDays" type="number" min="0" max="365" required></label><label>Antecedência máxima (dias)<input name="maxAdvanceDays" type="number" min="1" max="3650" required></label></div>
       <div class="two"><label>Máximo de noites por estadia<input name="maxNights" type="number" min="1" max="366" required></label><label>Prioridade temporária da solicitação (minutos)<input name="requestHoldMinutes" type="number" min="5" max="1440" required></label></div>
       <div class="two"><label>WhatsApp (somente números)<input name="whatsappNumber" required></label><label>E-mail<input name="email" type="email" required></label></div>

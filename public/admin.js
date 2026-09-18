@@ -116,6 +116,7 @@ function renderSettings(s) {
   const f = $("#settingsForm"); if (!f) return;
   f.pricingEnabled.checked = !!s.pricingEnabled;
   f.cleaningFee.value = ((s.cleaningFeeCents || 0) / 100).toFixed(2);
+  f.depositPercent.value = s.depositPercent || 20;
   f.maxGuests.value = s.maxGuests || 6;
   f.minLeadDays.value = s.minLeadDays ?? 0;
   f.maxAdvanceDays.value = s.maxAdvanceDays || 1825;
@@ -192,7 +193,7 @@ $("#settingsForm").addEventListener("submit", async (e) => {
   try {
     await api("/admin/settings", "PUT", {
       pricingEnabled:f.pricingEnabled.checked,
-      cleaningFeeCents:Math.round(Number(f.cleaningFee.value) * 100),
+      cleaningFeeCents:Math.round(Number(f.cleaningFee.value) * 100), depositPercent:Number(f.depositPercent.value),
       maxGuests:Number(f.maxGuests.value), minLeadDays:Number(f.minLeadDays.value),
       maxAdvanceDays:Number(f.maxAdvanceDays.value), maxNights:Number(f.maxNights.value),
       requestHoldMinutes:Number(f.requestHoldMinutes.value), whatsappNumber:f.whatsappNumber.value,
