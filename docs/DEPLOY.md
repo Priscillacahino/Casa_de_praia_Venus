@@ -73,3 +73,24 @@ VENUS_BOOKING_URL=https://seu-dominio/#reserva
 Coloque a propriedade em `~/.gradle/gradle.properties` ou em configuração segura de CI; não é segredo, mas deve apontar para HTTPS.
 
 A chave de assinatura de release nunca deve entrar no repositório.
+
+## Motor de reservas V2
+
+Antes de publicar esta versão, gere e configure um segredo exclusivo para acompanhamento das reservas:
+
+```bash
+npm run reservation:secret
+```
+
+Salve o valor como `RESERVATION_TOKEN_SECRET` no gerenciador de segredos da infraestrutura. Não reutilize `ADMIN_PASSWORD_HASH`, `ADMIN_TOTP_SECRET` ou `BACKUP_ENCRYPTION_KEY`.
+
+Depois da publicação, valide em ambiente controlado:
+
+1. primeira solicitação recebe prioridade temporária;
+2. nova cotação concorrente é bloqueada durante a prioridade;
+3. uma solicitação concorrente direta entra sem prioridade;
+4. o código privado correto consulta a reserva e um código incorreto recebe 404;
+5. a rota pública geral não expõe dados bancários;
+6. a rota específica só libera instruções quando a reserva está elegível;
+7. expiração/liberação da prioridade permite concedê-la a outra solicitação;
+8. duas reservas não podem ser confirmadas para datas sobrepostas.

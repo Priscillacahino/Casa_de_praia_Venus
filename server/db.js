@@ -49,6 +49,24 @@ export function openDatabase(path) {
       CHECK(check_in < check_out)
     );
     CREATE INDEX IF NOT EXISTS reservations_dates ON reservations(check_in,check_out,status);
+
+    CREATE TABLE IF NOT EXISTS reservation_holds (
+      reservation_id TEXT PRIMARY KEY REFERENCES reservations(id) ON DELETE CASCADE,
+      expires_at INTEGER NOT NULL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS reservation_holds_expiry ON reservation_holds(expires_at);
+
+    CREATE TABLE IF NOT EXISTS reservation_events (
+      id INTEGER PRIMARY KEY,
+      reservation_id TEXT NOT NULL REFERENCES reservations(id) ON DELETE CASCADE,
+      event TEXT NOT NULL,
+      actor TEXT NOT NULL DEFAULT 'system',
+      details_json TEXT NOT NULL DEFAULT '{}',
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS reservation_events_reservation ON reservation_events(reservation_id,id);
+
     CREATE TABLE IF NOT EXISTS messages (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
@@ -130,24 +148,29 @@ export function openDatabase(path) {
     ["entry_hash", "TEXT"],
   ]) addColumnIfMissing(db, "audit", name, def);
 
-  db.prepare("INSERT OR IGNORE INTO settings(id,value) VALUES(1,?)").run(JSON.stringify({
+  const defaults = {
     pricingEnabled: false,
     cleaningFeeCents: 0,
     depositPercent: 20,
     maxGuests: 6,
+    minLeadDays: 0,
+    maxAdvanceDays: 1825,
+    maxNights: 30,
+    requestHoldMinutes: 30,
     whatsappNumber: "",
     email: "",
     googleMapsUrl: "",
     mapsEmbedUrl: "",
-  }));
+  };
+  db.prepare("INSERT OR IGNORE INTO settings(id,value) VALUES(1,?)").run(JSON.stringify(defaults));
+  const currentSettings = JSON.parse(db.prepare("SELECT value FROM settings WHERE id=1").get().value);
+  const mergedSettings = { ...defaults, ...currentSettings, depositPercent: 20 };
+  db.prepare("UPDATE settings SET value=? WHERE id=1").run(JSON.stringify(mergedSettings));
+
   db.prepare("INSERT OR IGNORE INTO legal_approval(id) VALUES(1)").run();
   db.prepare("INSERT OR IGNORE INTO banking(id,value) VALUES(1,?)").run(JSON.stringify({
     bank: "", holder: "", holderDocument: "", branch: "", account: "", accountType: "", pixKey: "",
   }));
-
-  const cfg = JSON.parse(db.prepare("SELECT value FROM settings WHERE id=1").get().value);
-  cfg.depositPercent = 20;
-  db.prepare("UPDATE settings SET value=? WHERE id=1").run(JSON.stringify(cfg));
 
   const duplicate = db.prepare(`
     SELECT method, bank_reference, COUNT(*) n
@@ -164,6 +187,6 @@ export function openDatabase(path) {
     ON payments(method, bank_reference)
     WHERE bank_reference IS NOT NULL AND bank_reference <> '';`);
 
-  db.exec("PRAGMA user_version=3");
+  db.exec("PRAGMA user_version=4");
   return db;
 }

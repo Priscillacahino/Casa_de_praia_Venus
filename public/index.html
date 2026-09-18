@@ -54,6 +54,22 @@
     </form>
   </section>
 
+  <section id="acompanhar" class="section split">
+    <div>
+      <span class="eyebrow">Acompanhar solicitação</span>
+      <h2>Consulte o andamento sem criar uma conta.</h2>
+      <p class="muted">O protocolo identifica a solicitação. O código privado funciona como uma chave de acesso: não compartilhe com terceiros.</p>
+      <div id="trackingResult" class="notice">Nenhuma solicitação consultada neste dispositivo.</div>
+      <div id="paymentInstructions" class="notice hidden"></div>
+    </div>
+    <form id="trackingForm" class="card form">
+      <label>Protocolo<input name="reservationId" autocomplete="off" required></label>
+      <label>Código privado de acompanhamento<input name="manageToken" autocomplete="off" required></label>
+      <button class="button primary full" type="submit">Consultar andamento</button>
+      <button class="button full hidden" id="loadPaymentInstructions" type="button">Consultar instruções de pagamento</button>
+    </form>
+  </section>
+
   <section id="guia" class="section guide">
     <div><span class="eyebrow">Dois aplicativos em um</span><h2>Guia Vênus · João Pessoa, Cabedelo e Conde</h2><p>O guia é sincronizado do repositório oficial, fica em cache no servidor e pode ser aberto ou baixado como arquivo offline.</p></div>
     <div class="actions"><a class="button primary" href="/guia">Acessar guia</a><a class="button" href="/guia?download=1">Baixar guia offline</a></div>

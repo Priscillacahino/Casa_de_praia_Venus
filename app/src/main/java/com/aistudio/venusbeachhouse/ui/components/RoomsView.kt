@@ -83,8 +83,11 @@ fun RoomsView(
         Spacer(modifier = Modifier.height(14.dp))
 
         // Room Cards
-        filteredRooms.forEach { room ->
-            RoomCard(room = room, onDetailClick = { onOpenRoomDetail(room) })
+        for (room in filteredRooms) {
+            RoomCard(
+                room = room,
+                onDetailClick = { onOpenRoomDetail(room) }
+            )
             Spacer(modifier = Modifier.height(14.dp))
         }
     }

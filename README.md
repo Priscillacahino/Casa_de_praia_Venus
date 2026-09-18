@@ -45,6 +45,20 @@ Backend Node 24 + SQLite
  └─ retenção/anomização controlada
 ```
 
+## Motor de reservas V2
+
+O projeto agora inclui um fluxo de solicitação mais próximo de operação real:
+
+- política configurável de antecedência, duração máxima e capacidade;
+- prioridade temporária de datas com expiração automática;
+- fila segura para solicitações concorrentes;
+- código privado de acompanhamento do hóspede, sem conta e sem token na URL;
+- consulta de situação, valores recebidos e saldo;
+- dados bancários liberados apenas para uma reserva elegível;
+- histórico operacional por reserva.
+
+Detalhes: `docs/MOTOR_RESERVAS_V2_2026-09-18.md`.
+
 ## Princípios financeiros
 
 - valores em **centavos inteiros**;
@@ -78,12 +92,13 @@ Requer **Node.js 24+**. O backend endurecido não depende de pacotes NPM externo
 cp .env.example .env
 npm run admin:password
 npm run admin:totp
+npm run reservation:secret
 npm test
 npm run lint
 npm start
 ```
 
-Em produção, configure os segredos no provedor — não no repositório.
+Em produção, configure os segredos no provedor — não no repositório. `RESERVATION_TOKEN_SECRET` deve ser exclusivo do acompanhamento das reservas.
 
 Rotas:
 
