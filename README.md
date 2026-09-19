@@ -67,7 +67,7 @@ Detalhes: `docs/MOTOR_RESERVAS_V2_2026-09-18.md`.
 - comprovante não equivale a pagamento recebido;
 - pagamento só é registrado como liquidado depois de conferência bancária;
 - referência bancária é única;
-- uma reserva só pode ser confirmada após termo vigente + PDF validado + sinal mínimo de 20% + nova checagem de conflito;
+- uma reserva só pode ser confirmada após termo vigente + PDF validado + sinal mínimo conforme percentual configurado + nova checagem de conflito;
 - estorno não pode tornar o saldo negativo e pagamento não pode ultrapassar o total contratado.
 
 ## Segurança incorporada
@@ -131,6 +131,8 @@ O módulo baixa somente por HTTPS, valida o conteúdo básico, mantém cache pri
 - `docs/AUDITORIA_RIGOROSA_2026-09-18.md` — achados, correções e riscos residuais
 - `docs/THREAT_MODEL.md` — modelo de ameaças
 - `docs/DEPLOY.md` — publicação segura e backups
+- `docs/HOMOLOGACAO_V2_2.md` — roteiro de homologação e gates externos
+- `docs/STATUS_V2_2_0.md` — estado consolidado da versão 2.2.0
 - `SECURITY.md` — regras de segurança do repositório
 - `docs/termo-compromisso-minuta.txt` — minuta existente; continua condicionada à revisão jurídica
 
