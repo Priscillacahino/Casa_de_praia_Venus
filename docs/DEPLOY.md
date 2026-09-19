@@ -21,7 +21,12 @@ Obrigatórios em produção:
 - `DATABASE_PATH=/caminho/persistente/venus.sqlite`
 - `ADMIN_PASSWORD_HASH` gerado por `npm run admin:password`
 - `ADMIN_TOTP_SECRET` gerado por `npm run admin:totp`
+- `RESERVATION_TOKEN_SECRET` exclusivo, com pelo menos 32 caracteres
 - `BACKUP_ENCRYPTION_KEY` com 32 bytes aleatórios em Base64
+- `GUIDE_SOURCE_URL` em HTTPS
+- `GUIDE_EXPECTED_SHA256` com o SHA-256 do HTML exato do Guia Vênus
+
+A aplicação recusa inicialização em `NODE_ENV=production` se qualquer gate acima estiver ausente ou inválido.
 
 Não configure `TRUST_PROXY_HOPS` por tentativa. Informe apenas a quantidade real de proxies reversos confiáveis.
 
@@ -31,7 +36,10 @@ Não configure `TRUST_PROXY_HOPS` por tentativa. Informe apenas a quantidade rea
 npm test
 npm run lint
 npm run audit:verify
+npm run production:check
 ```
+
+`production:check` é somente leitura e valida configuração, SQLite, chaves estrangeiras e versão do schema sem criar ou migrar o banco.
 
 Em banco novo, `audit:verify` pode retornar zero eventos e isso é esperado.
 
@@ -60,7 +68,7 @@ Em produção, o comando falha se `BACKUP_ENCRYPTION_KEY` não estiver configura
 npm run backup:restore -- backups/arquivo.sqlite.enc data/teste-restaurado.sqlite
 ```
 
-Valide `PRAGMA integrity_check` e o funcionamento do sistema antes de considerar o backup recuperável.
+O restore agora usa arquivo temporário e só publica o destino após `PRAGMA integrity_check` e `PRAGMA foreign_key_check` aprovados. Ainda valide o funcionamento do sistema em ambiente isolado antes de considerar o backup recuperável.
 
 ## 6. Android
 
