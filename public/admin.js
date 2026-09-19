@@ -30,12 +30,12 @@ async function load() {
     const requested = d.reservations.filter((r) => r.status === "requested").length;
     const withPriority = d.reservations.filter((r) => r.status === "requested" && r.holdExpiresAt).length;
     const confirmed = d.reservations.filter((r) => r.status === "confirmed").length;
-    const received = d.payments.filter((p) => p.settled === 1).reduce((s, p) => s + p.amount_cents, 0);
+    const received = d.finance?.summary?.netReceivedCents || 0;
     $("#summary").innerHTML = `
       <article class="card"><h3>${requested}</h3><p>solicitações pendentes</p></article>
       <article class="card"><h3>${withPriority}</h3><p>com prioridade temporária</p></article>
       <article class="card"><h3>${confirmed}</h3><p>reservas confirmadas</p></article>
-      <article class="card"><h3>${money(received)}</h3><p>movimentação líquida registrada</p></article>`;
+      <article class="card"><h3>${money(received)}</h3><p>recebimento líquido registrado</p></article>`;
 
     $("#reservations").innerHTML = d.reservations.map((r) => {
       const q = r.quote || {}, req = r.requirements || {};
@@ -55,6 +55,7 @@ async function load() {
           <button class="button hold">${r.holdExpiresAt ? "Renovar prioridade" : "Conceder prioridade"}</button>
           ${r.holdExpiresAt ? '<button class="button release-hold">Liberar prioridade</button>' : ""}
         </div>` : ""}
+        ${r.request_key ? '<div class="actions"><button class="button rotate-token">Trocar código privado</button></div>' : ""}
       </article>`;
     }).join("") || "<p>Nenhum registro.</p>";
 
@@ -66,7 +67,9 @@ async function load() {
       card.querySelector(".term")?.addEventListener("click", () => term(id));
       card.querySelector(".hold")?.addEventListener("click", () => grantHold(id));
       card.querySelector(".release-hold")?.addEventListener("click", () => releaseHold(id));
+      card.querySelector(".rotate-token")?.addEventListener("click", () => rotateToken(id));
     });
+    renderFinance(d.finance);
     renderSettings(d.settings);
     renderReviews(d.reviews);
     await loadCompliance();
@@ -94,6 +97,31 @@ async function releaseHold(id) {
   if (!confirm("Liberar a prioridade temporária desta solicitação?")) return;
   try { await api(`/admin/reservations/${id}/hold`, "DELETE", {}); await load(); }
   catch (e) { alert(e.message); }
+}
+
+async function rotateToken(id) {
+  if (!confirm("Trocar o código privado? O código anterior deixará de funcionar.")) return;
+  try {
+    const result = await api(`/admin/reservations/${id}/rotate-token`, "POST", {});
+    prompt("Novo código privado. Copie e envie ao hóspede por um canal confiável:", result.manageToken);
+    await load();
+  } catch (e) { alert(e.message); }
+}
+
+function renderFinance(finance) {
+  const box = $("#finance"); if (!box) return;
+  const s = finance?.summary || {};
+  const rows = (finance?.rows || []).filter((r) => r.status !== "cancelled" || r.receivedCents !== 0).slice(0, 12);
+  box.innerHTML = `
+    <div class="grid three">
+      <article class="card"><h3>${money(s.grossInflowCents || 0)}</h3><p>entradas compensadas</p></article>
+      <article class="card"><h3>${money(s.refundsCents || 0)}</h3><p>estornos registrados</p></article>
+      <article class="card"><h3>${money(s.confirmedOutstandingCents || 0)}</h3><p>saldo de reservas confirmadas</p></article>
+      <article class="card"><h3>${money(s.cancelledHeldCents || 0)}</h3><p>valor ainda retido em canceladas</p></article>
+    </div>
+    <div class="grid">
+      ${rows.map((r) => `<article class="card"><strong>${esc(r.name)} · ${esc(r.status)}</strong><p class="muted">${esc(r.checkIn)} → ${esc(r.checkOut)} · protocolo ${esc(r.reservationId)}</p><p>Total ${money(r.totalCents)} · recebido ${money(r.receivedCents)} · saldo ${money(r.balanceCents)}</p></article>`).join("") || "<p class=muted>Nenhum movimento financeiro registrado.</p>"}
+    </div>`;
 }
 
 async function payment(id) {
@@ -131,7 +159,7 @@ function renderSettings(s) {
 function renderReviews(reviews) {
   const box = $("#reviews");
   const pending = (reviews || []).filter((r) => r.approved !== 1);
-  box.innerHTML = pending.map((r) => `<article class="card" data-review="${esc(r.id)}"><strong>${esc(r.name)}</strong> · ${esc(r.rating)}/5<p>${esc(r.comment)}</p><div class="actions"><button class="button approve-review">Aprovar</button><button class="button reject-review">Rejeitar</button></div></article>`).join("") || "<p class=muted>Nenhuma avaliação pendente.</p>";
+  box.innerHTML = pending.map((r) => `<article class="card" data-review="${esc(r.id)}"><strong>${esc(r.name)}</strong> · ${esc(r.rating)}/5<p>${esc(r.comment)}</p><p class="muted">${r.reservation_id ? `Estadia vinculada: ${esc(r.reservation_id)}` : "Avaliação legada sem vínculo de reserva"}</p><div class="actions"><button class="button approve-review">Aprovar</button><button class="button reject-review">Rejeitar</button></div></article>`).join("") || "<p class=muted>Nenhuma avaliação pendente.</p>";
   document.querySelectorAll("[data-review]").forEach((card) => {
     const id = card.dataset.review;
     card.querySelector(".approve-review").onclick = async () => { await api("/admin/reviews/" + id, "PATCH", { approved:true }); await load(); };

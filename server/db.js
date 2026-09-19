@@ -35,6 +35,7 @@ export function openDatabase(path) {
       id TEXT PRIMARY KEY,
       request_key TEXT UNIQUE,
       request_hash TEXT,
+      token_version INTEGER NOT NULL DEFAULT 1,
       name TEXT NOT NULL,
       email TEXT NOT NULL,
       phone TEXT NOT NULL,
@@ -78,6 +79,7 @@ export function openDatabase(path) {
     );
     CREATE TABLE IF NOT EXISTS reviews (
       id TEXT PRIMARY KEY,
+      reservation_id TEXT REFERENCES reservations(id),
       name TEXT NOT NULL,
       rating INTEGER NOT NULL CHECK(rating BETWEEN 1 AND 5),
       comment TEXT NOT NULL,
@@ -142,6 +144,9 @@ export function openDatabase(path) {
   `);
 
   // Safe migrations from the previous schema.
+  addColumnIfMissing(db, "reservations", "token_version", "INTEGER NOT NULL DEFAULT 1");
+  addColumnIfMissing(db, "reviews", "reservation_id", "TEXT REFERENCES reservations(id)");
+
   for (const [name, def] of [
     ["settled", "INTEGER NOT NULL DEFAULT 0"],
     ["method", "TEXT"],
@@ -154,6 +159,10 @@ export function openDatabase(path) {
     ["previous_hash", "TEXT"],
     ["entry_hash", "TEXT"],
   ]) addColumnIfMissing(db, "audit", name, def);
+
+  db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS reviews_reservation_unique
+    ON reviews(reservation_id)
+    WHERE reservation_id IS NOT NULL AND reservation_id <> '';`);
 
   const defaults = {
     pricingEnabled: false,
@@ -194,6 +203,6 @@ export function openDatabase(path) {
     ON payments(method, bank_reference)
     WHERE bank_reference IS NOT NULL AND bank_reference <> '';`);
 
-  db.exec("PRAGMA user_version=5");
+  db.exec("PRAGMA user_version=6");
   return db;
 }

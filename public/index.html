@@ -58,7 +58,7 @@
     <div>
       <span class="eyebrow">Acompanhar solicitação</span>
       <h2>Consulte o andamento sem criar uma conta.</h2>
-      <p class="muted">O protocolo identifica a solicitação. O código privado funciona como uma chave de acesso: não compartilhe com terceiros.</p>
+      <p class="muted">O protocolo identifica a solicitação. O código privado funciona como uma chave de acesso: não compartilhe com terceiros. Se houver risco de exposição, a administração pode substituí-lo e o anterior deixa de funcionar.</p>
       <div id="trackingResult" class="notice">Nenhuma solicitação consultada neste dispositivo.</div>
       <div id="paymentInstructions" class="notice hidden"></div>
     </div>
@@ -67,6 +67,28 @@
       <label>Código privado de acompanhamento<input name="manageToken" autocomplete="off" required></label>
       <button class="button primary full" type="submit">Consultar andamento</button>
       <button class="button full hidden" id="loadPaymentInstructions" type="button">Consultar instruções de pagamento</button>
+    </form>
+  </section>
+
+  <section id="avaliar" class="section hidden">
+    <span class="eyebrow">Após a estadia</span>
+    <h2>Avalie sua experiência.</h2>
+    <p class="muted">A avaliação só é aceita para uma reserva confirmada cujo check-out já tenha ocorrido. O nome vem da própria reserva e a publicação passa por moderação.</p>
+    <form id="reviewForm" class="card form" style="max-width:680px">
+      <label>Nota
+        <select name="rating" required>
+          <option value="">Selecione</option>
+          <option value="5">5 — Excelente</option>
+          <option value="4">4 — Muito boa</option>
+          <option value="3">3 — Boa</option>
+          <option value="2">2 — Regular</option>
+          <option value="1">1 — Ruim</option>
+        </select>
+      </label>
+      <label>Comentário<textarea name="comment" rows="4" minlength="10" maxlength="2000" required></textarea></label>
+      <label class="check"><input name="consent" type="checkbox" required> Autorizo a publicação do meu nome, nota e comentário após moderação.</label>
+      <button class="button primary" type="submit">Enviar avaliação</button>
+      <div id="reviewResult" class="notice hidden"></div>
     </form>
   </section>
 

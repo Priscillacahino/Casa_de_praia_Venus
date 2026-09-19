@@ -23,6 +23,9 @@ const trackingForm = $("#trackingForm");
 const trackingResult = $("#trackingResult");
 const paymentInstructions = $("#paymentInstructions");
 const paymentButton = $("#loadPaymentInstructions");
+const reviewSection = $("#avaliar");
+const reviewForm = $("#reviewForm");
+const reviewResult = $("#reviewResult");
 
 function saveReservationAccess(id, token) {
   currentReservationAccess = { id, token };
@@ -107,7 +110,8 @@ async function loadReservationStatus() {
       ? `Prioridade temporária ativa até ${when(d.hold.expiresAt)}.`
       : d.status === "requested" ? "Sem prioridade temporária no momento." : "";
     trackingResult.className = "notice ok";
-    trackingResult.innerHTML = `<strong>${statusLabel}</strong><br>${d.checkIn} → ${d.checkOut} · ${d.quote.nights} noite(s)<br>Total contratado: ${money(d.quote.totalCents)} · Recebido: ${money(d.paidCents)} · Saldo: ${money(d.balanceCents)}.<br>${priority}`;
+    trackingResult.innerHTML = `<strong>${statusLabel}</strong><br>${d.checkIn} → ${d.checkOut} · ${d.quote.nights} noite(s)<br>Total contratado: ${money(d.quote.totalCents)} · Recebido: ${money(d.paidCents)} · Saldo: ${money(d.balanceCents)}.<br>${priority}${d.reviewSubmitted ? "<br>Avaliação da estadia já enviada." : ""}`;
+    reviewSection?.classList.toggle("hidden", !d.reviewEligible);
     if (d.status === "requested" || d.status === "confirmed") paymentButton.classList.remove("hidden");
   } catch (e) {
     trackingResult.className = "notice error";
@@ -120,6 +124,37 @@ trackingForm.addEventListener("submit", async (e) => {
   if (!trackingForm.reportValidity()) return;
   saveReservationAccess(trackingForm.elements.reservationId.value.trim(), trackingForm.elements.manageToken.value.trim());
   await loadReservationStatus();
+});
+
+reviewForm?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!reviewForm.reportValidity() || !currentReservationAccess) return;
+  const button = reviewForm.querySelector("button[type=submit]");
+  button.disabled = true;
+  reviewResult.className = "notice";
+  reviewResult.textContent = "Enviando avaliação…";
+  try {
+    const body = {
+      reservationId: currentReservationAccess.id,
+      rating: Number(reviewForm.elements.rating.value),
+      comment: reviewForm.elements.comment.value,
+      consent: reviewForm.elements.consent.checked,
+    };
+    await api("/reviews", {
+      method:"POST",
+      headers:{ "X-Reservation-Token":currentReservationAccess.token },
+      body:JSON.stringify(body),
+    });
+    reviewResult.className = "notice ok";
+    reviewResult.textContent = "Avaliação recebida e encaminhada para moderação.";
+    reviewForm.reset();
+    await loadReservationStatus();
+  } catch (e) {
+    reviewResult.className = "notice error";
+    reviewResult.textContent = e.message;
+  } finally {
+    button.disabled = false;
+  }
 });
 
 paymentButton.addEventListener("click", async () => {

@@ -280,15 +280,12 @@ test("fluxo HTTP: acesso, pedido idempotente, conflito, pagamento, avaliação e
       201,
     );
     const review = await call("/reviews", "POST", {
-      name: "Hóspede",
       rating: 5,
       comment: "Comentário de teste isolado",
       consent: true,
     });
-    assert.equal(review.status, 201);
+    assert.equal(review.status, 400);
     assert.equal((await call("/public")).data.reviews.length, 0);
-    await call("/admin/reviews/" + review.data.id, "PATCH", { approved: true });
-    assert.equal((await call("/public")).data.reviewStats.count, 1);
     const csvRes = await fetch(base + "/admin/export.csv", {
       headers: { Cookie: cookie },
     });

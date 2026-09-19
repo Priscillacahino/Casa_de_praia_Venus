@@ -195,9 +195,13 @@ export function createApp(db, options = {}) {
     if (!row || row.expires < Date.now()) throw new AppError("Entre na administração para continuar.", 401);
   };
 
-  const reservationToken = (row) => createHmac("sha256", reservationTokenSecret)
-    .update(`reservation:${row.id}:${row.request_key || ""}`)
-    .digest("base64url");
+  const reservationToken = (row) => {
+    const version = Number(row.token_version || 1);
+    const material = version > 1
+      ? `reservation:${row.id}:${row.request_key || ""}:v${version}`
+      : `reservation:${row.id}:${row.request_key || ""}`;
+    return createHmac("sha256", reservationTokenSecret).update(material).digest("base64url");
+  };
   const verifyReservationToken = (row, supplied) => {
     if (!row?.request_key || typeof supplied !== "string") return false;
     const expected = Buffer.from(reservationToken(row));
@@ -211,10 +215,55 @@ export function createApp(db, options = {}) {
   const paidFor = (reservationId) => db.prepare(
     "SELECT COALESCE(SUM(amount_cents),0) AS total FROM payments WHERE reservation_id=? AND settled=1",
   ).get(reservationId).total;
+  const financialSnapshot = () => {
+    const reservations = db.prepare("SELECT * FROM reservations WHERE status!='blocked' ORDER BY check_in DESC").all();
+    const payments = db.prepare("SELECT reservation_id,amount_cents FROM payments WHERE settled=1").all();
+    const byReservation = new Map();
+    let grossInflowCents = 0, refundsCents = 0;
+    for (const p of payments) {
+      byReservation.set(p.reservation_id, (byReservation.get(p.reservation_id) || 0) + p.amount_cents);
+      if (p.amount_cents > 0) grossInflowCents += p.amount_cents;
+      else refundsCents += Math.abs(p.amount_cents);
+    }
+    const rows = reservations.map((r) => {
+      const q = JSON.parse(r.quote || "{}");
+      const totalCents = q.totalCents || 0;
+      const receivedCents = byReservation.get(r.id) || 0;
+      return {
+        reservationId: r.id,
+        name: r.name,
+        status: r.status,
+        checkIn: r.check_in,
+        checkOut: r.check_out,
+        totalCents,
+        receivedCents,
+        balanceCents: Math.max(0, totalCents - receivedCents),
+      };
+    });
+    const confirmed = rows.filter((r) => r.status === "confirmed");
+    const requested = rows.filter((r) => r.status === "requested");
+    const cancelled = rows.filter((r) => r.status === "cancelled");
+    const sum = (items, field) => items.reduce((total, item) => total + (item[field] || 0), 0);
+    return {
+      summary: {
+        grossInflowCents,
+        refundsCents,
+        netReceivedCents: grossInflowCents - refundsCents,
+        confirmedContractedCents: sum(confirmed, "totalCents"),
+        confirmedReceivedCents: sum(confirmed, "receivedCents"),
+        confirmedOutstandingCents: sum(confirmed, "balanceCents"),
+        requestedReceivedCents: sum(requested, "receivedCents"),
+        cancelledHeldCents: sum(cancelled, "receivedCents"),
+      },
+      rows,
+    };
+  };
+
   const publicReservationState = (row) => {
     const quote = JSON.parse(row.quote || "{}");
     const paidCents = paidFor(row.id);
     const hold = getReservationHold(db, row.id);
+    const review = db.prepare("SELECT id,approved FROM reviews WHERE reservation_id=?").get(row.id);
     return {
       id: row.id,
       status: row.status,
@@ -229,12 +278,14 @@ export function createApp(db, options = {}) {
       paidCents,
       balanceCents: Math.max(0, (quote.totalCents || 0) - paidCents),
       depositReceived: paidCents >= (quote.depositCents || 0),
+      reviewEligible: row.status === "confirmed" && row.check_out <= today() && !review,
+      reviewSubmitted: !!review,
       hold: hold ? { active: true, expiresAt: hold.expiresAtIso } : { active: false, expiresAt: null },
     };
   };
 
   // Public endpoints.
-  register("GET", "/api/health", (ctx) => json(ctx.res, 200, { ok: true, version: 5 }));
+  register("GET", "/api/health", (ctx) => json(ctx.res, 200, { ok: true, version: 6 }));
   register("GET", "/api/public", (ctx) => {
     const reviews = db.prepare("SELECT id,name,rating,comment,created_at FROM reviews WHERE approved=1 ORDER BY created_at DESC LIMIT 100").all();
     const stats = db.prepare("SELECT COUNT(*) AS count, AVG(rating) AS average FROM reviews WHERE approved=1").get();
@@ -336,11 +387,21 @@ export function createApp(db, options = {}) {
   register("POST", "/api/reviews", (ctx) => {
     const b = ctx.body;
     if (b.consent !== true) throw new AppError("Confirme a publicação de seu nome e comentário.");
+    const reservationId = text(b.reservationId, "Protocolo", 1, 100);
+    const row = db.prepare("SELECT * FROM reservations WHERE id=? AND status!='blocked'").get(reservationId);
+    const token = String(ctx.req.headers["x-reservation-token"] || "");
+    if (!row || !verifyReservationToken(row, token)) throw new AppError("Reserva não encontrada.", 404);
+    if (row.status !== "confirmed") throw new AppError("A avaliação fica disponível somente para reservas confirmadas.", 422);
+    if (row.check_out > today()) throw new AppError("A avaliação fica disponível após o encerramento da estadia.", 422);
+    if (db.prepare("SELECT id FROM reviews WHERE reservation_id=?").get(row.id)) {
+      throw new AppError("Esta estadia já possui uma avaliação enviada.", 409);
+    }
     const id = randomUUID();
-    db.prepare("INSERT INTO reviews(id,name,rating,comment) VALUES(?,?,?,?)").run(
-      id, text(b.name, "Nome", 2, 80), integer(b.rating, "Nota", 1, 5), text(b.comment, "Comentário", 10, 2000),
+    db.prepare("INSERT INTO reviews(id,reservation_id,name,rating,comment) VALUES(?,?,?,?,?)").run(
+      id, row.id, row.name, integer(b.rating, "Nota", 1, 5), text(b.comment, "Comentário", 10, 2000),
     );
-    audit(ctx, "review.submitted", id, {}, "guest");
+    reservationEvent(row.id, "review.submitted", "guest", { reviewId: id });
+    audit(ctx, "review.submitted", id, { reservationId: row.id }, "guest");
     json(ctx.res, 201, { id, status: "pending" });
   });
   register("GET", "/api/payment-options", (ctx) => {
@@ -423,6 +484,7 @@ export function createApp(db, options = {}) {
       messages: db.prepare("SELECT * FROM messages ORDER BY created_at DESC").all(),
       reviews: db.prepare("SELECT * FROM reviews ORDER BY created_at DESC").all(),
       payments: db.prepare("SELECT * FROM payments ORDER BY created_at DESC").all(),
+      finance: financialSnapshot(),
     });
   }, true);
 
@@ -524,6 +586,20 @@ export function createApp(db, options = {}) {
     json(ctx.res, 200, { ok: true });
   }, true);
 
+  register("POST", "/api/admin/reservations/:id/rotate-token", (ctx) => {
+    const result = transaction(db, () => {
+      const row = db.prepare("SELECT * FROM reservations WHERE id=? AND status!='blocked'").get(ctx.params.id);
+      if (!row || !row.request_key) throw new AppError("Reserva não encontrada.", 404);
+      const nextVersion = Math.max(1, Number(row.token_version || 1)) + 1;
+      db.prepare("UPDATE reservations SET token_version=? WHERE id=?").run(nextVersion, row.id);
+      const updated = db.prepare("SELECT * FROM reservations WHERE id=?").get(row.id);
+      reservationEvent(row.id, "access_token.rotated", "admin", { version: nextVersion });
+      audit(ctx, "reservation.access_token_rotated", row.id, { version: nextVersion });
+      return { manageToken: reservationToken(updated), tokenVersion: nextVersion };
+    });
+    json(ctx.res, 200, result);
+  }, true);
+
   register("PATCH", "/api/admin/reservations/:id", (ctx) => {
     const id = ctx.params.id, status = ctx.body.status;
     if (!["confirmed", "cancelled"].includes(status)) throw new AppError("Situação inválida.");
@@ -573,7 +649,9 @@ export function createApp(db, options = {}) {
         if (String(e.message).toLowerCase().includes("unique")) throw new AppError("Esta transação bancária já foi registrada.", 409);
         throw e;
       }
-      audit(ctx, "payment.recorded", id, {
+      const paymentEvent = b.amountCents < 0 ? "payment.refund_recorded" : "payment.recorded";
+      reservationEvent(b.reservationId, paymentEvent, "admin", { amountCents: b.amountCents, method: b.method });
+      audit(ctx, paymentEvent, id, {
         reservationId: b.reservationId, amountCents: b.amountCents, method: b.method,
         bankReferenceHash: sha256(bankReference),
       });
@@ -582,7 +660,8 @@ export function createApp(db, options = {}) {
   }, true);
 
   register("PATCH", "/api/admin/reviews/:id", (ctx) => {
-    db.prepare("UPDATE reviews SET approved=? WHERE id=?").run(ctx.body.approved === true ? 1 : 0, ctx.params.id);
+    const result = db.prepare("UPDATE reviews SET approved=? WHERE id=?").run(ctx.body.approved === true ? 1 : 0, ctx.params.id);
+    if (!result.changes) throw new AppError("Avaliação não encontrada.", 404);
     audit(ctx, "review.moderated", ctx.params.id, { approved: ctx.body.approved === true });
     json(ctx.res, 200, { ok: true });
   }, true);
@@ -628,6 +707,20 @@ export function createApp(db, options = {}) {
   register("POST", "/api/admin/reservations/:id/validate-term", (ctx) => {
     validateSignedTerm(db, ctx.params.id, ctx.body, (a, r, d) => audit(ctx, a, r, d));
     json(ctx.res, 200, { ok: true });
+  }, true);
+
+  register("GET", "/api/admin/finance", (ctx) => {
+    json(ctx.res, 200, financialSnapshot());
+  }, true);
+
+  register("GET", "/api/admin/finance.csv", (ctx) => {
+    const finance = financialSnapshot();
+    const money = (n) => ((n || 0) / 100).toFixed(2).replace(".", ",");
+    const output = [["Protocolo","Hóspede","Situação","Entrada","Saída","Total contratado (R$)","Recebido líquido (R$)","Saldo (R$)"]];
+    for (const r of finance.rows) {
+      output.push([r.reservationId,r.name,r.status,r.checkIn,r.checkOut,money(r.totalCents),money(r.receivedCents),money(r.balanceCents)]);
+    }
+    raw(ctx.res, 200, csv(output), "text/csv; charset=utf-8", attachment("conciliacao-financeira-venus.csv"));
   }, true);
 
   register("GET", "/api/admin/export.csv", (ctx) => {
