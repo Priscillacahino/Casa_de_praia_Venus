@@ -1,4 +1,4 @@
-name: Security and build checks
+﻿name: Security and build checks
 
 on:
   push:
@@ -33,4 +33,5 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - run: gradle --no-daemon assembleDebug
+      - run: gradle --no-daemon assembleDebug assembleRelease
+
