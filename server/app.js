@@ -1,6 +1,6 @@
 import http from "node:http";
 import { readFileSync, existsSync, statSync, writeFileSync, mkdirSync } from "node:fs";
-import { extname, join, normalize, resolve, dirname , relative , isAbsolute } from "node:path";
+import { extname, join, normalize, resolve, dirname, relative, isAbsolute } from "node:path";
 import {
   randomBytes, randomUUID, createHash, createHmac, scryptSync, timingSafeEqual,
 } from "node:crypto";
@@ -23,7 +23,7 @@ function decodeBase32(value) {
   let bits = "";
   for (const c of clean) {
     const n = alphabet.indexOf(c);
-    if (n < 0) throw new Error("TOTP invÃ¡lido");
+    if (n < 0) throw new Error("TOTP inválido");
     bits += n.toString(2).padStart(5, "0");
   }
   const out = [];
@@ -91,12 +91,12 @@ async function readJson(req) {
   const chunks = [];
   for await (const chunk of req) {
     size += chunk.length;
-    if (size > MAX_JSON) throw new AppError("ConteÃºdo muito grande.", 413);
+    if (size > MAX_JSON) throw new AppError("Conteúdo muito grande.", 413);
     chunks.push(chunk);
   }
   if (!chunks.length) return {};
   try { return JSON.parse(Buffer.concat(chunks).toString("utf8")); }
-  catch { throw new AppError("JSON invÃ¡lido.", 400); }
+  catch { throw new AppError("JSON inválido.", 400); }
 }
 
 async function loadGuideHtml() {
@@ -106,14 +106,14 @@ async function loadGuideHtml() {
   const expectedHash = String(process.env.GUIDE_EXPECTED_SHA256 || "").trim().toLowerCase();
 
   const validateGuide = (html) => {
-    if (html.length < 1000 || html.length > 600000 || !/Guia V[eÃª]nus/i.test(html)) {
-      throw new Error("ConteÃºdo do guia nÃ£o passou na validaÃ§Ã£o.");
+    if (html.length < 1000 || html.length > 600000 || !/Guia V[eê]nus/i.test(html)) {
+      throw new Error("Conteúdo do guia não passou na validação.");
     }
     if (expectedHash && !/^[a-f0-9]{64}$/.test(expectedHash)) {
-      throw new Error("GUIDE_EXPECTED_SHA256 invÃ¡lido.");
+      throw new Error("GUIDE_EXPECTED_SHA256 inválido.");
     }
     if (expectedHash && sha256(html) !== expectedHash) {
-      throw new Error("O Guia VÃªnus nÃ£o corresponde ao SHA-256 configurado.");
+      throw new Error("O Guia Vênus não corresponde ao SHA-256 configurado.");
     }
     return html;
   };
@@ -129,7 +129,7 @@ async function loadGuideHtml() {
     if (existsSync(cachePath)) {
       try { return validateGuide(readFileSync(cachePath, "utf8")); } catch {}
     }
-    throw new AppError("O Guia VÃªnus estÃ¡ temporariamente indisponÃ­vel.", 503);
+    throw new AppError("O Guia Vênus está temporariamente indisponível.", 503);
   }
 }
 
@@ -151,7 +151,7 @@ export function createApp(db, options = {}) {
     ?? (production ? "" : sha256(passwordHash || "venus-development-reservation-token"));
   const staticDir = options.staticDir ? resolve(options.staticDir) : null;
   if (production && (!origin || !origin.startsWith("https://") || !passwordHash || !totpSecret || reservationTokenSecret.length < 32)) {
-    throw new Error("Configure APP_URL HTTPS, ADMIN_PASSWORD_HASH, ADMIN_TOTP_SECRET e RESERVATION_TOKEN_SECRET antes de iniciar em produÃ§Ã£o.");
+    throw new Error("Configure APP_URL HTTPS, ADMIN_PASSWORD_HASH, ADMIN_TOTP_SECRET e RESERVATION_TOKEN_SECRET antes de iniciar em produção.");
   }
 
   const routes = [];
@@ -192,7 +192,7 @@ export function createApp(db, options = {}) {
   const sessionHash = (ctx) => sha256(ctx.cookies.venus_session || "");
   const requireAuth = (ctx) => {
     const row = db.prepare("SELECT expires FROM sessions WHERE token_hash=?").get(sessionHash(ctx));
-    if (!row || row.expires < Date.now()) throw new AppError("Entre na administraÃ§Ã£o para continuar.", 401);
+    if (!row || row.expires < Date.now()) throw new AppError("Entre na administração para continuar.", 401);
   };
 
   const reservationToken = (row) => {
@@ -319,14 +319,14 @@ export function createApp(db, options = {}) {
     const b = ctx.body;
     const person = contact(b);
     if (!person.phone) throw new AppError("Informe seu telefone.");
-    if (b.consent !== true) throw new AppError("Confirme o uso dos dados para atender Ã  solicitaÃ§Ã£o.");
+    if (b.consent !== true) throw new AppError("Confirme o uso dos dados para atender à solicitação.");
     const requestKey = text(ctx.req.headers["idempotency-key"], "Identificador", 16, 100);
     const requestHash = sha256(JSON.stringify(b));
     const result = transaction(db, () => {
       cleanupExpiredHolds(db);
       const existing = db.prepare("SELECT * FROM reservations WHERE request_key=?").get(requestKey);
       if (existing) {
-        if (existing.request_hash !== requestHash) throw new AppError("Esta solicitaÃ§Ã£o jÃ¡ foi enviada com outros dados. Atualize a pÃ¡gina.", 409);
+        if (existing.request_hash !== requestHash) throw new AppError("Esta solicitação já foi enviada com outros dados. Atualize a página.", 409);
         let hold = getReservationHold(db, existing.id);
         if (!hold && existing.status === "requested" && !findHoldConflict(db, existing.check_in, existing.check_out, existing.id)) {
           hold = grantReservationHold(db, existing.id, bookingPolicy(db).requestHoldMinutes);
@@ -338,8 +338,8 @@ export function createApp(db, options = {}) {
           holdGranted: !!hold, holdExpiresAt: hold?.expiresAtIso || null,
         };
       }
-      integer(b.guests, "HÃ³spedes", 1, settings().maxGuests);
-      // SolicitaÃ§Ãµes concorrentes podem entrar na fila; somente reservas confirmadas/bloqueios impedem o pedido.
+      integer(b.guests, "Hóspedes", 1, settings().maxGuests);
+      // Solicitações concorrentes podem entrar na fila; somente reservas confirmadas/bloqueios impedem o pedido.
       assertAvailable(db, b.checkIn, b.checkOut, "", { includeHolds: false });
       const quote = calculateQuote(db, b.checkIn, b.checkOut);
       if (b.expectedTotalCents !== quote.totalCents) throw new AppError("A tarifa foi atualizada. Consulte o valor novamente.", 409);
@@ -349,7 +349,7 @@ export function createApp(db, options = {}) {
         VALUES(?,?,?,?,?,?,?,?,?,?,?,'requested',?)`).run(
         id, requestKey, requestHash, person.name, person.email, person.phone,
         b.checkIn, b.checkOut, b.guests, b.hasPet === true ? 1 : 0,
-        text(b.notes || "", "ObservaÃ§Ãµes", 0, 2000), JSON.stringify(quote),
+        text(b.notes || "", "Observações", 0, 2000), JSON.stringify(quote),
       );
       const row = db.prepare("SELECT * FROM reservations WHERE id=?").get(id);
       const hold = findHoldConflict(db, b.checkIn, b.checkOut, id)
@@ -370,13 +370,13 @@ export function createApp(db, options = {}) {
   register("GET", "/api/reservations/:id/status", (ctx) => {
     const row = db.prepare("SELECT * FROM reservations WHERE id=? AND status!='blocked'").get(ctx.params.id);
     const token = String(ctx.req.headers["x-reservation-token"] || "");
-    if (!row || !verifyReservationToken(row, token)) throw new AppError("Reserva nÃ£o encontrada.", 404);
+    if (!row || !verifyReservationToken(row, token)) throw new AppError("Reserva não encontrada.", 404);
     json(ctx.res, 200, publicReservationState(row));
   });
   register("POST", "/api/messages", (ctx) => {
     const b = ctx.body;
     const p = contact(b);
-    if (b.consent !== true || b.website) throw new AppError("NÃ£o foi possÃ­vel registrar a mensagem.");
+    if (b.consent !== true || b.website) throw new AppError("Não foi possível registrar a mensagem.");
     const id = randomUUID();
     db.prepare("INSERT INTO messages(id,name,email,phone,dates,message) VALUES(?,?,?,?,?,?)").run(
       id, p.name, p.email, p.phone, text(b.dates || "", "Datas", 0, 120), text(b.message, "Mensagem", 10, 4000),
@@ -386,19 +386,19 @@ export function createApp(db, options = {}) {
   });
   register("POST", "/api/reviews", (ctx) => {
     const b = ctx.body;
-    if (b.consent !== true) throw new AppError("Confirme a publicaÃ§Ã£o de seu nome e comentÃ¡rio.");
+    if (b.consent !== true) throw new AppError("Confirme a publicação de seu nome e comentário.");
     const reservationId = text(b.reservationId, "Protocolo", 1, 100);
     const row = db.prepare("SELECT * FROM reservations WHERE id=? AND status!='blocked'").get(reservationId);
     const token = String(ctx.req.headers["x-reservation-token"] || "");
-    if (!row || !verifyReservationToken(row, token)) throw new AppError("Reserva nÃ£o encontrada.", 404);
-    if (row.status !== "confirmed") throw new AppError("A avaliaÃ§Ã£o fica disponÃ­vel somente para reservas confirmadas.", 422);
-    if (row.check_out > today()) throw new AppError("A avaliaÃ§Ã£o fica disponÃ­vel apÃ³s o encerramento da estadia.", 422);
+    if (!row || !verifyReservationToken(row, token)) throw new AppError("Reserva não encontrada.", 404);
+    if (row.status !== "confirmed") throw new AppError("A avaliação fica disponível somente para reservas confirmadas.", 422);
+    if (row.check_out > today()) throw new AppError("A avaliação fica disponível após o encerramento da estadia.", 422);
     if (db.prepare("SELECT id FROM reviews WHERE reservation_id=?").get(row.id)) {
-      throw new AppError("Esta estadia jÃ¡ possui uma avaliaÃ§Ã£o enviada.", 409);
+      throw new AppError("Esta estadia já possui uma avaliação enviada.", 409);
     }
     const id = randomUUID();
     db.prepare("INSERT INTO reviews(id,reservation_id,name,rating,comment) VALUES(?,?,?,?,?)").run(
-      id, row.id, row.name, integer(b.rating, "Nota", 1, 5), text(b.comment, "ComentÃ¡rio", 10, 2000),
+      id, row.id, row.name, integer(b.rating, "Nota", 1, 5), text(b.comment, "Comentário", 10, 2000),
     );
     reservationEvent(row.id, "review.submitted", "guest", { reviewId: id });
     audit(ctx, "review.submitted", id, { reservationId: row.id }, "guest");
@@ -408,7 +408,7 @@ export function createApp(db, options = {}) {
     const b = banking(db), l = legal(db);
     const enabled = l?.approved === 1 && l.term_hash === TERM_HASH;
     const empty = { bank: "", holder: "", holderDocument: "", branch: "", account: "", accountType: "", pixKey: "" };
-    // A rota pÃºblica informa apenas os mÃ©todos. Dados bancÃ¡rios exigem uma solicitaÃ§Ã£o autenticada por token.
+    // A rota pública informa apenas os métodos. Dados bancários exigem uma solicitação autenticada por token.
     json(ctx.res, 200, {
       pixAvailable: enabled && !!b.pixKey,
       transferAvailable: enabled && !!(b.bank && b.holder && b.account && b.branch),
@@ -420,7 +420,7 @@ export function createApp(db, options = {}) {
   register("GET", "/api/reservations/:id/payment-options", (ctx) => {
     const row = db.prepare("SELECT * FROM reservations WHERE id=? AND status!='blocked'").get(ctx.params.id);
     const token = String(ctx.req.headers["x-reservation-token"] || "");
-    if (!row || !verifyReservationToken(row, token)) throw new AppError("Reserva nÃ£o encontrada.", 404);
+    if (!row || !verifyReservationToken(row, token)) throw new AppError("Reserva não encontrada.", 404);
     const b = banking(db), l = legal(db);
     const enabled = l?.approved === 1 && l.term_hash === TERM_HASH;
     const hold = getReservationHold(db, row.id);
@@ -437,7 +437,7 @@ export function createApp(db, options = {}) {
 
   // Login must stay outside authenticated /admin routes.
   register("POST", "/api/admin/login", (ctx) => {
-    if (!passwordHash) throw new AppError("Acesso administrativo ainda nÃ£o configurado.", 503);
+    if (!passwordHash) throw new AppError("Acesso administrativo ainda não configurado.", 503);
     const password = text(ctx.body.password, "Senha", 1, 200);
     const [salt, digest] = passwordHash.split(":");
     let valid = false;
@@ -446,7 +446,7 @@ export function createApp(db, options = {}) {
     }
     if (!valid || !verifyTotp(totpSecret, ctx.body.otp)) {
       audit(ctx, "auth.login_failed", "admin", { ipHash: sha256(ctx.ip), mfaRequired: !!totpSecret }, "anonymous");
-      throw new AppError("Credenciais invÃ¡lidas.", 401);
+      throw new AppError("Credenciais inválidas.", 401);
     }
     const token = randomBytes(32).toString("hex");
     db.prepare("DELETE FROM sessions WHERE expires < ?").run(Date.now());
@@ -501,25 +501,25 @@ export function createApp(db, options = {}) {
         const u = new URL(value);
         if (u.protocol !== "https:" || !allowedHosts.includes(u.hostname)) throw new Error();
         return u.href;
-      } catch { throw new AppError("Link do Google Maps invÃ¡lido."); }
+      } catch { throw new AppError("Link do Google Maps inválido."); }
     };
     const whatsappNumber = text(b.whatsappNumber, "WhatsApp", 10, 15);
-    if (!/^\d{10,15}$/.test(whatsappNumber)) throw new AppError("WhatsApp: use somente nÃºmeros, incluindo paÃ­s e DDD.");
+    if (!/^\d{10,15}$/.test(whatsappNumber)) throw new AppError("WhatsApp: use somente números, incluindo país e DDD.");
     const email = contact({ name: "Admin", email: b.email, phone: "" }).email;
     const value = {
       pricingEnabled: b.pricingEnabled === true,
       cleaningFeeCents: integer(b.cleaningFeeCents, "Limpeza"), depositPercent: integer(b.depositPercent, "Percentual do sinal", 1, 100),
-      maxGuests: integer(b.maxGuests, "HÃ³spedes", 1, 50),
-      minLeadDays: integer(b.minLeadDays, "AntecedÃªncia mÃ­nima", 0, 365),
-      maxAdvanceDays: integer(b.maxAdvanceDays, "AntecedÃªncia mÃ¡xima", 1, 3650),
-      maxNights: integer(b.maxNights, "MÃ¡ximo de noites", 1, 366),
-      requestHoldMinutes: integer(b.requestHoldMinutes, "Bloqueio temporÃ¡rio", 5, 1440),
+      maxGuests: integer(b.maxGuests, "Hóspedes", 1, 50),
+      minLeadDays: integer(b.minLeadDays, "Antecedência mínima", 0, 365),
+      maxAdvanceDays: integer(b.maxAdvanceDays, "Antecedência máxima", 1, 3650),
+      maxNights: integer(b.maxNights, "Máximo de noites", 1, 366),
+      requestHoldMinutes: integer(b.requestHoldMinutes, "Bloqueio temporário", 5, 1440),
       whatsappNumber, email,
       googleMapsUrl: url(b.googleMapsUrl, ["maps.app.goo.gl", "www.google.com", "maps.google.com", "google.com"]),
       mapsEmbedUrl: url(b.mapsEmbedUrl, ["www.google.com", "maps.google.com"], true),
     };
     if (value.mapsEmbedUrl && !new URL(value.mapsEmbedUrl).pathname.startsWith("/maps/embed")) {
-      throw new AppError("Use o endereÃ§o de incorporaÃ§Ã£o do Google Maps.");
+      throw new AppError("Use o endereço de incorporação do Google Maps.");
     }
     db.prepare("UPDATE settings SET value=? WHERE id=1").run(JSON.stringify(value));
     audit(ctx, "settings.updated", "1", { pricingEnabled: value.pricingEnabled });
@@ -531,13 +531,13 @@ export function createApp(db, options = {}) {
     datesBetween(start, end);
     const id = transaction(db, () => {
       if (db.prepare("SELECT id FROM rates WHERE start_date < ? AND end_date > ?").get(end, start)) {
-        throw new AppError("Existe tarifa cadastrada neste intervalo. Exclua ou ajuste o perÃ­odo anterior.", 409);
+        throw new AppError("Existe tarifa cadastrada neste intervalo. Exclua ou ajuste o período anterior.", 409);
       }
       const id = randomUUID();
       db.prepare("INSERT INTO rates VALUES(?,?,?,?,?,?,?)").run(
-        id, text(b.label, "DescriÃ§Ã£o", 2, 120), start, end,
-        integer(b.weekdayCents, "DiÃ¡ria", 1), integer(b.weekendCents, "DiÃ¡ria de sexta/sÃ¡bado", 1),
-        integer(b.minNights, "MÃ­nimo de noites", 1, 366),
+        id, text(b.label, "Descrição", 2, 120), start, end,
+        integer(b.weekdayCents, "Diária", 1), integer(b.weekendCents, "Diária de sexta/sábado", 1),
+        integer(b.minNights, "Mínimo de noites", 1, 366),
       );
       audit(ctx, "rate.created", id, { start, end });
       return id;
@@ -563,13 +563,13 @@ export function createApp(db, options = {}) {
   }, true);
 
   register("POST", "/api/admin/reservations/:id/hold", (ctx) => {
-    const minutes = integer(ctx.body.minutes ?? bookingPolicy(db).requestHoldMinutes, "DuraÃ§Ã£o do bloqueio", 5, 1440);
+    const minutes = integer(ctx.body.minutes ?? bookingPolicy(db).requestHoldMinutes, "Duração do bloqueio", 5, 1440);
     const hold = transaction(db, () => {
       const row = db.prepare("SELECT * FROM reservations WHERE id=?").get(ctx.params.id);
-      if (!row) throw new AppError("Reserva nÃ£o encontrada.", 404);
+      if (!row) throw new AppError("Reserva não encontrada.", 404);
       assertAvailable(db, row.check_in, row.check_out, row.id);
       const created = grantReservationHold(db, row.id, minutes);
-      if (!created) throw new AppError("Outra solicitaÃ§Ã£o possui prioridade temporÃ¡ria para este perÃ­odo.", 409);
+      if (!created) throw new AppError("Outra solicitação possui prioridade temporária para este período.", 409);
       reservationEvent(row.id, "hold.granted", "admin", { expiresAt: created.expiresAtIso, minutes });
       audit(ctx, "reservation.hold_granted", row.id, { expiresAt: created.expiresAtIso, minutes });
       return created;
@@ -579,7 +579,7 @@ export function createApp(db, options = {}) {
 
   register("DELETE", "/api/admin/reservations/:id/hold", (ctx) => {
     const row = db.prepare("SELECT id FROM reservations WHERE id=?").get(ctx.params.id);
-    if (!row) throw new AppError("Reserva nÃ£o encontrada.", 404);
+    if (!row) throw new AppError("Reserva não encontrada.", 404);
     releaseReservationHold(db, ctx.params.id);
     reservationEvent(ctx.params.id, "hold.released", "admin");
     audit(ctx, "reservation.hold_released", ctx.params.id);
@@ -589,7 +589,7 @@ export function createApp(db, options = {}) {
   register("POST", "/api/admin/reservations/:id/rotate-token", (ctx) => {
     const result = transaction(db, () => {
       const row = db.prepare("SELECT * FROM reservations WHERE id=? AND status!='blocked'").get(ctx.params.id);
-      if (!row || !row.request_key) throw new AppError("Reserva nÃ£o encontrada.", 404);
+      if (!row || !row.request_key) throw new AppError("Reserva não encontrada.", 404);
       const nextVersion = Math.max(1, Number(row.token_version || 1)) + 1;
       db.prepare("UPDATE reservations SET token_version=? WHERE id=?").run(nextVersion, row.id);
       const updated = db.prepare("SELECT * FROM reservations WHERE id=?").get(row.id);
@@ -602,14 +602,14 @@ export function createApp(db, options = {}) {
 
   register("PATCH", "/api/admin/reservations/:id", (ctx) => {
     const id = ctx.params.id, status = ctx.body.status;
-    if (!["confirmed", "cancelled"].includes(status)) throw new AppError("SituaÃ§Ã£o invÃ¡lida.");
+    if (!["confirmed", "cancelled"].includes(status)) throw new AppError("Situação inválida.");
     transaction(db, () => {
       const row = db.prepare("SELECT * FROM reservations WHERE id=?").get(id);
-      if (!row) throw new AppError("Reserva nÃ£o encontrada.", 404);
+      if (!row) throw new AppError("Reserva não encontrada.", 404);
       if (row.status === status) return;
       if (status === "confirmed") {
-        if (row.status !== "requested") throw new AppError("Somente solicitaÃ§Ãµes pendentes podem ser confirmadas.");
-        if (row.check_in < today()) throw new AppError("A data de entrada jÃ¡ passou.");
+        if (row.status !== "requested") throw new AppError("Somente solicitações pendentes podem ser confirmadas.");
+        if (row.check_in < today()) throw new AppError("A data de entrada já passou.");
         assertConfirmationReady(db, row);
         assertAvailable(db, row.check_in, row.check_out, id);
       }
@@ -625,15 +625,15 @@ export function createApp(db, options = {}) {
     const b = ctx.body, id = randomUUID();
     integer(b.amountCents, "Valor", -100000000, 100000000);
     if (!["pix", "transfer"].includes(b.method) || b.settled !== true) {
-      throw new AppError("Informe Pix ou transferÃªncia e confirme a compensaÃ§Ã£o no banco.");
+      throw new AppError("Informe Pix ou transferência e confirme a compensação no banco.");
     }
-    const bankReference = text(b.bankReference, "IdentificaÃ§Ã£o da transaÃ§Ã£o bancÃ¡ria", 5, 250);
+    const bankReference = text(b.bankReference, "Identificação da transação bancária", 5, 250);
     if (!b.amountCents) throw new AppError("Informe um valor diferente de zero.");
     transaction(db, () => {
       const row = db.prepare("SELECT status,quote FROM reservations WHERE id=?").get(b.reservationId);
-      if (!row || row.status === "blocked") throw new AppError("Reserva invÃ¡lida.");
+      if (!row || row.status === "blocked") throw new AppError("Reserva inválida.");
       if (db.prepare("SELECT id FROM payments WHERE method=? AND bank_reference=?").get(b.method, bankReference)) {
-        throw new AppError("Esta transaÃ§Ã£o bancÃ¡ria jÃ¡ foi registrada.", 409);
+        throw new AppError("Esta transação bancária já foi registrada.", 409);
       }
       const paid = db.prepare("SELECT COALESCE(SUM(amount_cents),0) AS total FROM payments WHERE reservation_id=? AND settled=1").get(b.reservationId).total;
       const total = JSON.parse(row.quote).totalCents;
@@ -643,10 +643,10 @@ export function createApp(db, options = {}) {
       try {
         db.prepare(`INSERT INTO payments(id,reservation_id,amount_cents,note,settled,method,bank_reference)
           VALUES(?,?,?,?,1,?,?)`).run(
-          id, b.reservationId, b.amountCents, text(b.note, "DescriÃ§Ã£o do pagamento/estorno", 2, 250), b.method, bankReference,
+          id, b.reservationId, b.amountCents, text(b.note, "Descrição do pagamento/estorno", 2, 250), b.method, bankReference,
         );
       } catch (e) {
-        if (String(e.message).toLowerCase().includes("unique")) throw new AppError("Esta transaÃ§Ã£o bancÃ¡ria jÃ¡ foi registrada.", 409);
+        if (String(e.message).toLowerCase().includes("unique")) throw new AppError("Esta transação bancária já foi registrada.", 409);
         throw e;
       }
       const paymentEvent = b.amountCents < 0 ? "payment.refund_recorded" : "payment.recorded";
@@ -661,7 +661,7 @@ export function createApp(db, options = {}) {
 
   register("PATCH", "/api/admin/reviews/:id", (ctx) => {
     const result = db.prepare("UPDATE reviews SET approved=? WHERE id=?").run(ctx.body.approved === true ? 1 : 0, ctx.params.id);
-    if (!result.changes) throw new AppError("AvaliaÃ§Ã£o nÃ£o encontrada.", 404);
+    if (!result.changes) throw new AppError("Avaliação não encontrada.", 404);
     audit(ctx, "review.moderated", ctx.params.id, { approved: ctx.body.approved === true });
     json(ctx.res, 200, { ok: true });
   }, true);
@@ -679,18 +679,18 @@ export function createApp(db, options = {}) {
     json(ctx.res, 200, { ok: true });
   }, true);
   register("POST", "/api/admin/legal-approval", (ctx) => {
-    if (ctx.body.termHash !== TERM_HASH) throw new AppError("A versÃ£o do termo mudou. Atualize a pÃ¡gina.", 409);
+    if (ctx.body.termHash !== TERM_HASH) throw new AppError("A versão do termo mudou. Atualize a página.", 409);
     if (ctx.body.approved !== true) {
       db.prepare("UPDATE legal_approval SET approved=0 WHERE id=1").run();
       audit(ctx, "legal.disabled", TERM_HASH);
       return json(ctx.res, 200, { ok: true });
     }
-    if (ctx.body.confirmedReview !== true) throw new AppError("Confirme que o jurÃ­dico validou esta versÃ£o.");
+    if (ctx.body.confirmedReview !== true) throw new AppError("Confirme que o jurídico validou esta versão.");
     db.prepare(`UPDATE legal_approval SET approved=1,term_hash=?,reviewer=?,reference=?,approved_at=CURRENT_TIMESTAMP
       WHERE id=1`).run(
-      TERM_HASH, text(ctx.body.reviewer, "ResponsÃ¡vel jurÃ­dico", 3, 150), text(ctx.body.reference, "ReferÃªncia da aprovaÃ§Ã£o", 5, 1000),
+      TERM_HASH, text(ctx.body.reviewer, "Responsável jurídico", 3, 150), text(ctx.body.reference, "Referência da aprovação", 5, 1000),
     );
-    audit(ctx, "legal.approved", TERM_HASH, { reviewer: text(ctx.body.reviewer, "ResponsÃ¡vel jurÃ­dico", 3, 150) });
+    audit(ctx, "legal.approved", TERM_HASH, { reviewer: text(ctx.body.reviewer, "Responsável jurídico", 3, 150) });
     json(ctx.res, 200, { ok: true });
   }, true);
   register("GET", "/api/admin/term-template", (ctx) => {
@@ -701,7 +701,7 @@ export function createApp(db, options = {}) {
   }, true);
   register("GET", "/api/admin/reservations/:id/signed-term", (ctx) => {
     const d = db.prepare("SELECT pdf FROM signed_terms WHERE reservation_id=?").get(ctx.params.id);
-    if (!d) throw new AppError("Documento nÃ£o encontrado.", 404);
+    if (!d) throw new AppError("Documento não encontrado.", 404);
     raw(ctx.res, 200, Buffer.from(d.pdf), "application/pdf", attachment("termo-assinado.pdf"));
   }, true);
   register("POST", "/api/admin/reservations/:id/validate-term", (ctx) => {
@@ -716,7 +716,7 @@ export function createApp(db, options = {}) {
   register("GET", "/api/admin/finance.csv", (ctx) => {
     const finance = financialSnapshot();
     const money = (n) => ((n || 0) / 100).toFixed(2).replace(".", ",");
-    const output = [["Protocolo","HÃ³spede","SituaÃ§Ã£o","Entrada","SaÃ­da","Total contratado (R$)","Recebido lÃ­quido (R$)","Saldo (R$)"]];
+    const output = [["Protocolo","Hóspede","Situação","Entrada","Saída","Total contratado (R$)","Recebido líquido (R$)","Saldo (R$)"]];
     for (const r of finance.rows) {
       output.push([r.reservationId,r.name,r.status,r.checkIn,r.checkOut,money(r.totalCents),money(r.receivedCents),money(r.balanceCents)]);
     }
@@ -725,7 +725,7 @@ export function createApp(db, options = {}) {
 
   register("GET", "/api/admin/export.csv", (ctx) => {
     const rows = db.prepare("SELECT * FROM reservations ORDER BY check_in").all();
-    const output = [["Protocolo","HÃ³spede","E-mail","Telefone","Entrada","SaÃ­da","SituaÃ§Ã£o","Noites","DiÃ¡rias (R$)","Limpeza (R$)","Total (R$)","Sinal previsto (R$)","Recebido (R$)","Saldo contratual (R$)"]];
+    const output = [["Protocolo","Hóspede","E-mail","Telefone","Entrada","Saída","Situação","Noites","Diárias (R$)","Limpeza (R$)","Total (R$)","Sinal previsto (R$)","Recebido (R$)","Saldo contratual (R$)"]];
     for (const r of rows) {
       const q = JSON.parse(r.quote || "{}");
       const paid = db.prepare("SELECT COALESCE(SUM(amount_cents),0) AS total FROM payments WHERE reservation_id=? AND settled=1").get(r.id).total;
@@ -774,8 +774,8 @@ export function createApp(db, options = {}) {
         if (mutating) {
           const requestOrigin = req.headers.origin;
           const allowed = origin || "http://localhost:3000";
-          if (requestOrigin && requestOrigin !== allowed) throw new AppError("Origem nÃ£o permitida.", 403);
-          if (req.headers["sec-fetch-site"] === "cross-site") throw new AppError("Origem nÃ£o permitida.", 403);
+          if (requestOrigin && requestOrigin !== allowed) throw new AppError("Origem não permitida.", 403);
+          if (req.headers["sec-fetch-site"] === "cross-site") throw new AppError("Origem não permitida.", 403);
           const contentType = String(req.headers["content-type"] || "").split(";")[0].trim();
           if (contentType !== "application/json") throw new AppError("Envie os dados em JSON.", 415);
 
@@ -791,7 +791,7 @@ export function createApp(db, options = {}) {
           ctx.params = Object.fromEntries(r.names.map((n, i) => [n, decodeURIComponent(match[i + 1])]));
           return true;
         });
-        if (!route) throw new AppError("Recurso nÃ£o encontrado.", 404);
+        if (!route) throw new AppError("Recurso não encontrado.", 404);
         if (route.auth) requireAuth(ctx);
         return await route.handler(ctx);
       }
@@ -801,7 +801,10 @@ export function createApp(db, options = {}) {
         if (path === "/") path = "/index.html";
         if (path === "/admin") path = "/admin.html";
         const target = resolve(join(staticDir, normalize(path).replace(/^[/\\]+/, "")));
-        const relativeTarget = relative(staticDir, target);         if (relativeTarget.startsWith("..") || isAbsolute(relativeTarget)) {           throw new AppError("Recurso não encontrado.", 404);         }
+        const relativeTarget = relative(staticDir, target);
+        if (relativeTarget.startsWith("..") || isAbsolute(relativeTarget)) {
+          throw new AppError("Recurso não encontrado.", 404);
+        }
         if (existsSync(target) && statSync(target).isFile()) {
           const body = readFileSync(target);
           const cache = path.endsWith(".html") || path.endsWith("sw.js") ? "no-cache" : "public, max-age=3600";
@@ -810,11 +813,11 @@ export function createApp(db, options = {}) {
         const fallback = join(staticDir, "index.html");
         if (existsSync(fallback)) return raw(res, 200, readFileSync(fallback), "text/html; charset=utf-8", { "Cache-Control": "no-cache" });
       }
-      throw new AppError("Recurso nÃ£o encontrado.", 404);
+      throw new AppError("Recurso não encontrado.", 404);
     } catch (error) {
       const status = error.status || 500;
       if (status >= 500 && !(error instanceof AppError)) console.error("Request failed:", error);
-      if (!res.headersSent) json(res, status, { error: error instanceof AppError ? error.message : "NÃ£o foi possÃ­vel concluir. Tente novamente.", requestId });
+      if (!res.headersSent) json(res, status, { error: error instanceof AppError ? error.message : "Não foi possível concluir. Tente novamente.", requestId });
       else res.end();
     }
   }
