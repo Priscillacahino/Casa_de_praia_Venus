@@ -28,6 +28,9 @@ export function productionConfigErrors(env = process.env) {
   if (String(env.RESERVATION_TOKEN_SECRET || "").length < 32) {
     errors.push("RESERVATION_TOKEN_SECRET deve ter pelo menos 32 caracteres.");
   }
+  if (String(env.AUDIT_HMAC_SECRET || "").length < 32) {
+    errors.push("AUDIT_HMAC_SECRET deve ter pelo menos 32 caracteres.");
+  }
   if (!validBackupKey(env.BACKUP_ENCRYPTION_KEY)) {
     errors.push("BACKUP_ENCRYPTION_KEY deve representar 32 bytes em Base64.");
   }

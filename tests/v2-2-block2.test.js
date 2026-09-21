@@ -198,3 +198,23 @@ test("conciliação separa entradas, estornos, líquido e saldo confirmado", asy
     db.close();
   }
 });
+
+test("reserva cancelada rejeita nova entrada positiva e aceita estorno do saldo recebido", async () => {
+  const db = fixture();
+  const { server, call, login } = await startApp(db);
+  try {
+    const reservation = await createReservation(call, "Hóspede Cancelamento");
+    await login();
+    assert.equal((await call("/admin/payments", "POST", { reservationId:reservation.id, amountCents:10000, note:"Entrada antes do cancelamento", method:"pix", bankReference:"cancel-test-payment-001", settled:true })).status, 201);
+    assert.equal((await call(`/admin/reservations/${reservation.id}`, "PATCH", { status:"cancelled" })).status, 200);
+    const novaEntrada = await call("/admin/payments", "POST", { reservationId:reservation.id, amountCents:1000, note:"Entrada indevida", method:"pix", bankReference:"cancel-test-payment-002", settled:true });
+    assert.equal(novaEntrada.status, 409);
+    assert.equal((await call("/admin/payments", "POST", { reservationId:reservation.id, amountCents:-5000, note:"Estorno parcial", method:"pix", bankReference:"cancel-test-refund-001", settled:true })).status, 201);
+    const movements = db.prepare("SELECT movement_type,settled_at FROM payments WHERE reservation_id=? ORDER BY created_at").all(reservation.id);
+    assert.deepEqual(movements.map((m) => m.movement_type), ["payment","refund"]);
+    assert.ok(movements.every((m) => m.settled_at));
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+    db.close();
+  }
+});

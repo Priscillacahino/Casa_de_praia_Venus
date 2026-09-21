@@ -15,7 +15,7 @@
 <body>
 <header class="topbar">
   <a href="#inicio" class="brand"><span class="brand-mark">♀</span><span><strong>Vênus Beach House</strong><small>Conde · Litoral Sul da Paraíba</small></span></a>
-  <nav><a href="#casa">A casa</a><a href="#ambientes">Ambientes</a><a href="#reserva">Reservar</a><a href="#guia">Guia PB</a><a href="#privacidade">Privacidade</a></nav>
+  <nav><a href="#casa">A casa</a><a href="#ambientes">Ambientes</a><a href="#reserva">Reservar</a><a href="#app-android">App Android</a><a href="#guia">Guia PB</a><a href="#privacidade">Privacidade</a></nav>
 </header>
 <main id="inicio">
   <section class="hero">
@@ -145,6 +145,22 @@
       <button class="button primary" type="submit">Enviar avaliação</button>
       <div id="reviewResult" class="notice hidden"></div>
     </form>
+  </section>
+
+  <section id="app-android" class="section split">
+    <div>
+      <span class="eyebrow">Aplicativo Android</span>
+      <h2>Baixe somente a versão publicada pela Vênus Beach House.</h2>
+      <p class="muted">O aplicativo será distribuído diretamente pela página oficial da casa, sem depender da Google Play. Antes de instalar, confira a versão e o SHA-256 exibidos nesta página.</p>
+      <div id="androidAppStatus" class="notice" role="status" aria-live="polite">Consultando disponibilidade do APK oficial…</div>
+      <p id="androidAppHash" class="muted hash-wrap"></p>
+    </div>
+    <div class="card">
+      <h3>Instalação direta</h3>
+      <p>O Android pode solicitar autorização para instalar aplicativos obtidos pelo navegador. Autorize apenas para o navegador usado no download e somente para o arquivo oficial desta página.</p>
+      <a id="androidAppDownload" class="button primary full hidden" href="#" rel="noopener">Baixar APK oficial</a>
+      <p class="muted">Não instale cópias recebidas por mensagens, grupos ou links de terceiros.</p>
+    </div>
   </section>
 
   <section id="guia" class="section guide">

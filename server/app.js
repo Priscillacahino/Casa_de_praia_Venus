@@ -149,9 +149,10 @@ export function createApp(db, options = {}) {
   const totpSecret = options.totpSecret ?? process.env.ADMIN_TOTP_SECRET;
   const reservationTokenSecret = options.reservationTokenSecret ?? process.env.RESERVATION_TOKEN_SECRET
     ?? (production ? "" : sha256(passwordHash || "venus-development-reservation-token"));
+  const auditSecret = options.auditSecret ?? process.env.AUDIT_HMAC_SECRET ?? "";
   const staticDir = options.staticDir ? resolve(options.staticDir) : null;
-  if (production && (!origin || !origin.startsWith("https://") || !passwordHash || !totpSecret || reservationTokenSecret.length < 32)) {
-    throw new Error("Configure APP_URL HTTPS, ADMIN_PASSWORD_HASH, ADMIN_TOTP_SECRET e RESERVATION_TOKEN_SECRET antes de iniciar em produção.");
+  if (production && (!origin || !origin.startsWith("https://") || !passwordHash || !totpSecret || reservationTokenSecret.length < 32 || auditSecret.length < 32)) {
+    throw new Error("Configure APP_URL HTTPS, ADMIN_PASSWORD_HASH, ADMIN_TOTP_SECRET, RESERVATION_TOKEN_SECRET e AUDIT_HMAC_SECRET antes de iniciar em produção.");
   }
 
   const routes = [];
@@ -180,12 +181,16 @@ export function createApp(db, options = {}) {
   const audit = (ctx, action, resource, details = {}, actor = "admin") => {
     const previous = db.prepare("SELECT entry_hash FROM audit WHERE entry_hash IS NOT NULL ORDER BY id DESC LIMIT 1").get()?.entry_hash || "";
     const safeDetails = JSON.stringify(details);
-    const payload = JSON.stringify({
-      action, resource, actor, requestId: ctx.requestId, details: safeDetails, previous,
-    });
-    const entryHash = sha256(payload);
-    db.prepare(`INSERT INTO audit(action,resource,actor,request_id,details_json,previous_hash,entry_hash)
-      VALUES(?,?,?,?,?,?,?)`).run(action, resource, actor, ctx.requestId, safeDetails, previous || null, entryHash);
+    const createdAt = new Date().toISOString();
+    const chainVersion = auditSecret.length >= 32 ? 2 : 1;
+    const payload = chainVersion >= 2
+      ? JSON.stringify({ action, resource, actor, requestId: ctx.requestId, details: safeDetails, previous, createdAt })
+      : JSON.stringify({ action, resource, actor, requestId: ctx.requestId, details: safeDetails, previous });
+    const entryHash = chainVersion >= 2
+      ? createHmac("sha256", auditSecret).update(payload).digest("hex")
+      : sha256(payload);
+    db.prepare(`INSERT INTO audit(action,resource,actor,request_id,details_json,previous_hash,entry_hash,chain_version,created_at)
+      VALUES(?,?,?,?,?,?,?,?,?)`).run(action, resource, actor, ctx.requestId, safeDetails, previous || null, entryHash, chainVersion, createdAt);
   };
 
   const settings = () => JSON.parse(db.prepare("SELECT value FROM settings WHERE id=1").get().value);
@@ -285,7 +290,13 @@ export function createApp(db, options = {}) {
   };
 
   // Public endpoints.
-  register("GET", "/api/health", (ctx) => json(ctx.res, 200, { ok: true, version: 6 }));
+  register("GET", "/api/health", (ctx) => json(ctx.res, 200, { ok: true, version: 7 }));
+  register("GET", "/api/ready", (ctx) => {
+    const quick = db.prepare("PRAGMA quick_check(1)").get()?.quick_check;
+    const schemaVersion = Number(db.prepare("PRAGMA user_version").get()?.user_version || 0);
+    const ok = quick === "ok" && schemaVersion === 7;
+    json(ctx.res, ok ? 200 : 503, { ok, schemaVersion });
+  });
   register("GET", "/api/public", (ctx) => {
     const reviews = db.prepare("SELECT id,name,rating,comment,created_at FROM reviews WHERE approved=1 ORDER BY created_at DESC LIMIT 100").all();
     const stats = db.prepare("SELECT COUNT(*) AS count, AVG(rating) AS average FROM reviews WHERE approved=1").get();
@@ -517,7 +528,22 @@ export function createApp(db, options = {}) {
       whatsappNumber, email,
       googleMapsUrl: url(b.googleMapsUrl, ["maps.app.goo.gl", "www.google.com", "maps.google.com", "google.com"]),
       mapsEmbedUrl: url(b.mapsEmbedUrl, ["www.google.com", "maps.google.com"], true),
+      androidApkUrl: (() => {
+        const raw = text(b.androidApkUrl || "", "URL do APK", 0, 1000);
+        if (!raw) return "";
+        let parsed;
+        try { parsed = new URL(raw); } catch { throw new AppError("URL do APK inválida."); }
+        if (parsed.protocol !== "https:" || !parsed.pathname.toLowerCase().endsWith(".apk")) {
+          throw new AppError("O APK deve usar uma URL HTTPS terminada em .apk.");
+        }
+        return parsed.href;
+      })(),
+      androidApkSha256: text(b.androidApkSha256 || "", "SHA-256 do APK", 0, 64).toLowerCase(),
+      androidVersionName: text(b.androidVersionName || "", "Versão Android", 0, 50),
     };
+    if (value.androidApkSha256 && !/^[a-f0-9]{64}$/.test(value.androidApkSha256)) throw new AppError("SHA-256 do APK inválido.");
+    const apkFields = [value.androidApkUrl, value.androidApkSha256, value.androidVersionName].filter(Boolean).length;
+    if (apkFields !== 0 && apkFields !== 3) throw new AppError("Informe URL, SHA-256 e versão do APK juntos.");
     if (value.mapsEmbedUrl && !new URL(value.mapsEmbedUrl).pathname.startsWith("/maps/embed")) {
       throw new AppError("Use o endereço de incorporação do Google Maps.");
     }
@@ -632,6 +658,9 @@ export function createApp(db, options = {}) {
     transaction(db, () => {
       const row = db.prepare("SELECT status,quote FROM reservations WHERE id=?").get(b.reservationId);
       if (!row || row.status === "blocked") throw new AppError("Reserva inválida.");
+      if (row.status === "cancelled" && b.amountCents > 0) {
+        throw new AppError("Reserva cancelada não pode receber nova entrada. Registre apenas estorno compatível com o saldo recebido.", 409);
+      }
       if (db.prepare("SELECT id FROM payments WHERE method=? AND bank_reference=?").get(b.method, bankReference)) {
         throw new AppError("Esta transação bancária já foi registrada.", 409);
       }
@@ -641,9 +670,10 @@ export function createApp(db, options = {}) {
         throw new AppError("O saldo recebido deve ficar entre zero e o total da reserva.");
       }
       try {
-        db.prepare(`INSERT INTO payments(id,reservation_id,amount_cents,note,settled,method,bank_reference)
-          VALUES(?,?,?,?,1,?,?)`).run(
-          id, b.reservationId, b.amountCents, text(b.note, "Descrição do pagamento/estorno", 2, 250), b.method, bankReference,
+        const movementType = b.amountCents < 0 ? "refund" : "payment";
+        db.prepare(`INSERT INTO payments(id,reservation_id,amount_cents,note,settled,method,bank_reference,movement_type,settled_at)
+          VALUES(?,?,?,?,1,?,?,?,CURRENT_TIMESTAMP)`).run(
+          id, b.reservationId, b.amountCents, text(b.note, "Descrição do pagamento/estorno", 2, 250), b.method, bankReference, movementType,
         );
       } catch (e) {
         if (String(e.message).toLowerCase().includes("unique")) throw new AppError("Esta transação bancária já foi registrada.", 409);
@@ -779,8 +809,18 @@ export function createApp(db, options = {}) {
           const contentType = String(req.headers["content-type"] || "").split(";")[0].trim();
           if (contentType !== "application/json") throw new AppError("Envie os dados em JSON.", 415);
 
-          const isLogin = url.pathname === "/api/admin/login";
-          enforceRateLimit(ctx, isLogin ? "login" : "write", isLogin ? 8 : 80, 600000);
+          const rule = url.pathname === "/api/admin/login"
+            ? { scope:"login", max:8, windowMs:600000 }
+            : url.pathname === "/api/reservations"
+              ? { scope:"reservation-create", max:12, windowMs:3600000 }
+              : url.pathname === "/api/messages"
+                ? { scope:"message-create", max:8, windowMs:3600000 }
+                : url.pathname === "/api/reviews"
+                  ? { scope:"review-create", max:8, windowMs:3600000 }
+                  : url.pathname === "/api/quote"
+                    ? { scope:"quote", max:60, windowMs:600000 }
+                    : { scope:"write", max:80, windowMs:600000 };
+          enforceRateLimit(ctx, rule.scope, rule.max, rule.windowMs);
           ctx.body = await readJson(req);
         }
 

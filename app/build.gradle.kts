@@ -16,8 +16,25 @@ android {
         versionName = "2.2.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
-        val bookingUrl = (project.findProperty("VENUS_BOOKING_URL") as String?) ?: ""
+        val bookingUrl = (project.findProperty("VENUS_BOOKING_URL") as String?) ?: System.getenv("VENUS_BOOKING_URL") ?: ""
+        val guideHash = (project.findProperty("VENUS_GUIDE_SHA256") as String?) ?: System.getenv("VENUS_GUIDE_SHA256") ?: ""
         buildConfigField("String", "BOOKING_URL", "\"${bookingUrl.replace("\\", "\\\\").replace("\"", "\\\"")}\"")
+        buildConfigField("String", "GUIDE_EXPECTED_SHA256", "\"${guideHash.replace("\\", "\\\\").replace("\"", "\\\"")}\"")
+    }
+
+    signingConfigs {
+        val storePath = System.getenv("VENUS_KEYSTORE_PATH")
+        val storePasswordEnv = System.getenv("VENUS_KEYSTORE_PASSWORD")
+        val aliasEnv = System.getenv("VENUS_KEY_ALIAS")
+        val keyPasswordEnv = System.getenv("VENUS_KEY_PASSWORD")
+        if (!storePath.isNullOrBlank() && !storePasswordEnv.isNullOrBlank() && !aliasEnv.isNullOrBlank() && !keyPasswordEnv.isNullOrBlank()) {
+            create("release") {
+                storeFile = file(storePath)
+                storePassword = storePasswordEnv
+                keyAlias = aliasEnv
+                keyPassword = keyPasswordEnv
+            }
+        }
     }
 
     buildTypes {
@@ -25,6 +42,7 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            signingConfig = signingConfigs.findByName("release")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
@@ -54,4 +72,3 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
-

@@ -15,7 +15,7 @@ try {
   const foreignKeys = db.prepare("PRAGMA foreign_key_check").all();
   if (foreignKeys.length) throw new Error(`PRAGMA foreign_key_check encontrou ${foreignKeys.length} inconsistência(s).`);
   const version = Number(db.prepare("PRAGMA user_version").get()?.user_version || 0);
-  if (version < 6) throw new Error(`Schema desatualizado: user_version=${version}; esperado >= 6.`);
+  if (version !== 7) throw new Error(`Schema incompatível: user_version=${version}; esperado exatamente 7.`);
   console.log(JSON.stringify({
     productionConfig:"ok",
     databaseIntegrity:"ok",

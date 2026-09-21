@@ -45,3 +45,21 @@ test("arquivos principais não apresentam sequências comuns de mojibake", () =>
     assert.equal(suspicious.some((pattern) => pattern.test(source)), false, `encoding suspeito em ${rel}`);
   }
 });
+
+test("interface prepara distribuição direta do APK sem persistir código privado no navegador", () => {
+  const html = readFileSync(join(root, "public", "index.html"), "utf8");
+  const app = readFileSync(join(root, "public", "app.js"), "utf8");
+  const admin = readFileSync(join(root, "public", "admin.html"), "utf8");
+  assert.match(html, /id="androidAppDownload"/);
+  assert.match(admin, /name="androidApkSha256"/);
+  assert.doesNotMatch(app, /venus:lastReservation/);
+  assert.doesNotMatch(app, /sessionStorage/);
+});
+
+test("Android permite pin SHA-256 do Guia e configuração externa de assinatura", () => {
+  const gradle = readFileSync(join(root, "app", "build.gradle.kts"), "utf8");
+  const guide = readFileSync(join(root, "app", "src", "main", "java", "com", "aistudio", "venusbeachhouse", "GuideRepository.kt"), "utf8");
+  assert.match(gradle, /GUIDE_EXPECTED_SHA256/);
+  assert.match(gradle, /VENUS_KEYSTORE_PATH/);
+  assert.match(guide, /MessageDigest\.getInstance\("SHA-256"\)/);
+});

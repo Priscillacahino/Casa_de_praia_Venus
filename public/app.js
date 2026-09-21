@@ -29,7 +29,6 @@ const reviewResult = $("#reviewResult");
 
 function saveReservationAccess(id, token) {
   currentReservationAccess = { id, token };
-  sessionStorage.setItem("venus:lastReservation", JSON.stringify(currentReservationAccess));
   trackingForm.elements.reservationId.value = id;
   trackingForm.elements.manageToken.value = token;
 }
@@ -185,10 +184,24 @@ paymentButton.addEventListener("click", async () => {
 
 (async () => {
   try {
-    const saved = JSON.parse(sessionStorage.getItem("venus:lastReservation") || "null");
-    if (saved?.id && saved?.token) {
-      saveReservationAccess(saved.id, saved.token);
-      await loadReservationStatus();
+    const pub = await api("/public");
+    const maxGuests = Number(pub.settings?.maxGuests || 6);
+    if (Number.isSafeInteger(maxGuests) && maxGuests > 0) {
+      form.elements.guests.max = String(maxGuests);
+      if (Number(form.elements.guests.value) > maxGuests) form.elements.guests.value = String(maxGuests);
+    }
+    const apkStatus = $("#androidAppStatus");
+    const apkButton = $("#androidAppDownload");
+    const apkHash = $("#androidAppHash");
+    const s = pub.settings || {};
+    if (apkStatus && apkButton && s.androidApkUrl && s.androidApkSha256 && s.androidVersionName) {
+      apkStatus.className = "notice ok";
+      apkStatus.textContent = "Versão " + s.androidVersionName + " disponível para Android.";
+      apkButton.href = s.androidApkUrl;
+      apkButton.classList.remove("hidden");
+      apkHash.textContent = "SHA-256: " + s.androidApkSha256;
+    } else if (apkStatus) {
+      apkStatus.textContent = "O APK oficial ainda não foi publicado. Use a versão web/PWA enquanto isso.";
     }
   } catch {}
   try {

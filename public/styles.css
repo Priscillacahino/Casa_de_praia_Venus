@@ -30,3 +30,6 @@
   .gallery-stage img{max-height:68dvh}
 }
 @media(prefers-reduced-motion:reduce){.gallery-card img{transition:none}}
+
+/* direct-apk-hardening */
+.hash-wrap{overflow-wrap:anywhere;word-break:break-word;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.8rem}
