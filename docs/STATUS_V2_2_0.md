@@ -24,7 +24,10 @@ A release **v2.2.0** consolida três blocos de endurecimento técnico e deve ser
 - exigência de HTTPS, segredos mínimos, banco persistente e hash do Guia em produção;
 - integração do Guia Vênus com `GUIDE_EXPECTED_SHA256`;
 - build Android e backend validados no CI;
-- branch `main` protegida com checks obrigatórios.
+- branch `main` protegida com checks obrigatórios;
+- compatibilidade de caminhos no Windows corrigida no servidor de arquivos estáticos;
+- interface web validada localmente em Windows e acessada por celular na mesma rede;
+- galeria responsiva de ambientes e controles PWA preparados sem dependências externas.
 
 ## Observação sobre a auditoria de 18/09/2026
 
