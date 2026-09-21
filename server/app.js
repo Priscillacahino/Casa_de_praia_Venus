@@ -1,6 +1,6 @@
 import http from "node:http";
 import { readFileSync, existsSync, statSync, writeFileSync, mkdirSync } from "node:fs";
-import { extname, join, normalize, resolve, dirname } from "node:path";
+import { extname, join, normalize, resolve, dirname, relative, isAbsolute } from "node:path";
 import {
   randomBytes, randomUUID, createHash, createHmac, scryptSync, timingSafeEqual,
 } from "node:crypto";
@@ -801,7 +801,10 @@ export function createApp(db, options = {}) {
         if (path === "/") path = "/index.html";
         if (path === "/admin") path = "/admin.html";
         const target = resolve(join(staticDir, normalize(path).replace(/^[/\\]+/, "")));
-        if (!target.startsWith(staticDir + "/") && target !== staticDir) throw new AppError("Recurso não encontrado.", 404);
+        const relativeTarget = relative(staticDir, target);
+        if (relativeTarget.startsWith("..") || isAbsolute(relativeTarget)) {
+          throw new AppError("Recurso não encontrado.", 404);
+        }
         if (existsSync(target) && statSync(target).isFile()) {
           const body = readFileSync(target);
           const cache = path.endsWith(".html") || path.endsWith("sw.js") ? "no-cache" : "public, max-age=3600";

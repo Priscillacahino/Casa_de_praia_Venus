@@ -214,4 +214,69 @@ paymentButton.addEventListener("click", async () => {
   }
 })();
 
+
+// Gallery mobile: ambientes
+const galleryDialog = $("#galleryDialog");
+if (galleryDialog) {
+  const galleryImage = $("#galleryImage");
+  const galleryTitle = $("#galleryTitle");
+  const galleryCounter = $("#galleryCounter");
+  const galleryPrev = $("#galleryPrev");
+  const galleryNext = $("#galleryNext");
+  const galleryClose = $("#galleryClose");
+  let galleryImages = [];
+  let galleryIndex = 0;
+  let galleryName = "";
+
+  const renderGallery = () => {
+    if (!galleryImages.length) return;
+    galleryIndex = (galleryIndex + galleryImages.length) % galleryImages.length;
+    galleryImage.src = galleryImages[galleryIndex];
+    galleryImage.alt = `${galleryName} — foto ${galleryIndex + 1} de ${galleryImages.length}`;
+    galleryTitle.textContent = galleryName;
+    galleryCounter.textContent = `${galleryIndex + 1} de ${galleryImages.length}`;
+    const single = galleryImages.length < 2;
+    galleryPrev.hidden = single;
+    galleryNext.hidden = single;
+  };
+
+  const openGallery = (card) => {
+    galleryName = card.dataset.galleryTitle || "Ambiente";
+    galleryImages = String(card.dataset.galleryImages || "").split("|").filter(Boolean);
+    galleryIndex = 0;
+    renderGallery();
+    if (typeof galleryDialog.showModal === "function") galleryDialog.showModal();
+    else galleryDialog.setAttribute("open", "");
+  };
+
+  const closeGallery = () => {
+    if (typeof galleryDialog.close === "function" && galleryDialog.open) galleryDialog.close();
+    else galleryDialog.removeAttribute("open");
+  };
+
+  document.querySelectorAll(".gallery-card[data-gallery-images]").forEach((card) => {
+    card.addEventListener("click", () => openGallery(card));
+  });
+
+  galleryPrev.addEventListener("click", () => { galleryIndex -= 1; renderGallery(); });
+  galleryNext.addEventListener("click", () => { galleryIndex += 1; renderGallery(); });
+  galleryClose.addEventListener("click", closeGallery);
+
+  galleryDialog.addEventListener("click", (event) => {
+    if (event.target === galleryDialog) closeGallery();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (!galleryDialog.open) return;
+    if (event.key === "ArrowLeft" && galleryImages.length > 1) {
+      galleryIndex -= 1;
+      renderGallery();
+    }
+    if (event.key === "ArrowRight" && galleryImages.length > 1) {
+      galleryIndex += 1;
+      renderGallery();
+    }
+  });
+}
+
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));

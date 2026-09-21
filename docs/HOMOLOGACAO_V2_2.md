@@ -19,6 +19,16 @@ Este roteiro separa o que já foi validado no repositório do que precisa ser co
 - [ ] executar `npm run audit:verify`;
 - [ ] executar `npm run production:check`.
 
+## Evidências locais já obtidas
+
+Estas evidências reduzem trabalho futuro, mas **não substituem** HTTPS real nem os testes ponta a ponta:
+
+- [x] `GET /api/health` respondeu `{"ok":true,"version":6}` no Windows;
+- [x] página inicial respondeu HTTP 200 em `localhost`;
+- [x] interface foi aberta por um celular na mesma rede local;
+- [x] falha de caminhos estáticos específica do Windows foi identificada e corrigida;
+- [x] galeria de ambientes, PWA e validações estruturais foram preparadas sem serviços externos.
+
 ## 2. Reserva e concorrência
 
 - [ ] cotação retorna valor esperado;

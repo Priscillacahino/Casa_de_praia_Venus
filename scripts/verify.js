@@ -31,4 +31,25 @@ if (pkg.scripts?.["production:check"] !== "node scripts/production-check.js") {
   console.error("Script production:check ausente ou inesperado.");
   process.exit(1);
 }
+
+const mojibakePatterns = [
+  /\u00C3[\u00A0-\u00BF]/,
+  /\u00C2[\u00A0-\u00BF]/,
+  /\u00E2[\u0080-\u00BF]/,
+];
+for (const file of [
+  "server/app.js",
+  "public/index.html",
+  "public/app.js",
+  "public/admin.html",
+  "public/admin.js",
+  "README.md",
+]) {
+  const source = readFileSync(file, "utf8");
+  if (mojibakePatterns.some((pattern) => pattern.test(source))) {
+    console.error(`Possível corrupção de UTF-8 detectada em: ${file}`);
+    process.exit(1);
+  }
+}
+
 console.log("Verificação estrutural concluída.");

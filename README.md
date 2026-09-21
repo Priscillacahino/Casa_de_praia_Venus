@@ -13,6 +13,19 @@ A experiência passa a unir dois projetos sem misturar suas responsabilidades:
 
 O guia continua independente, então pode evoluir sem duplicar manualmente dezenas de locais dentro do projeto da casa.
 
+## Experiência mobile da casa
+
+A interface web também funciona como uma apresentação da hospedagem em telas pequenas:
+
+- galeria responsiva de ambientes com ampliação em modal;
+- navegação horizontal por cartões no celular;
+- imagens servidas pelo próprio projeto, sem CDN obrigatória;
+- atalhos PWA para ambientes, reserva e Guia Vênus;
+- página offline explícita para diferenciar conteúdo em cache de funções que exigem servidor;
+- interface web carregada com sucesso em Windows e acessada por dispositivo móvel na mesma rede local durante a homologação.
+
+O inventário e a curadoria das imagens ficam em `docs/INVENTARIO_IMAGENS.md`.
+
 ## Arquitetura
 
 ```text
