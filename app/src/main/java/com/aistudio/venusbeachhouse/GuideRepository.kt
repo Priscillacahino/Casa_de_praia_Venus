@@ -7,6 +7,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
+import java.security.MessageDigest
 
 object GuideRepository {
     private const val MAX_BYTES = 600_000
@@ -19,10 +20,12 @@ object GuideRepository {
             return@withContext cache.readText(Charsets.UTF_8)
         }
         try {
-            val connection = (URL(HouseData.GUIDE_SOURCE_URL).openConnection() as HttpURLConnection).apply {
+            val sourceUrl = URL(HouseData.GUIDE_SOURCE_URL)
+            if (sourceUrl.protocol != "https" || sourceUrl.host != "raw.githubusercontent.com") error("Origem do guia não permitida")
+            val connection = (sourceUrl.openConnection() as HttpURLConnection).apply {
                 connectTimeout = 7_000
                 readTimeout = 10_000
-                instanceFollowRedirects = true
+                instanceFollowRedirects = false
                 requestMethod = "GET"
                 setRequestProperty("Accept", "text/html,text/plain;q=0.9")
                 setRequestProperty("User-Agent", "VenusBeachHouse-Android")
@@ -41,6 +44,13 @@ object GuideRepository {
                     output.write(buffer, 0, read)
                 }
                 output.toByteArray()
+            }
+            val expectedHash = BuildConfig.GUIDE_EXPECTED_SHA256.trim().lowercase()
+            if (expectedHash.isNotEmpty()) {
+                if (!expectedHash.matches(Regex("[a-f0-9]{64}"))) error("SHA-256 do guia inválido no build")
+                val actualHash = MessageDigest.getInstance("SHA-256").digest(bytes)
+                    .joinToString("") { "%02x".format(it.toInt() and 0xff) }
+                if (actualHash != expectedHash) error("O Guia Vênus não corresponde ao SHA-256 aprovado")
             }
             val html = bytes.toString(Charsets.UTF_8)
             if (!html.contains("Guia Vênus", ignoreCase = true) && !html.contains("Guia Venus", ignoreCase = true)) {

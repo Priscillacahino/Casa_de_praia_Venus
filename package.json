@@ -21,6 +21,7 @@
     "backup:restore": "node scripts/restore-backup.js",
     "privacy:retention": "node scripts/privacy-retention.js",
     "backup:selftest": "node scripts/backup-selftest.js",
-    "production:check": "node scripts/production-check.js"
+    "production:check": "node scripts/production-check.js",
+    "android:release-check": "node scripts/android-release-check.js"
   }
 }

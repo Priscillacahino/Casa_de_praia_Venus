@@ -154,6 +154,9 @@ function renderSettings(s) {
   f.email.value = s.email || "";
   f.googleMapsUrl.value = s.googleMapsUrl || "";
   f.mapsEmbedUrl.value = s.mapsEmbedUrl || "";
+  f.androidApkUrl.value = s.androidApkUrl || "";
+  f.androidApkSha256.value = s.androidApkSha256 || "";
+  f.androidVersionName.value = s.androidVersionName || "";
 }
 
 function renderReviews(reviews) {
@@ -226,6 +229,7 @@ $("#settingsForm").addEventListener("submit", async (e) => {
       maxAdvanceDays:Number(f.maxAdvanceDays.value), maxNights:Number(f.maxNights.value),
       requestHoldMinutes:Number(f.requestHoldMinutes.value), whatsappNumber:f.whatsappNumber.value,
       email:f.email.value, googleMapsUrl:f.googleMapsUrl.value, mapsEmbedUrl:f.mapsEmbedUrl.value,
+      androidApkUrl:f.androidApkUrl.value, androidApkSha256:f.androidApkSha256.value.trim(), androidVersionName:f.androidVersionName.value.trim(),
     });
     alert("Configuração salva."); await load();
   } catch (err) { alert(err.message); }

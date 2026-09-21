@@ -102,3 +102,7 @@ Depois da publicação, valide em ambiente controlado:
 6. a rota específica só libera instruções quando a reserva está elegível;
 7. expiração/liberação da prioridade permite concedê-la a outra solicitação;
 8. duas reservas não podem ser confirmadas para datas sobrepostas.
+
+## Migração controlada do banco
+
+Antes de atualizar uma instalação existente em produção: gere um backup criptografado, copie-o para armazenamento externo e execute `npm run db:migrate`. Depois rode `npm run production:check`. O preflight exige a versão exata do schema suportado pela aplicação.

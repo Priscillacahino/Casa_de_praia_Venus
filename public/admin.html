@@ -40,6 +40,9 @@
       <div class="two"><label>Máximo de noites por estadia<input name="maxNights" type="number" min="1" max="366" required></label><label>Prioridade temporária da solicitação (minutos)<input name="requestHoldMinutes" type="number" min="5" max="1440" required></label></div>
       <div class="two"><label>WhatsApp (somente números)<input name="whatsappNumber" required></label><label>E-mail<input name="email" type="email" required></label></div>
       <label>Google Maps URL<input name="googleMapsUrl" type="url" required></label><label>Google Maps Embed URL (opcional)<input name="mapsEmbedUrl" type="url"></label>
+      <h4>Distribuição direta do aplicativo Android</h4>
+      <label>URL HTTPS do APK oficial<input name="androidApkUrl" type="url" placeholder="https://.../venus-beach-house.apk"></label>
+      <div class="two"><label>Versão do APK<input name="androidVersionName" placeholder="2.2.0"></label><label>SHA-256 do APK<input name="androidApkSha256" maxlength="64" autocomplete="off"></label></div>
       <button class="button primary">Salvar configuração</button>
     </form>
 

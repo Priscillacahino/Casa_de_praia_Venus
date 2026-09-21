@@ -152,3 +152,7 @@ O módulo baixa somente por HTTPS, valida o conteúdo básico, mantém cache pri
 ## Antes de operar com dinheiro real
 
 A revisão jurídica, o domínio HTTPS, os segredos/MFA, os dados bancários, o teste de backup/restore, o APK release e os testes em dispositivo real são **bloqueios de produção**, não itens opcionais.
+
+## Distribuição direta do Android
+
+O aplicativo Android será distribuído pela página oficial da casa, acessada a partir do Instagram, e não pela Google Play. O fluxo exige APK release assinado, URL HTTPS e SHA-256 publicado. Consulte `docs/DISTRIBUICAO_ANDROID_DIRETA.md`.

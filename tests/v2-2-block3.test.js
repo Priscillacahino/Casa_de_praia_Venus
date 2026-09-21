@@ -10,6 +10,7 @@ function validEnv() {
     ADMIN_PASSWORD_HASH:"0123456789abcdef0123456789abcdef:" + "ab".repeat(64),
     ADMIN_TOTP_SECRET:"JBSWY3DPEHPK3PXP",
     RESERVATION_TOKEN_SECRET:"reservation-secret-0123456789abcdef",
+    AUDIT_HMAC_SECRET:"audit-secret-0123456789abcdef0123456789",
     BACKUP_ENCRYPTION_KEY:Buffer.alloc(32, 7).toString("base64"),
     GUIDE_SOURCE_URL:"https://raw.githubusercontent.com/Priscillacahino/guia_lugares_pb/main/guia_offline.html",
     GUIDE_EXPECTED_SHA256:"a".repeat(64),

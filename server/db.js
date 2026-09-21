@@ -94,6 +94,8 @@ export function openDatabase(path) {
       settled INTEGER NOT NULL DEFAULT 0 CHECK(settled IN (0,1)),
       method TEXT,
       bank_reference TEXT,
+      movement_type TEXT NOT NULL DEFAULT 'payment' CHECK(movement_type IN ('payment','refund')),
+      settled_at TEXT,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
     CREATE TABLE IF NOT EXISTS audit (
@@ -105,6 +107,7 @@ export function openDatabase(path) {
       details_json TEXT NOT NULL DEFAULT '{}',
       previous_hash TEXT,
       entry_hash TEXT,
+      chain_version INTEGER NOT NULL DEFAULT 1,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
     CREATE TABLE IF NOT EXISTS sessions (
@@ -151,6 +154,8 @@ export function openDatabase(path) {
     ["settled", "INTEGER NOT NULL DEFAULT 0"],
     ["method", "TEXT"],
     ["bank_reference", "TEXT"],
+    ["movement_type", "TEXT NOT NULL DEFAULT 'payment'"],
+    ["settled_at", "TEXT"],
   ]) addColumnIfMissing(db, "payments", name, def);
   for (const [name, def] of [
     ["actor", "TEXT NOT NULL DEFAULT 'system'"],
@@ -158,6 +163,7 @@ export function openDatabase(path) {
     ["details_json", "TEXT NOT NULL DEFAULT '{}'"],
     ["previous_hash", "TEXT"],
     ["entry_hash", "TEXT"],
+    ["chain_version", "INTEGER NOT NULL DEFAULT 1"],
   ]) addColumnIfMissing(db, "audit", name, def);
 
   db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS reviews_reservation_unique
@@ -177,6 +183,9 @@ export function openDatabase(path) {
     email: "",
     googleMapsUrl: "",
     mapsEmbedUrl: "",
+    androidApkUrl: "",
+    androidApkSha256: "",
+    androidVersionName: "",
   };
   db.prepare("INSERT OR IGNORE INTO settings(id,value) VALUES(1,?)").run(JSON.stringify(defaults));
   const currentSettings = JSON.parse(db.prepare("SELECT value FROM settings WHERE id=1").get().value);
@@ -203,6 +212,6 @@ export function openDatabase(path) {
     ON payments(method, bank_reference)
     WHERE bank_reference IS NOT NULL AND bank_reference <> '';`);
 
-  db.exec("PRAGMA user_version=6");
+  db.exec("PRAGMA user_version=7");
   return db;
 }
