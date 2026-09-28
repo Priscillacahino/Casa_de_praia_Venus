@@ -16,6 +16,8 @@ import {
 
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 const MAX_JSON = 8 * 1024 * 1024;
+const ADMIN_SESSION_MS = 2 * 60 * 60 * 1000;
+const ADMIN_SESSION_MAX_AGE = Math.floor(ADMIN_SESSION_MS / 1000);
 
 function decodeBase32(value) {
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
@@ -196,8 +198,13 @@ export function createApp(db, options = {}) {
   const settings = () => JSON.parse(db.prepare("SELECT value FROM settings WHERE id=1").get().value);
   const sessionHash = (ctx) => sha256(ctx.cookies.venus_session || "");
   const requireAuth = (ctx) => {
-    const row = db.prepare("SELECT expires FROM sessions WHERE token_hash=?").get(sessionHash(ctx));
-    if (!row || row.expires < Date.now()) throw new AppError("Entre na administração para continuar.", 401);
+    const tokenHash = sessionHash(ctx);
+    const row = db.prepare("SELECT expires FROM sessions WHERE token_hash=?").get(tokenHash);
+    if (!row) throw new AppError("Entre na administração para continuar.", 401);
+    if (row.expires < Date.now()) {
+      db.prepare("DELETE FROM sessions WHERE token_hash=?").run(tokenHash);
+      throw new AppError("Entre na administração para continuar.", 401);
+    }
   };
 
   const reservationToken = (row) => {
@@ -269,6 +276,13 @@ export function createApp(db, options = {}) {
     const paidCents = paidFor(row.id);
     const hold = getReservationHold(db, row.id);
     const review = db.prepare("SELECT id,approved FROM reviews WHERE reservation_id=?").get(row.id);
+    const cancellation = db.prepare(`SELECT id,status,reason,requested_at,reviewed_at
+      FROM cancellation_requests WHERE reservation_id=? ORDER BY requested_at DESC LIMIT 1`).get(row.id);
+    const paymentReport = db.prepare(`SELECT id,created_at FROM reservation_events
+      WHERE reservation_id=? AND event='payment.reported' ORDER BY id DESC LIMIT 1`).get(row.id);
+    const reconciledPayment = db.prepare(`SELECT id FROM reservation_events
+      WHERE reservation_id=? AND event IN ('payment.recorded','payment.refund_recorded') ORDER BY id DESC LIMIT 1`).get(row.id);
+    const paymentReported = !!paymentReport && (!reconciledPayment || paymentReport.id > reconciledPayment.id);
     return {
       id: row.id,
       status: row.status,
@@ -285,16 +299,22 @@ export function createApp(db, options = {}) {
       depositReceived: paidCents >= (quote.depositCents || 0),
       reviewEligible: row.status === "confirmed" && row.check_out <= today() && !review,
       reviewSubmitted: !!review,
+      paymentReported,
+      paymentReportedAt: paymentReported ? paymentReport.created_at : null,
+      cancellationRequest: cancellation ? {
+        id: cancellation.id, status: cancellation.status, reason: cancellation.reason || "",
+        requestedAt: cancellation.requested_at, reviewedAt: cancellation.reviewed_at || null,
+      } : null,
       hold: hold ? { active: true, expiresAt: hold.expiresAtIso } : { active: false, expiresAt: null },
     };
   };
 
   // Public endpoints.
-  register("GET", "/api/health", (ctx) => json(ctx.res, 200, { ok: true, version: 7 }));
+  register("GET", "/api/health", (ctx) => json(ctx.res, 200, { ok: true, version: 8 }));
   register("GET", "/api/ready", (ctx) => {
     const quick = db.prepare("PRAGMA quick_check(1)").get()?.quick_check;
     const schemaVersion = Number(db.prepare("PRAGMA user_version").get()?.user_version || 0);
-    const ok = quick === "ok" && schemaVersion === 7;
+    const ok = quick === "ok" && schemaVersion === 8;
     json(ctx.res, ok ? 200 : 503, { ok, schemaVersion });
   });
   register("GET", "/api/public", (ctx) => {
@@ -309,6 +329,16 @@ export function createApp(db, options = {}) {
       reviewStats: stats,
     });
   });
+  register("GET", "/api/legal/term", (ctx) => {
+    const approval = legal(db);
+    if (approval?.approved !== 1 || approval.term_hash !== TERM_HASH) {
+      throw new AppError("O termo vigente ainda não foi liberado para contratação.", 503);
+    }
+    raw(ctx.res, 200, TERM_TEXT, "text/plain; charset=utf-8", {
+      "Content-Disposition": `inline; filename*=UTF-8''${encodeURIComponent("termo-hospedagem-venus.txt")}`,
+    });
+  });
+
   register("GET", "/api/availability", (ctx) => {
     const start = date(ctx.url.searchParams.get("start"));
     const end = date(ctx.url.searchParams.get("end"));
@@ -384,6 +414,47 @@ export function createApp(db, options = {}) {
     if (!row || !verifyReservationToken(row, token)) throw new AppError("Reserva não encontrada.", 404);
     json(ctx.res, 200, publicReservationState(row));
   });
+
+  register("POST", "/api/reservations/:id/payment-reported", (ctx) => {
+    const row = db.prepare("SELECT * FROM reservations WHERE id=? AND status!='blocked'").get(ctx.params.id);
+    const token = String(ctx.req.headers["x-reservation-token"] || "");
+    if (!row || !verifyReservationToken(row, token)) throw new AppError("Reserva não encontrada.", 404);
+    if (!["requested","confirmed"].includes(row.status)) throw new AppError("Esta reserva não aceita informação de pagamento.", 409);
+    if (db.prepare("SELECT id FROM cancellation_requests WHERE reservation_id=? AND status='pending'").get(row.id)) {
+      throw new AppError("Há uma solicitação de cancelamento pendente. Não informe novo pagamento.", 409);
+    }
+    const quote = JSON.parse(row.quote || "{}");
+    if (paidFor(row.id) >= (quote.totalCents || 0)) throw new AppError("Não há saldo pendente nesta reserva.", 409);
+    const latestReport = db.prepare(`SELECT id,created_at FROM reservation_events
+      WHERE reservation_id=? AND event='payment.reported' ORDER BY id DESC LIMIT 1`).get(row.id);
+    const latestReconciled = db.prepare(`SELECT id FROM reservation_events
+      WHERE reservation_id=? AND event IN ('payment.recorded','payment.refund_recorded') ORDER BY id DESC LIMIT 1`).get(row.id);
+    if (latestReport && (!latestReconciled || latestReport.id > latestReconciled.id)) {
+      return json(ctx.res, 200, { ok:true, alreadyReported:true, reportedAt:latestReport.created_at });
+    }
+    reservationEvent(row.id, "payment.reported", "guest", {});
+    audit(ctx, "payment.reported", row.id, {}, "guest");
+    const created = db.prepare(`SELECT created_at FROM reservation_events
+      WHERE reservation_id=? AND event='payment.reported' ORDER BY id DESC LIMIT 1`).get(row.id);
+    json(ctx.res, 201, { ok:true, reportedAt:created?.created_at || null });
+  });
+
+  register("POST", "/api/reservations/:id/cancellation-request", (ctx) => {
+    const row = db.prepare("SELECT * FROM reservations WHERE id=? AND status!='blocked'").get(ctx.params.id);
+    const token = String(ctx.req.headers["x-reservation-token"] || "");
+    if (!row || !verifyReservationToken(row, token)) throw new AppError("Reserva não encontrada.", 404);
+    if (!['requested','confirmed'].includes(row.status)) throw new AppError("Esta reserva não aceita nova solicitação de cancelamento.", 409);
+    if (row.check_out <= today()) throw new AppError("O período da hospedagem já foi encerrado.", 409);
+    const reason = text(ctx.body.reason || "", "Motivo", 0, 1000);
+    const existing = db.prepare("SELECT id,status,requested_at FROM cancellation_requests WHERE reservation_id=? AND status='pending'").get(row.id);
+    if (existing) return json(ctx.res, 200, { id:existing.id, status:existing.status, requestedAt:existing.requested_at, existing:true });
+    const id = randomUUID();
+    db.prepare("INSERT INTO cancellation_requests(id,reservation_id,reason) VALUES(?,?,?)").run(id, row.id, reason);
+    reservationEvent(row.id, "cancellation.requested", "guest", { cancellationRequestId:id, hasReason:!!reason });
+    audit(ctx, "cancellation.requested", id, { reservationId:row.id, hasReason:!!reason }, "guest");
+    json(ctx.res, 201, { id, status:"pending" });
+  });
+
   register("POST", "/api/messages", (ctx) => {
     const b = ctx.body;
     const p = contact(b);
@@ -416,35 +487,42 @@ export function createApp(db, options = {}) {
     json(ctx.res, 201, { id, status: "pending" });
   });
   register("GET", "/api/payment-options", (ctx) => {
-    const b = banking(db), l = legal(db);
+    const l = legal(db);
     const enabled = l?.approved === 1 && l.term_hash === TERM_HASH;
     const empty = { bank: "", holder: "", holderDocument: "", branch: "", account: "", accountType: "", pixKey: "" };
-    // A rota pública informa apenas os métodos. Dados bancários exigem uma solicitação autenticada por token.
     json(ctx.res, 200, {
-      pixAvailable: enabled && !!b.pixKey,
-      transferAvailable: enabled && !!(b.bank && b.holder && b.account && b.branch),
+      paymentFlow: "whatsapp",
+      whatsappAvailable: !!settings().whatsappNumber,
       legalApproved: enabled,
+      pixAvailable: false,
+      transferAvailable: false,
       bank: empty,
     });
   });
+
 
   register("GET", "/api/reservations/:id/payment-options", (ctx) => {
     const row = db.prepare("SELECT * FROM reservations WHERE id=? AND status!='blocked'").get(ctx.params.id);
     const token = String(ctx.req.headers["x-reservation-token"] || "");
     if (!row || !verifyReservationToken(row, token)) throw new AppError("Reserva não encontrada.", 404);
-    const b = banking(db), l = legal(db);
+    const l = legal(db);
     const enabled = l?.approved === 1 && l.term_hash === TERM_HASH;
     const hold = getReservationHold(db, row.id);
-    const allowed = enabled && (row.status === "confirmed" || (row.status === "requested" && !!hold));
+    const pendingCancellation = db.prepare("SELECT id FROM cancellation_requests WHERE reservation_id=? AND status='pending'").get(row.id);
+    const allowed = enabled && !pendingCancellation && (row.status === "confirmed" || (row.status === "requested" && !!hold));
     const empty = { bank: "", holder: "", holderDocument: "", branch: "", account: "", accountType: "", pixKey: "" };
     json(ctx.res, 200, {
-      pixAvailable: allowed && !!b.pixKey,
-      transferAvailable: allowed && !!(b.bank && b.holder && b.account && b.branch),
+      paymentFlow: "whatsapp",
+      whatsappAvailable: !!settings().whatsappNumber,
       legalApproved: enabled,
       reservationEligible: allowed,
-      bank: allowed ? b : empty,
+      cancellationPending: !!pendingCancellation,
+      pixAvailable: false,
+      transferAvailable: false,
+      bank: empty,
     });
   });
+
 
   // Login must stay outside authenticated /admin routes.
   register("POST", "/api/admin/login", (ctx) => {
@@ -461,9 +539,9 @@ export function createApp(db, options = {}) {
     }
     const token = randomBytes(32).toString("hex");
     db.prepare("DELETE FROM sessions WHERE expires < ?").run(Date.now());
-    db.prepare("INSERT INTO sessions VALUES(?,?)").run(sha256(token), Date.now() + 8 * 3600000);
+    db.prepare("INSERT INTO sessions VALUES(?,?)").run(sha256(token), Date.now() + ADMIN_SESSION_MS);
     audit(ctx, "auth.login", "admin");
-    const cookie = `venus_session=${token}; HttpOnly; SameSite=Strict; Path=/api; Max-Age=28800${production ? "; Secure" : ""}`;
+    const cookie = `venus_session=${token}; HttpOnly; SameSite=Strict; Path=/api; Max-Age=${ADMIN_SESSION_MAX_AGE}${production ? "; Secure" : ""}`;
     json(ctx.res, 200, { ok: true }, { "Set-Cookie": cookie });
   });
 
@@ -486,6 +564,8 @@ export function createApp(db, options = {}) {
         paidCents: paidFor(r.id),
         holdExpiresAt: hold?.expiresAtIso || null,
         events: db.prepare("SELECT event,actor,details_json,created_at FROM reservation_events WHERE reservation_id=? ORDER BY id DESC LIMIT 20").all(r.id),
+        cancellationRequest: db.prepare(`SELECT id,status,reason,requested_at,reviewed_at,reviewed_by,review_note
+          FROM cancellation_requests WHERE reservation_id=? ORDER BY requested_at DESC LIMIT 1`).get(r.id) || null,
       };
     });
     json(ctx.res, 200, {
@@ -626,6 +706,32 @@ export function createApp(db, options = {}) {
     json(ctx.res, 200, result);
   }, true);
 
+  register("PATCH", "/api/admin/cancellations/:id", (ctx) => {
+    const decision = ctx.body.status;
+    if (!['accepted','rejected'].includes(decision)) throw new AppError("Decisão de cancelamento inválida.");
+    const note = text(ctx.body.note || "", "Observação", 0, 1000);
+    const result = transaction(db, () => {
+      const request = db.prepare(`SELECT c.*,r.status AS reservation_status,r.id AS reservation_id
+        FROM cancellation_requests c JOIN reservations r ON r.id=c.reservation_id WHERE c.id=?`).get(ctx.params.id);
+      if (!request) throw new AppError("Solicitação de cancelamento não encontrada.", 404);
+      if (request.status !== 'pending') throw new AppError("Esta solicitação já foi analisada.", 409);
+      if (decision === 'accepted') {
+        if (!['requested','confirmed','cancelled'].includes(request.reservation_status)) throw new AppError("Reserva não pode ser cancelada neste estado.", 409);
+        if (request.reservation_status !== 'cancelled') {
+          db.prepare("UPDATE reservations SET status='cancelled' WHERE id=?").run(request.reservation_id);
+          releaseReservationHold(db, request.reservation_id);
+          reservationEvent(request.reservation_id, "reservation.cancelled", "admin", { source:"guest_request", cancellationRequestId:request.id });
+        }
+      }
+      db.prepare(`UPDATE cancellation_requests SET status=?,reviewed_at=CURRENT_TIMESTAMP,reviewed_by='admin',review_note=? WHERE id=?`)
+        .run(decision, note, request.id);
+      reservationEvent(request.reservation_id, `cancellation.${decision}`, "admin", { cancellationRequestId:request.id });
+      audit(ctx, `cancellation.${decision}`, request.id, { reservationId:request.reservation_id });
+      return { reservationId:request.reservation_id, status:decision };
+    });
+    json(ctx.res, 200, result);
+  }, true);
+
   register("PATCH", "/api/admin/reservations/:id", (ctx) => {
     const id = ctx.params.id, status = ctx.body.status;
     if (!["confirmed", "cancelled"].includes(status)) throw new AppError("Situação inválida.");
@@ -636,11 +742,23 @@ export function createApp(db, options = {}) {
       if (status === "confirmed") {
         if (row.status !== "requested") throw new AppError("Somente solicitações pendentes podem ser confirmadas.");
         if (row.check_in < today()) throw new AppError("A data de entrada já passou.");
+        if (db.prepare("SELECT id FROM cancellation_requests WHERE reservation_id=? AND status='pending'").get(id)) {
+          throw new AppError("Existe uma solicitação de cancelamento pendente. Analise-a antes de confirmar.", 409);
+        }
         assertConfirmationReady(db, row);
         assertAvailable(db, row.check_in, row.check_out, id);
       }
       db.prepare("UPDATE reservations SET status=? WHERE id=?").run(status, id);
       releaseReservationHold(db, id);
+      if (status === "cancelled") {
+        const resolvedCancellation = db.prepare(`UPDATE cancellation_requests SET status='accepted',reviewed_at=CURRENT_TIMESTAMP,reviewed_by='admin',
+          review_note=CASE WHEN review_note='' THEN 'Cancelamento efetivado pela administração.' ELSE review_note END
+          WHERE reservation_id=? AND status='pending'`).run(id).changes;
+        if (resolvedCancellation) {
+          reservationEvent(id, "cancellation.accepted", "admin", { source:"manual_cancellation" });
+          audit(ctx, "cancellation.accepted", id, { source:"manual_cancellation" });
+        }
+      }
       reservationEvent(id, `reservation.${status}`, "admin");
       audit(ctx, `reservation.${status}`, id);
     });
@@ -658,6 +776,9 @@ export function createApp(db, options = {}) {
     transaction(db, () => {
       const row = db.prepare("SELECT status,quote FROM reservations WHERE id=?").get(b.reservationId);
       if (!row || row.status === "blocked") throw new AppError("Reserva inválida.");
+      if (b.amountCents > 0 && db.prepare("SELECT id FROM cancellation_requests WHERE reservation_id=? AND status='pending'").get(b.reservationId)) {
+        throw new AppError("Há uma solicitação de cancelamento pendente. Não registre nova entrada antes da análise.", 409);
+      }
       if (row.status === "cancelled" && b.amountCents > 0) {
         throw new AppError("Reserva cancelada não pode receber nova entrada. Registre apenas estorno compatível com o saldo recebido.", 409);
       }
@@ -781,6 +902,7 @@ export function createApp(db, options = {}) {
     res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
     res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
     res.setHeader("Content-Security-Policy", "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; font-src 'self' data:");
+    if (["/admin", "/admin.html"].includes(String(req.url || "").split("?")[0])) res.setHeader("X-Robots-Tag", "noindex, nofollow");
     if (production) res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
     if (req.url?.startsWith("/api")) res.setHeader("Cache-Control", "no-store");
   }
@@ -813,6 +935,10 @@ export function createApp(db, options = {}) {
             ? { scope:"login", max:8, windowMs:600000 }
             : url.pathname === "/api/reservations"
               ? { scope:"reservation-create", max:12, windowMs:3600000 }
+              : /\/api\/reservations\/[^/]+\/payment-reported$/.test(url.pathname)
+                ? { scope:"payment-report", max:8, windowMs:3600000 }
+              : /\/api\/reservations\/[^/]+\/cancellation-request$/.test(url.pathname)
+                ? { scope:"cancellation-request", max:4, windowMs:3600000 }
               : url.pathname === "/api/messages"
                 ? { scope:"message-create", max:8, windowMs:3600000 }
                 : url.pathname === "/api/reviews"
@@ -847,7 +973,8 @@ export function createApp(db, options = {}) {
         }
         if (existsSync(target) && statSync(target).isFile()) {
           const body = readFileSync(target);
-          const cache = path.endsWith(".html") || path.endsWith("sw.js") ? "no-cache" : "public, max-age=3600";
+          const sensitiveAdmin = path === "/admin.html" || path === "/admin.js";
+          const cache = sensitiveAdmin ? "no-store" : path.endsWith(".html") || path.endsWith("sw.js") ? "no-cache" : "public, max-age=3600";
           return raw(res, 200, req.method === "HEAD" ? Buffer.alloc(0) : body, MIME[extname(target).toLowerCase()] || "application/octet-stream", { "Cache-Control": cache });
         }
         const fallback = join(staticDir, "index.html");

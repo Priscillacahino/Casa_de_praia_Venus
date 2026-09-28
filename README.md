@@ -67,8 +67,10 @@ O projeto agora inclui um fluxo de solicitação mais próximo de operação rea
 - fila segura para solicitações concorrentes;
 - código privado de acompanhamento do hóspede, sem conta e sem token na URL;
 - consulta de situação, valores recebidos e saldo;
-- dados bancários liberados apenas para uma reserva elegível;
-- histórico operacional por reserva.
+- pagamento negociado manualmente pelo WhatsApp oficial, sem publicar dados bancários no site;
+- hóspede pode informar que realizou o pagamento, mas somente a conciliação administrativa altera o valor recebido;
+- histórico operacional por reserva;
+- solicitação de cancelamento autenticada pelo mesmo código privado, com análise administrativa e sem estorno automático.
 
 Detalhes: `docs/MOTOR_RESERVAS_V2_2026-09-18.md`.
 
@@ -87,12 +89,14 @@ Detalhes: `docs/MOTOR_RESERVAS_V2_2026-09-18.md`.
 
 - senha administrativa com `scrypt`;
 - MFA/TOTP obrigatório em produção;
-- sessão HttpOnly + SameSite Strict;
+- sessão administrativa HttpOnly + SameSite Strict, com duração de 2 horas;
 - proteção por origem em operações de escrita;
 - rate limiting para login e alterações;
 - CSP, HSTS em produção, `nosniff`, bloqueio de framing e permissões de navegador restritas;
 - auditoria com identificador de requisição e cadeia de hashes;
 - backup AES-256-GCM quando chave configurada — obrigatório em produção;
+- painel administrativo fora do cache offline e marcado para não indexação;
+- dados bancários não são publicados no fluxo público; o WhatsApp funciona apenas como ponte de atendimento e o site permanece como fonte oficial do status;
 - Android sem Auto Backup e sem tráfego HTTP claro;
 - release Android com minificação/shrink;
 - nenhuma senha, banco, backup, keystore ou `.env` deve ser versionado.
@@ -146,6 +150,8 @@ O módulo baixa somente por HTTPS, valida o conteúdo básico, mantém cache pri
 - `docs/DEPLOY.md` — publicação segura e backups
 - `docs/HOMOLOGACAO_V2_2.md` — roteiro de homologação e gates externos
 - `docs/STATUS_V2_2_0.md` — estado consolidado da versão 2.2.0
+- `docs/PRODUCTION_READINESS_2026-09-28.md` — hardening adicional e bloqueios externos restantes
+- `docs/INCIDENT_RESPONSE.md` — procedimento operacional de resposta a incidentes
 - `SECURITY.md` — regras de segurança do repositório
 - `docs/termo-compromisso-minuta.txt` — minuta existente; continua condicionada à revisão jurídica
 

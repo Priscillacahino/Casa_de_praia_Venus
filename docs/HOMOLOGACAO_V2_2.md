@@ -47,7 +47,17 @@ Estas evidências reduzem trabalho futuro, mas **não substituem** HTTPS real ne
 - [ ] código anterior deixa de funcionar;
 - [ ] dados bancários só aparecem quando a reserva está elegível.
 
-## 4. Financeiro
+## 4. Cancelamento e privacidade
+
+- [ ] código privado correto permite solicitar cancelamento;
+- [ ] código inválido recebe 404 e não revela existência da reserva;
+- [ ] cancelamento pendente bloqueia novo pagamento e confirmação;
+- [ ] aceite administrativo cancela a reserva sem gerar estorno automático;
+- [ ] recusa administrativa permite nova solicitação futura;
+- [ ] política de privacidade exibe canal oficial configurado;
+- [ ] painel administrativo não é cacheado pelo Service Worker.
+
+## 5. Financeiro
 
 - [ ] pagamento liquidado exige conferência administrativa;
 - [ ] referência bancária não pode ser reutilizada;
@@ -57,14 +67,14 @@ Estas evidências reduzem trabalho futuro, mas **não substituem** HTTPS real ne
 - [ ] exportação CSV abre sem executar fórmulas indevidas;
 - [ ] fluxo de conciliação e reembolso é testado com transações controladas.
 
-## 5. Avaliações
+## 6. Avaliações
 
 - [ ] somente reserva confirmada e já encerrada pode avaliar;
 - [ ] uma estadia não pode gerar duas avaliações;
 - [ ] autoria pública deriva da própria reserva;
 - [ ] moderação administrativa funciona conforme previsto.
 
-## 6. Auditoria e recuperação
+## 7. Auditoria e recuperação
 
 - [ ] `npm run audit:verify` valida a cadeia;
 - [ ] backup criptografado é gerado;
@@ -73,7 +83,7 @@ Estas evidências reduzem trabalho futuro, mas **não substituem** HTTPS real ne
 - [ ] `integrity_check` e `foreign_key_check` aprovam o restaurado;
 - [ ] destino existente é protegido contra sobrescrita acidental.
 
-## 7. Guia Vênus
+## 8. Guia Vênus
 
 - [ ] conteúdo correto é aceito com SHA-256 correspondente;
 - [ ] conteúdo divergente é rejeitado;
@@ -81,7 +91,7 @@ Estas evidências reduzem trabalho futuro, mas **não substituem** HTTPS real ne
 - [ ] download offline funciona;
 - [ ] links externos abrem fora da WebView restrita.
 
-## 8. Android
+## 9. Android
 
 - [ ] build CI continua verde;
 - [ ] APK release é compilado;
@@ -90,7 +100,7 @@ Estas evidências reduzem trabalho futuro, mas **não substituem** HTTPS real ne
 - [ ] botão de reserva abre o domínio HTTPS correto;
 - [ ] fluxo do Guia funciona no aparelho.
 
-## 9. Validações externas
+## 10. Validações externas
 
 - [ ] versão exata do termo revisada juridicamente;
 - [ ] dados bancários reais conferidos antes de habilitar cobrança;
@@ -100,6 +110,6 @@ Estas evidências reduzem trabalho futuro, mas **não substituem** HTTPS real ne
 
 ## Critério de encerramento
 
-A versão pode ser classificada como **homologada tecnicamente** quando os itens aplicáveis das seções 1 a 8 estiverem aprovados com evidência registrada.
+A versão pode ser classificada como **homologada tecnicamente** quando os itens aplicáveis das seções 1 a 9 estiverem aprovados com evidência registrada.
 
-Operação comercial real exige também o fechamento dos bloqueios da seção 9.
+Operação comercial real exige também o fechamento dos bloqueios da seção 10.

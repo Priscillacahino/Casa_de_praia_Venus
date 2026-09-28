@@ -4,6 +4,7 @@ import { randomUUID, scryptSync } from "node:crypto";
 import { openDatabase } from "../server/db.js";
 import { createApp } from "../server/app.js";
 import { addDays, today } from "../server/domain.js";
+import { TERM_HASH } from "../server/compliance.js";
 
 const SECRET = "abcdef0123456789abcdef0123456789abcdef0123456789";
 
@@ -102,6 +103,73 @@ test("rotação do código privado invalida o anterior e preserva o novo acesso"
     assert.equal(newAccess.status, 200);
     assert.equal(db.prepare("SELECT token_version FROM reservations WHERE id=?").get(reservation.id).token_version, 2);
     assert.ok(db.prepare("SELECT 1 FROM reservation_events WHERE reservation_id=? AND event='access_token.rotated'").get(reservation.id));
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+    db.close();
+  }
+});
+
+test("cancelamento exige código privado, bloqueia nova entrada e depende de decisão administrativa", async () => {
+  const db = fixture();
+  const { server, call, login } = await startApp(db);
+  try {
+    const reservation = await createReservation(call, "Hóspede Cancelamento Seguro");
+    db.prepare("UPDATE legal_approval SET approved=1,term_hash=? WHERE id=1").run(TERM_HASH);
+    db.prepare("UPDATE banking SET value=? WHERE id=1").run(JSON.stringify({ bank:"Banco Teste", holder:"Titular", holderDocument:"12345678900", branch:"0001", account:"12345-6", accountType:"corrente", pixKey:"pix@example.com" }));
+    const paymentOptions = await call(`/reservations/${reservation.id}/payment-options`, "GET", undefined, { "X-Reservation-Token":reservation.manageToken });
+    assert.equal(paymentOptions.status, 200);
+    assert.equal(paymentOptions.data.paymentFlow, "whatsapp");
+    assert.equal(paymentOptions.data.bank.pixKey, "");
+    assert.equal(paymentOptions.data.bank.holderDocument, "");
+    assert.equal(paymentOptions.data.pixAvailable, false);
+    assert.equal(paymentOptions.data.transferAvailable, false);
+
+    const reported = await call(`/reservations/${reservation.id}/payment-reported`, "POST", {}, { "X-Reservation-Token":reservation.manageToken });
+    assert.equal(reported.status, 201);
+    const reportedStatus = await call(`/reservations/${reservation.id}/status`, "GET", undefined, { "X-Reservation-Token":reservation.manageToken });
+    assert.equal(reportedStatus.data.paymentReported, true);
+
+    const invalid = await call(`/reservations/${reservation.id}/cancellation-request`, "POST", { reason:"teste" }, { "X-Reservation-Token":"invalido" });
+    assert.equal(invalid.status, 404);
+
+    const requested = await call(`/reservations/${reservation.id}/cancellation-request`, "POST", { reason:"Mudança de planos" }, { "X-Reservation-Token":reservation.manageToken });
+    assert.equal(requested.status, 201);
+    const status = await call(`/reservations/${reservation.id}/status`, "GET", undefined, { "X-Reservation-Token":reservation.manageToken });
+    assert.equal(status.data.cancellationRequest.status, "pending");
+
+    await login();
+    const blockedPayment = await call("/admin/payments", "POST", { reservationId:reservation.id, amountCents:1000, note:"Não deve entrar", method:"pix", bankReference:"pending-cancel-payment-001", settled:true });
+    assert.equal(blockedPayment.status, 409);
+
+    const rejected = await call(`/admin/cancellations/${requested.data.id}`, "PATCH", { status:"rejected", note:"Solicitação revisada" });
+    assert.equal(rejected.status, 200);
+    const second = await call(`/reservations/${reservation.id}/cancellation-request`, "POST", { reason:"Nova solicitação" }, { "X-Reservation-Token":reservation.manageToken });
+    assert.equal(second.status, 201);
+    const accepted = await call(`/admin/cancellations/${second.data.id}`, "PATCH", { status:"accepted", note:"Cancelamento aprovado" });
+    assert.equal(accepted.status, 200);
+    assert.equal(db.prepare("SELECT status FROM reservations WHERE id=?").get(reservation.id).status, "cancelled");
+    assert.ok(db.prepare("SELECT 1 FROM audit WHERE action='cancellation.accepted'").get());
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+    db.close();
+  }
+});
+
+test("aviso de pagamento do hóspede só é encerrado após conciliação administrativa", async () => {
+  const db = fixture();
+  const { server, call, login } = await startApp(db);
+  try {
+    const reservation = await createReservation(call, "Hóspede Pagamento Manual");
+    const reported = await call(`/reservations/${reservation.id}/payment-reported`, "POST", {}, { "X-Reservation-Token":reservation.manageToken });
+    assert.equal(reported.status, 201);
+    let status = await call(`/reservations/${reservation.id}/status`, "GET", undefined, { "X-Reservation-Token":reservation.manageToken });
+    assert.equal(status.data.paymentReported, true);
+
+    await login();
+    assert.equal((await call("/admin/payments", "POST", { reservationId:reservation.id, amountCents:1000, note:"Pagamento conciliado", method:"pix", bankReference:"reported-payment-001", settled:true })).status, 201);
+    status = await call(`/reservations/${reservation.id}/status`, "GET", undefined, { "X-Reservation-Token":reservation.manageToken });
+    assert.equal(status.data.paymentReported, false);
+    assert.equal(status.data.paidCents, 1000);
   } finally {
     await new Promise((resolve) => server.close(resolve));
     db.close();

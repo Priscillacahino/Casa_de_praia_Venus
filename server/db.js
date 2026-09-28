@@ -144,6 +144,20 @@ export function openDatabase(path) {
       reviewer TEXT,
       validation_reference TEXT
     );
+    CREATE TABLE IF NOT EXISTS cancellation_requests(
+      id TEXT PRIMARY KEY,
+      reservation_id TEXT NOT NULL REFERENCES reservations(id) ON DELETE CASCADE,
+      reason TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','accepted','rejected')),
+      requested_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      reviewed_at TEXT,
+      reviewed_by TEXT,
+      review_note TEXT NOT NULL DEFAULT ''
+    );
+    CREATE INDEX IF NOT EXISTS cancellation_requests_reservation
+      ON cancellation_requests(reservation_id,requested_at);
+    CREATE UNIQUE INDEX IF NOT EXISTS cancellation_requests_pending_unique
+      ON cancellation_requests(reservation_id) WHERE status='pending';
   `);
 
   // Safe migrations from the previous schema.
@@ -212,6 +226,6 @@ export function openDatabase(path) {
     ON payments(method, bank_reference)
     WHERE bank_reference IS NOT NULL AND bank_reference <> '';`);
 
-  db.exec("PRAGMA user_version=7");
+  db.exec("PRAGMA user_version=8");
   return db;
 }
