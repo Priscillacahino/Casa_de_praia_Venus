@@ -56,6 +56,29 @@ test("interface prepara distribuição direta do APK sem persistir código priva
   assert.doesNotMatch(app, /sessionStorage/);
 });
 
+test("painel administrativo fica fora do cache PWA e da indexação", () => {
+  const sw = readFileSync(join(root, "public", "sw.js"), "utf8");
+  const shellMatch = sw.match(/const SHELL=(\[[^;]+\])/);
+  assert.ok(shellMatch, "lista SHELL do service worker não encontrada");
+  const shell = JSON.parse(shellMatch[1]);
+  assert.equal(shell.includes("/admin.html"), false);
+  assert.equal(shell.includes("/admin.js"), false);
+  const admin = readFileSync(join(root, "public", "admin.html"), "utf8");
+  assert.match(admin, /name="robots" content="noindex,nofollow"/);
+});
+
+test("site expõe cancelamento autenticado e política de privacidade", () => {
+  const html = readFileSync(join(root, "public", "index.html"), "utf8");
+  assert.match(html, /id="requestCancellation"/);
+  assert.match(html, /id="continueWhatsApp"/);
+  assert.match(html, /id="reportPayment"/);
+  assert.match(html, /href="\/privacidade.html"/);
+  assert.ok(existsSync(join(root, "public", "privacidade.html")));
+  assert.ok(existsSync(join(root, "public", "privacy.js")));
+  assert.ok(existsSync(join(root, "public", "termos.html")));
+  assert.ok(existsSync(join(root, "public", "terms.js")));
+});
+
 test("Android permite pin SHA-256 do Guia e configuração externa de assinatura", () => {
   const gradle = readFileSync(join(root, "app", "build.gradle.kts"), "utf8");
   const guide = readFileSync(join(root, "app", "src", "main", "java", "com", "aistudio", "venusbeachhouse", "GuideRepository.kt"), "utf8");

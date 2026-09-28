@@ -16,13 +16,17 @@ const api = async (path, options = {}) => {
 let currentQuote = null;
 let lastQuoteKey = "";
 let currentReservationAccess = null;
+let currentReservationState = null;
+let publicSettings = {};
 const form = $("#bookingForm");
 const quoteBox = $("#quote");
 const resultBox = $("#reservationResult");
 const trackingForm = $("#trackingForm");
 const trackingResult = $("#trackingResult");
 const paymentInstructions = $("#paymentInstructions");
-const paymentButton = $("#loadPaymentInstructions");
+const whatsappButton = $("#continueWhatsApp");
+const reportPaymentButton = $("#reportPayment");
+const cancellationButton = $("#requestCancellation");
 const reviewSection = $("#avaliar");
 const reviewForm = $("#reviewForm");
 const reviewResult = $("#reviewResult");
@@ -98,20 +102,38 @@ async function loadReservationStatus() {
   const token = trackingForm.elements.manageToken.value.trim();
   if (!id || !token) return;
   currentReservationAccess = { id, token };
-  paymentButton.classList.add("hidden");
+  whatsappButton?.classList.add("hidden");
+  reportPaymentButton?.classList.add("hidden");
+  cancellationButton?.classList.add("hidden");
   paymentInstructions.classList.add("hidden");
   trackingResult.className = "notice";
   trackingResult.textContent = "Consultando andamento…";
   try {
     const d = await api(`/reservations/${encodeURIComponent(id)}/status`, { headers:{ "X-Reservation-Token":token } });
+    currentReservationState = d;
     const statusLabel = ({ requested:"Solicitação em análise", confirmed:"Reserva confirmada", cancelled:"Solicitação cancelada" })[d.status] || d.status;
     const priority = d.hold?.active
       ? `Prioridade temporária ativa até ${when(d.hold.expiresAt)}.`
       : d.status === "requested" ? "Sem prioridade temporária no momento." : "";
+    const cancellation = d.cancellationRequest;
+    const cancellationInfo = cancellation?.status === "pending"
+      ? "<br><strong>Cancelamento solicitado e aguardando análise. Não realize novos pagamentos.</strong>"
+      : cancellation?.status === "accepted"
+        ? "<br>Solicitação de cancelamento aceita."
+        : cancellation?.status === "rejected" ? "<br>Solicitação de cancelamento analisada e não aceita." : "";
+    const paymentInfo = d.paymentReported
+      ? "<br><strong>Pagamento informado pelo hóspede — aguardando conferência bancária.</strong>"
+      : d.paidCents > 0
+        ? "<br><strong>Pagamento recebido e conciliado pela administração.</strong>"
+        : "";
     trackingResult.className = "notice ok";
-    trackingResult.innerHTML = `<strong>${statusLabel}</strong><br>${d.checkIn} → ${d.checkOut} · ${d.quote.nights} noite(s)<br>Total contratado: ${money(d.quote.totalCents)} · Recebido: ${money(d.paidCents)} · Saldo: ${money(d.balanceCents)}.<br>${priority}${d.reviewSubmitted ? "<br>Avaliação da estadia já enviada." : ""}`;
+    trackingResult.innerHTML = `<strong>${statusLabel}</strong><br>${d.checkIn} → ${d.checkOut} · ${d.quote.nights} noite(s)<br>Total contratado: ${money(d.quote.totalCents)} · Recebido: ${money(d.paidCents)} · Saldo: ${money(d.balanceCents)}.<br>${priority}${paymentInfo}${cancellationInfo}${d.reviewSubmitted ? "<br>Avaliação da estadia já enviada." : ""}`;
     reviewSection?.classList.toggle("hidden", !d.reviewEligible);
-    if (d.status === "requested" || d.status === "confirmed") paymentButton.classList.remove("hidden");
+    if ((d.status === "requested" || d.status === "confirmed") && cancellation?.status !== "pending") {
+      whatsappButton?.classList.remove("hidden");
+      if (d.balanceCents > 0 && !d.paymentReported) reportPaymentButton?.classList.remove("hidden");
+      cancellationButton?.classList.remove("hidden");
+    }
   } catch (e) {
     trackingResult.className = "notice error";
     trackingResult.textContent = e.message;
@@ -123,6 +145,28 @@ trackingForm.addEventListener("submit", async (e) => {
   if (!trackingForm.reportValidity()) return;
   saveReservationAccess(trackingForm.elements.reservationId.value.trim(), trackingForm.elements.manageToken.value.trim());
   await loadReservationStatus();
+});
+
+cancellationButton?.addEventListener("click", async () => {
+  if (!currentReservationAccess) return;
+  const reason = prompt("Motivo do cancelamento (opcional, até 1000 caracteres):", "");
+  if (reason === null) return;
+  if (reason.length > 1000) return alert("O motivo deve ter no máximo 1000 caracteres.");
+  if (!confirm("Registrar a solicitação de cancelamento? Isso não gera estorno automático; a administração fará a análise e o eventual reembolso.")) return;
+  cancellationButton.disabled = true;
+  try {
+    await api(`/reservations/${encodeURIComponent(currentReservationAccess.id)}/cancellation-request`, {
+      method:"POST",
+      headers:{ "X-Reservation-Token":currentReservationAccess.token },
+      body:JSON.stringify({ reason }),
+    });
+    alert("Solicitação de cancelamento registrada. Acompanhe o andamento por este mesmo protocolo e código privado.");
+    await loadReservationStatus();
+  } catch (e) {
+    alert(e.message);
+  } finally {
+    cancellationButton.disabled = false;
+  }
 });
 
 reviewForm?.addEventListener("submit", async (e) => {
@@ -156,35 +200,79 @@ reviewForm?.addEventListener("submit", async (e) => {
   }
 });
 
-paymentButton.addEventListener("click", async () => {
-  const id = trackingForm.elements.reservationId.value.trim();
-  const token = trackingForm.elements.manageToken.value.trim();
+whatsappButton?.addEventListener("click", async () => {
+  if (!currentReservationAccess || !currentReservationState) return;
   paymentInstructions.className = "notice";
-  paymentInstructions.textContent = "Consultando instruções oficiais…";
+  paymentInstructions.textContent = "Verificando se a solicitação está liberada para continuar…";
   try {
-    const p = await api(`/reservations/${encodeURIComponent(id)}/payment-options`, { headers:{ "X-Reservation-Token":token } });
+    const p = await api(`/reservations/${encodeURIComponent(currentReservationAccess.id)}/payment-options`, {
+      headers:{ "X-Reservation-Token":currentReservationAccess.token },
+    });
+    if (p.cancellationPending) {
+      paymentInstructions.textContent = "Há uma solicitação de cancelamento pendente. Não realize novos pagamentos.";
+      return;
+    }
     if (!p.legalApproved) {
-      paymentInstructions.textContent = "As instruções de pagamento ainda não foram liberadas porque a versão vigente do termo não possui aprovação jurídica registrada.";
+      paymentInstructions.textContent = "A etapa de pagamento ainda não foi liberada porque o termo vigente não possui aprovação registrada.";
       return;
     }
     if (!p.reservationEligible) {
-      paymentInstructions.textContent = "Esta solicitação ainda não está habilitada para pagamento. Aguarde a administração conceder prioridade ou confirmar a reserva.";
+      paymentInstructions.textContent = "Esta solicitação ainda não está liberada para pagamento. Aguarde a prioridade das datas ou a orientação da administração.";
       return;
     }
-    const lines = [];
-    if (p.pixAvailable) lines.push(`Pix: ${p.bank.pixKey}`);
-    if (p.transferAvailable) lines.push(`Transferência: ${p.bank.bank} · agência ${p.bank.branch} · conta ${p.bank.account} · titular ${p.bank.holder}`);
+    if (!p.whatsappAvailable) {
+      paymentInstructions.textContent = "O WhatsApp oficial ainda não está configurado. Use o canal de contato informado pela administração.";
+      return;
+    }
+    const phone = String(publicSettings.whatsappNumber || "").replace(/\D/g, "");
+    if (!phone) throw new Error("WhatsApp oficial não configurado.");
+    const d = currentReservationState;
+    const message = [
+      "Olá! Quero continuar a minha solicitação de reserva da Vênus Beach House.",
+      `Protocolo: ${d.id}`,
+      `Datas: ${d.checkIn} a ${d.checkOut}`,
+      `Hóspedes: ${d.guests}`,
+      "Gostaria de receber as orientações para pagamento por Pix ou transferência.",
+    ].join("\n");
     paymentInstructions.className = "notice ok";
-    paymentInstructions.textContent = lines.length ? lines.join(" | ") : "Nenhum meio de pagamento está configurado para esta solicitação.";
+    paymentInstructions.textContent = "O WhatsApp será aberto com os dados básicos da reserva. O código privado não será enviado.";
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
   } catch (e) {
     paymentInstructions.className = "notice error";
     paymentInstructions.textContent = e.message;
   }
 });
 
+reportPaymentButton?.addEventListener("click", async () => {
+  if (!currentReservationAccess) return;
+  if (!confirm("Você já realizou o Pix ou a transferência combinada pelo WhatsApp? Este aviso não confirma o pagamento; a administração ainda fará a conferência bancária.")) return;
+  reportPaymentButton.disabled = true;
+  paymentInstructions.className = "notice";
+  paymentInstructions.textContent = "Registrando seu aviso de pagamento…";
+  try {
+    const result = await api(`/reservations/${encodeURIComponent(currentReservationAccess.id)}/payment-reported`, {
+      method:"POST",
+      headers:{ "X-Reservation-Token":currentReservationAccess.token },
+      body:JSON.stringify({}),
+    });
+    paymentInstructions.className = "notice ok";
+    paymentInstructions.textContent = result.alreadyReported
+      ? "O pagamento já havia sido informado e continua aguardando conferência bancária."
+      : "Pagamento informado. A administração fará a conferência bancária antes de confirmar o recebimento.";
+    await loadReservationStatus();
+  } catch (e) {
+    paymentInstructions.className = "notice error";
+    paymentInstructions.textContent = e.message;
+  } finally {
+    reportPaymentButton.disabled = false;
+  }
+});
+
+
 (async () => {
   try {
     const pub = await api("/public");
+    publicSettings = pub.settings || {};
     const maxGuests = Number(pub.settings?.maxGuests || 6);
     if (Number.isSafeInteger(maxGuests) && maxGuests > 0) {
       form.elements.guests.max = String(maxGuests);
@@ -193,7 +281,7 @@ paymentButton.addEventListener("click", async () => {
     const apkStatus = $("#androidAppStatus");
     const apkButton = $("#androidAppDownload");
     const apkHash = $("#androidAppHash");
-    const s = pub.settings || {};
+    const s = publicSettings;
     if (apkStatus && apkButton && s.androidApkUrl && s.androidApkSha256 && s.androidVersionName) {
       apkStatus.className = "notice ok";
       apkStatus.textContent = "Versão " + s.androidVersionName + " disponível para Android.";
@@ -204,28 +292,18 @@ paymentButton.addEventListener("click", async () => {
       apkStatus.textContent = "O APK oficial ainda não foi publicado. Use a versão web/PWA enquanto isso.";
     }
   } catch {}
-  try {
-    const p = await api("/payment-options");
-    const box = $("#paymentStatus");
-    if (!p.legalApproved) {
+  const box = $("#paymentStatus");
+  if (box) {
+    if (publicSettings.whatsappNumber) {
+      box.className = "notice ok";
+      box.textContent = "Após solicitar a reserva, continue pelo WhatsApp oficial. Pix ou transferência são combinados no atendimento e a confirmação final aparece no próprio site.";
+    } else {
       box.className = "notice";
-      box.textContent = "Meios de pagamento permanecem ocultos até a aprovação jurídica da versão vigente do termo.";
-      return;
+      box.textContent = "O canal oficial de WhatsApp ainda será configurado pela administração.";
     }
-    if (!p.pixAvailable && !p.transferAvailable) {
-      box.className = "notice";
-      box.textContent = "Aprovação jurídica registrada, mas os meios de pagamento ainda não foram configurados.";
-      return;
-    }
-    const methods = [];
-    if (p.pixAvailable) methods.push("Pix");
-    if (p.transferAvailable) methods.push("transferência bancária");
-    box.className = "notice ok";
-    box.textContent = `Meios habilitados: ${methods.join(" e ")}. Os dados bancários só aparecem dentro do acompanhamento de uma solicitação elegível.`;
-  } catch {
-    $("#paymentStatus").textContent = "Não foi possível consultar os meios de pagamento agora.";
   }
 })();
+
 
 
 // Gallery mobile: ambientes

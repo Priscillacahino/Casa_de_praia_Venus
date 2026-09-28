@@ -30,11 +30,19 @@ async function load() {
     const requested = d.reservations.filter((r) => r.status === "requested").length;
     const withPriority = d.reservations.filter((r) => r.status === "requested" && r.holdExpiresAt).length;
     const confirmed = d.reservations.filter((r) => r.status === "confirmed").length;
+    const cancellationPending = d.reservations.filter((r) => r.cancellationRequest?.status === "pending").length;
+    const paymentReportedPending = d.reservations.filter((r) => {
+      const reportIndex = (r.events || []).findIndex((e) => e.event === "payment.reported");
+      const reconcileIndex = (r.events || []).findIndex((e) => e.event === "payment.recorded" || e.event === "payment.refund_recorded");
+      return reportIndex >= 0 && (reconcileIndex < 0 || reportIndex < reconcileIndex);
+    }).length;
     const received = d.finance?.summary?.netReceivedCents || 0;
     $("#summary").innerHTML = `
       <article class="card"><h3>${requested}</h3><p>solicitações pendentes</p></article>
       <article class="card"><h3>${withPriority}</h3><p>com prioridade temporária</p></article>
       <article class="card"><h3>${confirmed}</h3><p>reservas confirmadas</p></article>
+      <article class="card"><h3>${cancellationPending}</h3><p>cancelamentos aguardando análise</p></article>
+      <article class="card"><h3>${paymentReportedPending}</h3><p>pagamentos informados para conferir</p></article>
       <article class="card"><h3>${money(received)}</h3><p>recebimento líquido registrado</p></article>`;
 
     $("#reservations").innerHTML = d.reservations.map((r) => {
@@ -42,19 +50,31 @@ async function load() {
       const hold = r.holdExpiresAt
         ? `<strong>Prioridade até ${esc(when(r.holdExpiresAt))}</strong>`
         : `<span class="muted">Sem prioridade temporária</span>`;
+      const paymentReportIndex = (r.events || []).findIndex((e) => e.event === "payment.reported");
+      const paymentReconciledIndex = (r.events || []).findIndex((e) => e.event === "payment.recorded" || e.event === "payment.refund_recorded");
+      const paymentReportedPending = paymentReportIndex >= 0 && (paymentReconciledIndex < 0 || paymentReportIndex < paymentReconciledIndex);
+      const paymentReportBox = paymentReportedPending
+        ? `<div class="notice"><strong>Pagamento informado pelo hóspede</strong><p>Confira o crédito diretamente no banco. Só depois use “Registrar pagamento/estorno”.</p></div>`
+        : "";
+      const cancellation = r.cancellationRequest;
+      const cancellationBox = cancellation?.status === "pending"
+        ? `<div class="notice"><strong>Cancelamento solicitado</strong><p>${esc(cancellation.reason || "Sem motivo informado")}</p><div class="actions"><button class="button accept-cancellation" data-cancellation="${esc(cancellation.id)}">Aceitar cancelamento</button><button class="button reject-cancellation" data-cancellation="${esc(cancellation.id)}">Não aceitar</button></div></div>`
+        : "";
       return `<article class="card" data-id="${esc(r.id)}">
         <strong>${esc(r.check_in)} → ${esc(r.check_out)}</strong> · ${esc(r.status)}<br>
         <span>${esc(r.name || "Bloqueio")} · ${q.totalCents ? money(q.totalCents) : "—"}</span>
         <p>${hold}</p>
         <p class="muted">Termo jurídico: ${req.legalReady ? "OK" : "pendente"} · assinatura: ${req.signatureReady ? "OK" : "pendente"} · recebido: ${money(req.paidCents || 0)} / sinal ${money(req.requiredDepositCents || 0)}</p>
+        ${paymentReportBox}
+        ${cancellationBox}
         ${r.status === "requested" ? `<div class="actions">
           <button class="button confirm">Confirmar</button>
           <button class="button cancel">Cancelar</button>
-          <button class="button payment">Registrar pagamento</button>
+          <button class="button payment">Registrar pagamento/estorno</button>
           <button class="button term">Termo assinado</button>
           <button class="button hold">${r.holdExpiresAt ? "Renovar prioridade" : "Conceder prioridade"}</button>
           ${r.holdExpiresAt ? '<button class="button release-hold">Liberar prioridade</button>' : ""}
-        </div>` : ""}
+        </div>` : r.status === "confirmed" ? `<div class="actions"><button class="button payment">Registrar pagamento/estorno</button><button class="button cancel">Cancelar reserva</button></div>` : r.status === "cancelled" && (r.paidCents || 0) > 0 ? `<div class="actions"><button class="button payment">Registrar estorno</button></div>` : ""}
         ${r.request_key ? '<div class="actions"><button class="button rotate-token">Trocar código privado</button></div>' : ""}
       </article>`;
     }).join("") || "<p>Nenhum registro.</p>";
@@ -68,6 +88,8 @@ async function load() {
       card.querySelector(".hold")?.addEventListener("click", () => grantHold(id));
       card.querySelector(".release-hold")?.addEventListener("click", () => releaseHold(id));
       card.querySelector(".rotate-token")?.addEventListener("click", () => rotateToken(id));
+      card.querySelector(".accept-cancellation")?.addEventListener("click", (e) => reviewCancellation(e.currentTarget.dataset.cancellation, "accepted"));
+      card.querySelector(".reject-cancellation")?.addEventListener("click", (e) => reviewCancellation(e.currentTarget.dataset.cancellation, "rejected"));
     });
     renderFinance(d.finance);
     renderSettings(d.settings);
@@ -80,7 +102,20 @@ async function load() {
 }
 
 async function changeStatus(id, status) {
+  if (status === "cancelled" && !confirm("Cancelar esta reserva? Valores já recebidos não serão estornados automaticamente; registre o estorno separadamente após a conciliação bancária.")) return;
   try { await api("/admin/reservations/" + id, "PATCH", { status }); await load(); }
+  catch (e) { alert(e.message); }
+}
+
+async function reviewCancellation(id, status) {
+  const accepting = status === "accepted";
+  const note = prompt(accepting
+    ? "Observação sobre o cancelamento/reembolso (opcional):"
+    : "Motivo para não aceitar a solicitação (opcional):", "");
+  if (note === null) return;
+  if (note.length > 1000) return alert("A observação deve ter no máximo 1000 caracteres.");
+  if (accepting && !confirm("Aceitar o cancelamento? A reserva será marcada como cancelada. Valores recebidos não são estornados automaticamente e devem ser conciliados separadamente.")) return;
+  try { await api(`/admin/cancellations/${id}`, "PATCH", { status, note }); await load(); }
   catch (e) { alert(e.message); }
 }
 

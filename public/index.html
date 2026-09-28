@@ -121,7 +121,9 @@
       <label>Protocolo<input name="reservationId" autocomplete="off" required></label>
       <label>Código privado de acompanhamento<input name="manageToken" autocomplete="off" required></label>
       <button class="button primary full" type="submit">Consultar andamento</button>
-      <button class="button full hidden" id="loadPaymentInstructions" type="button">Consultar instruções de pagamento</button>
+      <button class="button full hidden" id="continueWhatsApp" type="button">Continuar pelo WhatsApp</button>
+      <button class="button full hidden" id="reportPayment" type="button">Já realizei um pagamento</button>
+      <button class="button full hidden" id="requestCancellation" type="button">Solicitar cancelamento</button>
     </form>
   </section>
 
@@ -169,15 +171,18 @@
   </section>
 
   <section id="pagamento" class="section">
-    <span class="eyebrow">Pagamentos</span><h2>Pagamento não é confirmado por comprovante.</h2>
-    <div id="paymentStatus" class="notice" role="status" aria-live="polite">Consultando disponibilidade dos meios de pagamento…</div>
-    <p class="muted">A reserva só pode ser confirmada no painel administrativo depois da validação do termo assinado, conciliação do valor recebido e nova checagem de conflito de datas.</p>
+    <span class="eyebrow">Pagamentos</span><h2>Negociação pelo WhatsApp, confirmação pelo site.</h2>
+    <div id="paymentStatus" class="notice" role="status" aria-live="polite">O pagamento é combinado com a administração pelo WhatsApp.</div>
+    <p>Depois de solicitar a reserva, use o botão de WhatsApp no acompanhamento. Pix ou transferência são informados durante o atendimento e os dados bancários não ficam publicados no site.</p>
+    <p class="muted">O botão “Já realizei um pagamento” apenas avisa a administração. A reserva só muda para confirmada depois da conferência do crédito no banco, registro no painel, validação das demais exigências e nova checagem de conflito de datas.</p>
   </section>
 
   <section id="privacidade" class="section">
     <span class="eyebrow">Privacidade</span><h2>Dados mínimos, finalidade clara.</h2>
     <p>Os dados de contato e reserva são usados para atender a solicitação, organizar a hospedagem e manter os registros operacionais necessários. Avaliações só são publicadas após moderação. Solicitações de correção ou exclusão devem ser tratadas pela administração, observadas as obrigações legais de retenção.</p>
     <p class="muted">Este sistema não armazena senha do hóspede nem dados de cartão. Pix e transferência são registrados somente após conferência bancária pela administração.</p>
+    <div class="actions"><a class="button" href="/privacidade.html">Política de privacidade</a><a class="button" href="/termos.html">Termo vigente da hospedagem</a></div>
+    <p class="muted">O termo vigente só é disponibilizado pelo sistema depois que a versão exata possui aprovação registrada.</p>
   </section>
 </main>
 
