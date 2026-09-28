@@ -6,16 +6,11 @@ import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-test("galeria mobile referencia apenas imagens existentes", () => {
+test("site público não publica fotos da casa sem origem validada", () => {
   const html = readFileSync(join(root, "public", "index.html"), "utf8");
-  const groups = [...html.matchAll(/data-gallery-images="([^"]+)"/g)].map((match) => match[1]);
-  assert.ok(groups.length >= 6, "esperava ao menos seis ambientes na galeria");
-  for (const group of groups) {
-    for (const image of group.split("|").filter(Boolean)) {
-      assert.match(image, /^\/images\/[A-Za-z0-9_.-]+$/);
-      assert.ok(existsSync(join(root, "public", image.replace(/^\//, ""))), `imagem ausente: ${image}`);
-    }
-  }
+  assert.match(html, /Fotos reais em atualização/);
+  assert.doesNotMatch(html, /<img[^>]+\/images\/(?:quarto_abduzido|quarto_escritorio|sala_divindade|cozinha_chef|piscina_churrasqueira|area_externa_rede)/);
+  assert.doesNotMatch(html, /data-gallery-images=/);
 });
 
 test("PWA mantém atalhos da casa, reserva e guia", () => {
@@ -87,17 +82,19 @@ test("Android permite pin SHA-256 do Guia e configuração externa de assinatura
   assert.match(guide, /MessageDigest\.getInstance\("SHA-256"\)/);
 });
 
-test("galeria usa nomes canônicos e evita aliases temporários com timestamp", () => {
-  const html = readFileSync(join(root, "public", "index.html"), "utf8");
+test("Android não associa fotos não validadas aos ambientes da casa", () => {
+  const data = readFileSync(join(root, "app", "src", "main", "java", "com", "aistudio", "venusbeachhouse", "data", "HouseData.kt"), "utf8");
   for (const image of [
-    "/images/quarto_abduzido.jpg",
-    "/images/quarto_escritorio.jpg",
-    "/images/sala_divindade.jpg",
-    "/images/cozinha_chef.jpg",
-    "/images/piscina_churrasqueira.jpg",
-    "/images/area_externa_rede.jpg",
+    "piscina_churrasqueira.jpg",
+    "quarto_abduzido.jpg",
+    "quarto_abduzido_angulo2.jpg",
+    "quarto_escritorio.jpg",
+    "area_externa_rede.jpg",
+    "sala_divindade.jpg",
+    "cozinha_chef.jpg",
   ]) {
-    assert.match(html, new RegExp(image.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.doesNotMatch(data, new RegExp(image.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }
-  assert.doesNotMatch(html, /_178947\d+\.jpg/);
+  const assetImage = readFileSync(join(root, "app", "src", "main", "java", "com", "aistudio", "venusbeachhouse", "ui", "components", "AssetImage.kt"), "utf8");
+  assert.match(assetImage, /assetPath\.isBlank\(\)/);
 });
