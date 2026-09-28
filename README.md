@@ -168,3 +168,13 @@ O aplicativo Android será distribuído pela página oficial da casa, acessada a
 - aliases antigos que apontavam para imagens duplicadas foram substituídos pelo conteúdo correto;
 - site deixa de depender dos nomes temporários com timestamp;
 - cache PWA renovado para evitar exibição de fotos antigas após atualização.
+
+## Imagens da casa — validação obrigatória
+
+As imagens anteriormente associadas aos ambientes foram retiradas da interface pública e do uso no Android porque a origem não pôde ser confirmada como sendo os arquivos reais fornecidos pela proprietária.
+
+Até nova validação:
+- o site exibe um aviso neutro no lugar das fotos da casa;
+- o Android usa fallback visual neutro nos ambientes;
+- nenhuma imagem ilustrativa deve ser apresentada como foto real da propriedade;
+- novas fotos só devem ser publicadas após conferência com os arquivos originais.

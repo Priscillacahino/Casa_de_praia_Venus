@@ -29,7 +29,7 @@ object HouseData {
         instagramHandle = "@venuscasadepraiapb",
         googleMapsUrl = "https://maps.app.goo.gl/QdquwUhCt9KzitQr8",
         catProfileAsset = "images/cat_profile.jpg",
-        heroMainAsset = "images/piscina_churrasqueira.jpg"
+        heroMainAsset = ""
     )
 
     val ROOMS = listOf(
@@ -47,7 +47,7 @@ object HouseData {
                 "Banquinho decorativo arco-íris e tomadas acessíveis",
                 "Porta com acesso direto ao banheiro privativo"
             ),
-            assetPath = "images/quarto_abduzido.jpg",
+            assetPath = "",
             alt = "Quarto 01 - Fui Abduzido na Vênus Beach House"
         ),
         RoomItem(
@@ -64,7 +64,7 @@ object HouseData {
                 "Janela com cortina persiana e excelente claridade natural",
                 "Placa de porta decorativa redonda com arco-íris e inscrição Amor"
             ),
-            assetPath = "images/quarto_escritorio.jpg",
+            assetPath = "",
             alt = "Quarto 02 - Escritório no Paraíso na Vênus Beach House"
         ),
         RoomItem(
@@ -81,7 +81,7 @@ object HouseData {
                 "Plantas ornamentais em vasos e decoração de praia",
                 "Garagem privativa fechada para 1 carro de passeio"
             ),
-            assetPath = "images/piscina_churrasqueira.jpg",
+            assetPath = "",
             alt = "Área externa 01 com piscina em L e churrasqueira"
         ),
         RoomItem(
@@ -97,7 +97,7 @@ object HouseData {
                 "Espaço para rede e descanso revigorante",
                 "Decoração alegre com cortinas coloridas e estilo rústico"
             ),
-            assetPath = "images/area_externa_rede.jpg",
+            assetPath = "",
             alt = "Área externa 02 Suave na Nave com varanda e jardim"
         ),
         RoomItem(
@@ -114,7 +114,7 @@ object HouseData {
                 "Geladeira duplex e integração aberta com a cozinha",
                 "Projetor smart para noites de streaming e cinema"
             ),
-            assetPath = "images/sala_divindade.jpg",
+            assetPath = "",
             alt = "Sala Divindade Ancestral com sofá bicama e bancada integrada"
         ),
         RoomItem(
@@ -131,7 +131,7 @@ object HouseData {
                 "Kit completo de panelas, pratos, copos e talheres",
                 "Liquidificador, cafeteira e itens essenciais"
             ),
-            assetPath = "images/cozinha_chef.jpg",
+            assetPath = "",
             alt = "Cozinha Chef no Rolê integrada à sala americana"
         )
     )
@@ -231,35 +231,35 @@ object HouseData {
             title = "Piscina em L e Churrasqueira",
             category = "Lazer & Área Externa",
             description = "Área externa 01 - Ilhado em Vênus com piscina privativa em L, churrasqueira, varanda colonial e plantas.",
-            assetPath = "images/piscina_churrasqueira.jpg"
+            assetPath = ""
         ),
         GalleryPhoto(
             id = "p2",
             title = "Quarto 01 - Fui abduzido 👽🛸",
             category = "Cômodos",
             description = "Cama de casal com temática espacial e decoração mística.",
-            assetPath = "images/quarto_abduzido.jpg"
+            assetPath = ""
         ),
         GalleryPhoto(
             id = "p3",
             title = "Quarto 01 - Vista das Portas & Ventilador",
             category = "Cômodos",
             description = "Segundo ângulo do Quarto 01 mostrando ventilador, portas para o banheiro e corredor.",
-            assetPath = "images/quarto_abduzido_angulo2.jpg"
+            assetPath = ""
         ),
         GalleryPhoto(
             id = "p4",
             title = "Quarto 02 - Escritório no Paraíso",
             category = "Cômodos",
             description = "Cama retrátil, bancada home office e cadeira ergonômica.",
-            assetPath = "images/quarto_escritorio.jpg"
+            assetPath = ""
         ),
         GalleryPhoto(
             id = "p5",
             title = "Sala & Cozinha Americana Integrada",
             category = "Cômodos",
             description = "Sofá bicama, bancada americana, geladeira e integração com a cozinha.",
-            assetPath = "images/sala_divindade.jpg"
+            assetPath = ""
         ),
         GalleryPhoto(
             id = "p6",

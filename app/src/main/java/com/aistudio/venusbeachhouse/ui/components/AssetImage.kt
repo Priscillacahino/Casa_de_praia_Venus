@@ -29,6 +29,21 @@ fun AssetImage(
     contentScale: ContentScale = ContentScale.Crop,
     shape: Shape = RoundedCornerShape(16.dp)
 ) {
+    if (assetPath.isBlank()) {
+        Box(
+            modifier = modifier
+                .clip(shape)
+                .background(StoneSurfaceVariant),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Home,
+                contentDescription = contentDescription ?: "Foto real em atualização",
+                tint = AmberPrimary.copy(alpha = 0.6f)
+            )
+        }
+        return
+    }
     val context = LocalContext.current
     val uri = "file:///android_asset/$assetPath"
 
