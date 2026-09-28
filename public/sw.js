@@ -1,4 +1,4 @@
-const CACHE="venus-shell-v5";
+const CACHE="venus-shell-v6";
 const SHELL=["/","/styles.css","/app.js","/offline.html","/manifest.webmanifest","/privacidade.html","/privacy.js","/termos.html","/terms.js"];
 
 self.addEventListener("install",(event)=>{

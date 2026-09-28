@@ -1,4 +1,4 @@
-﻿plugins {
+plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
@@ -12,8 +12,8 @@ android {
         applicationId = "com.aistudio.venusbeachhouse"
         minSdk = 26
         targetSdk = 35
-        versionCode = 220
-        versionName = "2.2.0"
+        versionCode = 231
+        versionName = "2.3.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
         val bookingUrl = (project.findProperty("VENUS_BOOKING_URL") as String?) ?: System.getenv("VENUS_BOOKING_URL") ?: ""
