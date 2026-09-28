@@ -17,270 +17,84 @@ object HouseData {
         tagline = "Venus, sua casa de praia!",
         intro = "Aqui você viverá momentos de alegria, confraternização e união. Será um refúgio para relaxar e se divertir junto aos amigos e à família.",
         locationShort = "Conde, Litoral Sul da Paraíba, Brasil",
-        locationDetails = "Localizada estrategicamente no litoral sul paraibano, a poucos minutos das praias mais cobiçadas do Nordeste, em um bairro tranquilo e acolhedor em Conde - PB.",
+        locationDetails = "Conde, Litoral Sul da Paraíba, com acesso às praias e aos comércios de Jacumã.",
         maxGuests = 6,
         bedrooms = 2,
         beds = 3,
         baths = 1,
         whatsappNumber = "83986705999",
         whatsappDisplay = "(83) 98670-5999",
-        email = "priscillacahinoo@gmail.com",
+        email = "",
         instagramUrl = "https://www.instagram.com/venuscasadepraiapb?stkn=MWpvd3cwMWpvbmJ2Mg==",
         instagramHandle = "@venuscasadepraiapb",
         googleMapsUrl = "https://maps.app.goo.gl/QdquwUhCt9KzitQr8",
         catProfileAsset = "images/cat_profile.jpg",
-        heroMainAsset = ""
+        heroMainAsset = "images/piscina_churrasqueira.jpg"
     )
 
     val ROOMS = listOf(
-        RoomItem(
-            id = "quarto-01",
-            title = "Quarto 01 - Fui abduzido 👽🛸",
-            subtitle = "Suíte Cósmica & Conforto",
-            emoji = "🛸",
-            category = "quarto",
-            description = "Este quarto conta com cama de casal, ventilador e porta para acesso ao banheiro principal.",
-            features = listOf(
-                "Cama de casal com colcha preta espacial de OVNI e vaquinha abduzida",
-                "Ventilador de parede de alta potência",
-                "Tapeçaria mística feminina com arco-íris e estrelas na parede",
-                "Banquinho decorativo arco-íris e tomadas acessíveis",
-                "Porta com acesso direto ao banheiro privativo"
-            ),
-            assetPath = "",
-            alt = "Quarto 01 - Fui Abduzido na Vênus Beach House"
-        ),
-        RoomItem(
-            id = "quarto-02",
-            title = "Quarto 02 - Escritório no Paraíso",
-            subtitle = "Home Office & Cama Retrátil Inteligente",
-            emoji = "💻",
-            category = "quarto",
-            description = "Este quarto conta com cama de casal retrátil, ventilador, mesa retrátil, cadeira e suporte para monitor.",
-            features = listOf(
-                "Estante e cama retrátil em madeira com armário",
-                "Mesa de trabalho com cadeira de escritório giratória ergonômica preta",
-                "Ventilador de parede potente",
-                "Janela com cortina persiana e excelente claridade natural",
-                "Placa de porta decorativa redonda com arco-íris e inscrição Amor"
-            ),
-            assetPath = "",
-            alt = "Quarto 02 - Escritório no Paraíso na Vênus Beach House"
-        ),
-        RoomItem(
-            id = "area-externa-01",
-            title = "Área externa 01 - Ilhado em Vênus",
-            subtitle = "Piscina em L & Churrasqueira",
-            emoji = "🏊‍♂️",
-            category = "externo",
-            description = "Este espaço conta com a nossa churrasqueira pré-moldada e uma singela piscina em L. Também pode ser utilizado como garagem, suportando até 1 carro de passeio.",
-            features = listOf(
-                "Piscina privativa refrescante com design em L e pastilhas azuis",
-                "Churrasqueira de tijolos à vista para confraternizações",
-                "Varanda coberta com telhado colonial e cortinas decorativas",
-                "Plantas ornamentais em vasos e decoração de praia",
-                "Garagem privativa fechada para 1 carro de passeio"
-            ),
-            assetPath = "",
-            alt = "Área externa 01 com piscina em L e churrasqueira"
-        ),
-        RoomItem(
-            id = "area-externa-02",
-            title = "Área externa 02 - Suave na nave",
-            subtitle = "Varanda Colonial & Jardim Suspenso",
-            emoji = "🌴",
-            category = "externo",
-            description = "Neste espaço temos o nosso jardim suspenso para dar vida ao ambiente e também uma rede tipicamente nordestina para que você possa relaxar ao ar livre.",
-            features = listOf(
-                "Varanda colonial sombreada e ventilada para relaxar ao ar livre",
-                "Ambiente arejado com plantas tropicais em vasos",
-                "Espaço para rede e descanso revigorante",
-                "Decoração alegre com cortinas coloridas e estilo rústico"
-            ),
-            assetPath = "",
-            alt = "Área externa 02 Suave na Nave com varanda e jardim"
-        ),
-        RoomItem(
-            id = "sala",
-            title = "Sala - Divindade ancestral",
-            subtitle = "Cinema Smart & Convivência Integrada",
-            emoji = "🎬",
-            category = "social",
-            description = "Temos sofá bicama de solteiro, mesa bancada, cadeiras e projetor smart.",
-            features = listOf(
-                "Sofá de madeira bicama com almofadas temáticas sol e girassol",
-                "Bancada americana de granito com cadeiras pretas modernas",
-                "Quadros com arte de divindades ancestrais na parede",
-                "Geladeira duplex e integração aberta com a cozinha",
-                "Projetor smart para noites de streaming e cinema"
-            ),
-            assetPath = "",
-            alt = "Sala Divindade Ancestral com sofá bicama e bancada integrada"
-        ),
-        RoomItem(
-            id = "cozinha",
-            title = "Cozinha - Chef no rolê",
-            subtitle = "Completa & Prática para suas Férias",
-            emoji = "🍳",
-            category = "social",
-            description = "Nossa cozinha conta com geladeira, fogão, Airfryer e utensílios.",
-            features = listOf(
-                "Geladeira duplex espaçosa e bancada prática",
-                "Fogão a gás para refeições completas",
-                "Fritadeira elétrica Airfryer para petiscos práticos",
-                "Kit completo de panelas, pratos, copos e talheres",
-                "Liquidificador, cafeteira e itens essenciais"
-            ),
-            assetPath = "",
-            alt = "Cozinha Chef no Rolê integrada à sala americana"
-        )
+        RoomItem("quarto-01","Quarto 01 - Fui abduzido 👽🛸","Conforto para descansar","🛸","quarto",
+            "Cama de casal, ventilação e acesso ao banheiro principal.",
+            listOf("Cama de casal","Ventilador","Acesso ao banheiro"),
+            "images/quarto_abduzido.jpg","Quarto 01 - Fui Abduzido na Vênus Beach House"),
+        RoomItem("quarto-02","Quarto 02 - Escritório no Paraíso","Descanso & Home Office","💻","quarto",
+            "Cama retrátil, ventilador e estação para Home Office.",
+            listOf("Cama retrátil","Mesa de trabalho","Ventilador"),
+            "images/quarto_escritorio.jpg","Quarto 02 - Escritório no Paraíso na Vênus Beach House"),
+        RoomItem("area-externa-01","Área externa 01 - Ilhado em Vênus","Piscina em L & Churrasqueira","🏊‍♂️","externo",
+            "Piscina em L, churrasqueira e área de convivência.",
+            listOf("Piscina privativa em L","Churrasqueira","Área de convivência"),
+            "images/piscina_churrasqueira.jpg","Área externa 01 com piscina em L e churrasqueira"),
+        RoomItem("area-externa-02","Área externa 02 - Suave na nave","Rede & Jardim Suspenso","🌴","externo",
+            "Área externa com rede nordestina e jardim suspenso.",
+            listOf("Rede","Jardim suspenso","Espaço para descanso"),
+            "images/area_externa_rede.jpg","Área externa 02 Suave na Nave com rede e jardim suspenso"),
+        RoomItem("sala","Sala - Divindade ancestral","Convivência & Cinema","🎬","social",
+            "Sala com sofá bicama, bancada e projetor smart.",
+            listOf("Sofá bicama","Bancada","Projetor smart"),
+            "images/sala_divindade.jpg","Sala Divindade Ancestral"),
+        RoomItem("cozinha","Cozinha - Chef no rolê","Prática para a estadia","🍳","social",
+            "Cozinha com geladeira, fogão, Airfryer e utensílios.",
+            listOf("Geladeira","Fogão","Airfryer e utensílios"),
+            "images/cozinha_chef.jpg","Cozinha Chef no Rolê")
     )
 
     val BEACHES = listOf(
-        BeachItem(
-            id = "tabatinga",
-            name = "Praia de Tabatinga",
-            distance = "~5 a 7 min",
-            description = "Famosa pelas imponentes falésias coloridas, encontro do rio com o mar e piscinas naturais mornas e cristalinas.",
-            highlights = listOf(
-                "Falésias exuberantes",
-                "Encontro do Rio com o Mar",
-                "Piscinas naturais na maré baixa"
-            ),
-            assetPath = "images/tabatinga.jpg"
-        ),
-        BeachItem(
-            id = "coqueirinho",
-            name = "Praia de Coqueirinho",
-            distance = "~8 a 10 min",
-            description = "Considerada uma das praias mais bonitas do Brasil, cercada por coqueirais ondulantes, mar verde esmeralda e cânions multicoloridos.",
-            highlights = listOf(
-                "Mar verde-esmeralda",
-                "Coqueirais",
-                "Cânions e mirantes"
-            ),
-            assetPath = "images/coqueirinho.jpg"
-        )
+        BeachItem("tabatinga","Praia de Tabatinga","~5 a 7 min",
+            "Falésias, encontro do rio com o mar e piscinas naturais na maré baixa.",
+            listOf("Falésias","Encontro do rio com o mar","Piscinas naturais"),"images/tabatinga.jpg"),
+        BeachItem("coqueirinho","Praia de Coqueirinho","~8 a 10 min",
+            "Coqueirais, mar verde-esmeralda, cânions e mirantes.",
+            listOf("Mar verde-esmeralda","Coqueirais","Cânions e mirantes"),"images/coqueirinho.jpg")
     )
 
     val OTHER_BEACHES = listOf(
-        NearbyBeachGuide(
-            name = "Praia de Carapibus",
-            distance = "~3 a 5 min",
-            description = "Piscinas naturais de corais e quiosques charmosos à beira-mar."
-        ),
-        NearbyBeachGuide(
-            name = "Praia do Amor",
-            distance = "~5 min",
-            description = "Pedra Furada, mirante natural e falésias deslumbrantes."
-        ),
-        NearbyBeachGuide(
-            name = "Praia de Jacumã",
-            distance = "~4 min",
-            description = "Centro comercial, artesanato, mercados e culinária paraibana."
-        ),
-        NearbyBeachGuide(
-            name = "Praia de Tambaba",
-            distance = "~12 min",
-            description = "Referência internacional por suas falésias e natureza preservada."
-        )
+        NearbyBeachGuide("Praia de Carapibus","~3 a 5 min","Piscinas naturais e quiosques à beira-mar."),
+        NearbyBeachGuide("Praia do Amor","~5 min","Pedra Furada, mirante natural e falésias."),
+        NearbyBeachGuide("Praia de Jacumã","~4 min","Comércio, artesanato, mercados e gastronomia."),
+        NearbyBeachGuide("Praia de Tambaba","~12 min","Falésias e natureza preservada.")
     )
 
     val AMENITIES = listOf(
-        AmenityCategory(
-            title = "Lazer e Área Externa",
-            items = listOf(
-                AmenityItem("Piscina privativa em L", "Perfeita para relaxar e se refrescar a qualquer hora", "pool"),
-                AmenityItem("Churrasqueira pré-moldada", "Pronta para churrascos e confraternizações", "grill"),
-                AmenityItem("Rede nordestina autêntica", "Para relaxar sob a brisa na área externa Suave na nave", "hammock"),
-                AmenityItem("Jardim suspenso", "Verde e vida decorando o ambiente externo", "garden")
-            )
-        ),
-        AmenityCategory(
-            title = "Trabalho, Tecnologia & Sala",
-            items = listOf(
-                AmenityItem("Home Office completo", "Mesa retrátil, cadeira ergonômica e suporte para monitor", "work"),
-                AmenityItem("Projetor Smart", "Cinema em casa na sala com projetor", "movie"),
-                AmenityItem("Wi-Fi rápido", "Conexão estável para videochamadas e streaming", "wifi"),
-                AmenityItem("Sofá bicama de solteiro", "Confortável para repouso ou acomodar hóspedes extras", "bed")
-            )
-        ),
-        AmenityCategory(
-            title = "Cozinha e Praticidade",
-            items = listOf(
-                AmenityItem("Airfryer elétrica", "Fritadeira sem óleo para lanches e refeições rápidas", "kitchen"),
-                AmenityItem("Fogão a gás", "Cozinhe suas receitas favoritas com liberdade", "kitchen"),
-                AmenityItem("Geladeira espaçosa", "Mantém bebidas geladas e alimentos frescos", "kitchen"),
-                AmenityItem("Utensílios completos", "Panelas, pratos, copos, talheres e recipientes", "kitchen")
-            )
-        ),
-        AmenityCategory(
-            title = "Instalações & Serviços",
-            items = listOf(
-                AmenityItem("Garagem privativa", "Vaga segura para 1 carro de passeio", "car"),
-                AmenityItem("Lavanderia completa", "Tanque para lavar e varal retrátil para secagem", "laundry"),
-                AmenityItem("Ventiladores potentes", "Ambientes frescos nos quartos e áreas sociais", "fan"),
-                AmenityItem("Pet Friendly 🐾", "Seu pet de pequeno/médio porte é bem-vindo", "pet")
-            )
-        )
+        AmenityCategory("Comodidades & Infraestrutura", listOf(
+            AmenityItem("Piscina privativa em L","Com cascata e ducha externa","pool"),
+            AmenityItem("Churrasqueira pré-moldada","Uso privativo durante a hospedagem","grill"),
+            AmenityItem("Wi-Fi de fibra ótica","Conexão para lazer e Home Office","wifi"),
+            AmenityItem("Home Office","Espaço dedicado para trabalho remoto","work"),
+            AmenityItem("Pet Friendly 🐾","Pet bem-vindo sem taxa adicional","pet")
+        ))
     )
 
     val GALLERY_PHOTOS = listOf(
-        GalleryPhoto(
-            id = "p1",
-            title = "Piscina em L e Churrasqueira",
-            category = "Lazer & Área Externa",
-            description = "Área externa 01 - Ilhado em Vênus com piscina privativa em L, churrasqueira, varanda colonial e plantas.",
-            assetPath = ""
-        ),
-        GalleryPhoto(
-            id = "p2",
-            title = "Quarto 01 - Fui abduzido 👽🛸",
-            category = "Cômodos",
-            description = "Cama de casal com temática espacial e decoração mística.",
-            assetPath = ""
-        ),
-        GalleryPhoto(
-            id = "p3",
-            title = "Quarto 01 - Vista das Portas & Ventilador",
-            category = "Cômodos",
-            description = "Segundo ângulo do Quarto 01 mostrando ventilador, portas para o banheiro e corredor.",
-            assetPath = ""
-        ),
-        GalleryPhoto(
-            id = "p4",
-            title = "Quarto 02 - Escritório no Paraíso",
-            category = "Cômodos",
-            description = "Cama retrátil, bancada home office e cadeira ergonômica.",
-            assetPath = ""
-        ),
-        GalleryPhoto(
-            id = "p5",
-            title = "Sala & Cozinha Americana Integrada",
-            category = "Cômodos",
-            description = "Sofá bicama, bancada americana, geladeira e integração com a cozinha.",
-            assetPath = ""
-        ),
-        GalleryPhoto(
-            id = "p6",
-            title = "Praia de Tabatinga",
-            category = "Praias de Conde",
-            description = "Falésias coloridas, encontro do rio com o mar e piscinas naturais.",
-            assetPath = "images/tabatinga.jpg"
-        ),
-        GalleryPhoto(
-            id = "p7",
-            title = "Praia de Coqueirinho",
-            category = "Praias de Conde",
-            description = "Coqueirais, mar verde-esmeralda, cânions e mirantes.",
-            assetPath = "images/coqueirinho.jpg"
-        ),
-        GalleryPhoto(
-            id = "p8",
-            title = "Vênus Astronauta",
-            category = "Lazer & Área Externa",
-            description = "A mascote que dá nome e personalidade à Vênus Beach House.",
-            assetPath = "images/cat_profile.jpg"
-        )
+        GalleryPhoto("p1","Área externa 01 - Ilhado em Vênus","Área externa","Piscina em L e churrasqueira.","images/piscina_churrasqueira.jpg"),
+        GalleryPhoto("p2","Área externa 02 - Suave na nave","Área externa","Rede e jardim suspenso.","images/area_externa_rede.jpg"),
+        GalleryPhoto("p3","Quarto 01 - Fui abduzido 👽🛸","Cômodos","Cama de casal e ventilação.","images/quarto_abduzido.jpg"),
+        GalleryPhoto("p4","Quarto 01 - Segundo ângulo","Cômodos","Segundo ângulo do Quarto 01.","images/quarto_abduzido_angulo2.jpg"),
+        GalleryPhoto("p5","Quarto 02 - Escritório no Paraíso","Cômodos","Cama retrátil e Home Office.","images/quarto_escritorio.jpg"),
+        GalleryPhoto("p6","Sala - Divindade ancestral","Cômodos","Sala com sofá bicama e projetor smart.","images/sala_divindade.jpg"),
+        GalleryPhoto("p7","Cozinha - Chef no rolê","Cômodos","Cozinha equipada para a estadia.","images/cozinha_chef.jpg"),
+        GalleryPhoto("p8","Praia de Tabatinga","Praias de Conde","Falésias e piscinas naturais.","images/tabatinga.jpg"),
+        GalleryPhoto("p9","Praia de Coqueirinho","Praias de Conde","Coqueirais, cânions e mirantes.","images/coqueirinho.jpg"),
+        GalleryPhoto("p10","Vênus Astronauta","Mascote","A mascote da Vênus Beach House.","images/cat_profile.jpg")
     )
 }

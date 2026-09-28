@@ -187,7 +187,7 @@ export function openDatabase(path) {
   const defaults = {
     pricingEnabled: false,
     cleaningFeeCents: 0,
-    depositPercent: 20,
+    depositPercent: 50,
     maxGuests: 6,
     minLeadDays: 0,
     maxAdvanceDays: 1825,
@@ -204,6 +204,12 @@ export function openDatabase(path) {
   db.prepare("INSERT OR IGNORE INTO settings(id,value) VALUES(1,?)").run(JSON.stringify(defaults));
   const currentSettings = JSON.parse(db.prepare("SELECT value FROM settings WHERE id=1").get().value);
   const mergedSettings = { ...defaults, ...currentSettings };
+  // Migracao operacional v2.3.2: sinal de referencia = 50%.
+  // Depois desta migracao, o percentual continua configuravel no painel.
+  if (!mergedSettings.depositPolicyVersion) {
+    mergedSettings.depositPercent = 50;
+    mergedSettings.depositPolicyVersion = 2;
+  }
   db.prepare("UPDATE settings SET value=? WHERE id=1").run(JSON.stringify(mergedSettings));
 
   db.prepare("INSERT OR IGNORE INTO legal_approval(id) VALUES(1)").run();

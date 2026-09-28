@@ -17,6 +17,7 @@ function fixture() {
     cleaningFeeCents: 10000,
     maxAdvanceDays: 365,
     maxNights: 30,
+    whatsappNumber: "5583986705999",
   }));
   const start = addDays(today(), 1);
   const end = addDays(today(), 366);
@@ -124,6 +125,8 @@ test("cancelamento exige código privado, bloqueia nova entrada e depende de dec
     assert.equal(paymentOptions.data.pixAvailable, false);
     assert.equal(paymentOptions.data.transferAvailable, false);
 
+    const whatsappStarted = await call(`/reservations/${reservation.id}/whatsapp-started`, "POST", {}, { "X-Reservation-Token":reservation.manageToken });
+    assert.equal(whatsappStarted.status, 201);
     const reported = await call(`/reservations/${reservation.id}/payment-reported`, "POST", {}, { "X-Reservation-Token":reservation.manageToken });
     assert.equal(reported.status, 201);
     const reportedStatus = await call(`/reservations/${reservation.id}/status`, "GET", undefined, { "X-Reservation-Token":reservation.manageToken });
@@ -160,6 +163,9 @@ test("aviso de pagamento do hóspede só é encerrado após conciliação admini
   const { server, call, login } = await startApp(db);
   try {
     const reservation = await createReservation(call, "Hóspede Pagamento Manual");
+    db.prepare("UPDATE legal_approval SET approved=1,term_hash=? WHERE id=1").run(TERM_HASH);
+    const whatsappStarted = await call(`/reservations/${reservation.id}/whatsapp-started`, "POST", {}, { "X-Reservation-Token":reservation.manageToken });
+    assert.equal(whatsappStarted.status, 201);
     const reported = await call(`/reservations/${reservation.id}/payment-reported`, "POST", {}, { "X-Reservation-Token":reservation.manageToken });
     assert.equal(reported.status, 201);
     let status = await call(`/reservations/${reservation.id}/status`, "GET", undefined, { "X-Reservation-Token":reservation.manageToken });

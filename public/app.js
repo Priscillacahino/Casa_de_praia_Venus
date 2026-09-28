@@ -131,7 +131,7 @@ async function loadReservationStatus() {
     reviewSection?.classList.toggle("hidden", !d.reviewEligible);
     if ((d.status === "requested" || d.status === "confirmed") && cancellation?.status !== "pending") {
       whatsappButton?.classList.remove("hidden");
-      if (d.balanceCents > 0 && !d.paymentReported) reportPaymentButton?.classList.remove("hidden");
+      if (d.balanceCents > 0 && !d.paymentReported && d.whatsappStarted) reportPaymentButton?.classList.remove("hidden");
       cancellationButton?.classList.remove("hidden");
     }
   } catch (e) {
@@ -226,6 +226,12 @@ whatsappButton?.addEventListener("click", async () => {
     }
     const phone = String(publicSettings.whatsappNumber || "").replace(/\D/g, "");
     if (!phone) throw new Error("WhatsApp oficial não configurado.");
+    await api(`/reservations/${encodeURIComponent(currentReservationAccess.id)}/whatsapp-started`, {
+      method:"POST",
+      headers:{ "X-Reservation-Token":currentReservationAccess.token },
+      body:JSON.stringify({}),
+    });
+    currentReservationState.whatsappStarted = true;
     const d = currentReservationState;
     const message = [
       "Olá! Quero continuar a minha solicitação de reserva da Vênus Beach House.",
@@ -273,6 +279,49 @@ reportPaymentButton?.addEventListener("click", async () => {
   try {
     const pub = await api("/public");
     publicSettings = pub.settings || {};
+    const reviewsBox = $("#publicReviews");
+    const reviewStats = $("#reviewStats");
+    const reviews = Array.isArray(pub.reviews) ? pub.reviews : [];
+    if (reviewsBox) {
+      reviewsBox.replaceChildren();
+      if (reviews.length) {
+        for (const r of reviews) {
+          const article = document.createElement("article");
+          article.className = "card review-card";
+
+          const stars = document.createElement("div");
+          stars.className = "stars";
+          const rating = Math.max(0, Math.min(5, Number(r.rating || 0)));
+          stars.textContent = "★".repeat(rating);
+
+          const title = document.createElement("h3");
+          title.textContent = String(r.name || "Hóspede");
+
+          const comment = document.createElement("p");
+          comment.textContent = String(r.comment || "");
+
+          const note = document.createElement("small");
+          note.textContent = "Experiência publicada após moderação";
+
+          article.append(stars, title, comment, note);
+          reviewsBox.append(article);
+        }
+      } else {
+        const article = document.createElement("article");
+        article.className = "card";
+        const message = document.createElement("p");
+        message.textContent = "Nenhuma avaliação pública disponível no momento.";
+        article.append(message);
+        reviewsBox.append(article);
+      }
+    }
+    if (reviewStats) {
+      const count = Number(pub.reviewStats?.count || 0);
+      const avg = Number(pub.reviewStats?.average || 0);
+      reviewStats.textContent = count > 0
+        ? `${count} avaliação(ões) pública(s) · média ${avg.toFixed(1).replace(".", ",")}/5`
+        : "As avaliações aparecem aqui somente após estadia concluída e moderação.";
+    }
     const maxGuests = Number(pub.settings?.maxGuests || 6);
     if (Number.isSafeInteger(maxGuests) && maxGuests > 0) {
       form.elements.guests.max = String(maxGuests);
