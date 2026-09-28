@@ -17,7 +17,7 @@ object HouseData {
         tagline = "Venus, sua casa de praia!",
         intro = "Aqui você viverá momentos de alegria, confraternização e união. Será um refúgio para relaxar e se divertir junto aos amigos e à família.",
         locationShort = "Conde, Litoral Sul da Paraíba, Brasil",
-        locationDetails = "Conde, Litoral Sul da Paraíba, com acesso às praias e aos comércios de Jacumã.",
+        locationDetails = "Estamos no litoral sul da Paraíba, próximos à Praia do Amor, Jacumã, Carapibus, Tabatinga e Coqueirinho, em Conde.",
         maxGuests = 6,
         bedrooms = 2,
         beds = 3,
@@ -33,30 +33,30 @@ object HouseData {
     )
 
     val ROOMS = listOf(
-        RoomItem("quarto-01","Quarto 01 - Fui abduzido 👽🛸","Conforto para descansar","🛸","quarto",
-            "Cama de casal, ventilação e acesso ao banheiro principal.",
-            listOf("Cama de casal","Ventilador","Acesso ao banheiro"),
+        RoomItem("quarto-01","Quarto 01 - Fui abduzido 👽🛸","Conforto para descansar","👽🛸","quarto",
+            "Este quarto conta com cama de casal, ventilador e porta para acesso ao banheiro principal.",
+            listOf("Cama de casal","Ventilador","Acesso ao banheiro principal"),
             "images/quarto_abduzido.jpg","Quarto 01 - Fui Abduzido na Vênus Beach House"),
-        RoomItem("quarto-02","Quarto 02 - Escritório no Paraíso","Descanso & Home Office","💻","quarto",
-            "Cama retrátil, ventilador e estação para Home Office.",
-            listOf("Cama retrátil","Mesa de trabalho","Ventilador"),
+        RoomItem("quarto-02","Quarto 02 - Escritório no Paraíso 💻🌴","Descanso & Home Office","💻🌴","quarto",
+            "Este quarto conta com cama de casal retrátil, ventilador, mesa retrátil, cadeira e suporte para monitor.",
+            listOf("Cama de casal retrátil","Mesa retrátil e cadeira","Suporte para monitor","Ventilador"),
             "images/quarto_escritorio.jpg","Quarto 02 - Escritório no Paraíso na Vênus Beach House"),
-        RoomItem("area-externa-01","Área externa 01 - Ilhado em Vênus","Piscina em L & Churrasqueira","🏊‍♂️","externo",
-            "Piscina em L, churrasqueira e área de convivência.",
-            listOf("Piscina privativa em L","Churrasqueira","Área de convivência"),
-            "images/piscina_churrasqueira.jpg","Área externa 01 com piscina em L e churrasqueira"),
-        RoomItem("area-externa-02","Área externa 02 - Suave na nave","Rede & Jardim Suspenso","🌴","externo",
-            "Área externa com rede nordestina e jardim suspenso.",
-            listOf("Rede","Jardim suspenso","Espaço para descanso"),
+        RoomItem("area-externa-02","Área externa 02 - Suave na nave 🌴🪢","Rede & Jardim Suspenso","🌴🪢","externo",
+            "Neste espaço temos o nosso jardim suspenso para dar vida ao ambiente e uma rede tipicamente nordestina para que você possa relaxar ao ar livre.",
+            listOf("Rede nordestina","Jardim suspenso","Espaço para descanso"),
             "images/area_externa_rede.jpg","Área externa 02 Suave na Nave com rede e jardim suspenso"),
-        RoomItem("sala","Sala - Divindade ancestral","Convivência & Cinema","🎬","social",
-            "Sala com sofá bicama, bancada e projetor smart.",
-            listOf("Sofá bicama","Bancada","Projetor smart"),
-            "images/sala_divindade.jpg","Sala Divindade Ancestral"),
-        RoomItem("cozinha","Cozinha - Chef no rolê","Prática para a estadia","🍳","social",
-            "Cozinha com geladeira, fogão, Airfryer e utensílios.",
-            listOf("Geladeira","Fogão","Airfryer e utensílios"),
-            "images/cozinha_chef.jpg","Cozinha Chef no Rolê")
+        RoomItem("area-externa-01","Área externa 01 - Ilhado em Vênus 🏊‍♂️🥩","Piscina em L & Churrasqueira","🏊‍♂️🥩","externo",
+            "Este espaço conta com a nossa churrasqueira pré-moldada e uma singela piscina em L. Também pode ser utilizado como garagem, suportando até 1 carro de passeio.",
+            listOf("Piscina privativa em L","Churrasqueira pré-moldada","Garagem para 1 carro de passeio"),
+            "images/piscina_churrasqueira.jpg","Área externa 01 com piscina em L e churrasqueira"),
+        RoomItem("cozinha","Cozinha - Chef no rolê 🍳🧑‍🍳","Prática para a estadia","🍳🧑‍🍳","social",
+            "Nossa cozinha conta com geladeira, fogão, liquidificador, Airfryer e utensílios.",
+            listOf("Geladeira","Fogão","Liquidificador","Airfryer e utensílios"),
+            "images/cozinha_chef.jpg","Cozinha Chef no Rolê"),
+        RoomItem("sala","Sala - Divindade ancestral 🎬✨","Convivência & Cinema","🎬✨","social",
+            "Temos sofá bicama de solteiro, mesa bancada, cadeiras e projetor smart.",
+            listOf("Sofá bicama","Mesa bancada e cadeiras","Projetor smart"),
+            "images/sala_divindade.jpg","Sala Divindade Ancestral")
     )
 
     val BEACHES = listOf(
@@ -77,7 +77,7 @@ object HouseData {
 
     val AMENITIES = listOf(
         AmenityCategory("Comodidades & Infraestrutura", listOf(
-            AmenityItem("Piscina privativa em L","Com cascata e ducha externa","pool"),
+            AmenityItem("Piscina privativa em L","Com ducha externa","pool"),
             AmenityItem("Churrasqueira pré-moldada","Uso privativo durante a hospedagem","grill"),
             AmenityItem("Wi-Fi de fibra ótica","Conexão para lazer e Home Office","wifi"),
             AmenityItem("Home Office","Espaço dedicado para trabalho remoto","work"),
@@ -86,13 +86,13 @@ object HouseData {
     )
 
     val GALLERY_PHOTOS = listOf(
-        GalleryPhoto("p1","Área externa 01 - Ilhado em Vênus","Área externa","Piscina em L e churrasqueira.","images/piscina_churrasqueira.jpg"),
-        GalleryPhoto("p2","Área externa 02 - Suave na nave","Área externa","Rede e jardim suspenso.","images/area_externa_rede.jpg"),
+        GalleryPhoto("p1","Área externa 01 - Ilhado em Vênus 🏊‍♂️🥩","Área externa","Piscina em L e churrasqueira.","images/piscina_churrasqueira.jpg"),
+        GalleryPhoto("p2","Área externa 02 - Suave na nave 🌴🪢","Área externa","Rede e jardim suspenso.","images/area_externa_rede.jpg"),
         GalleryPhoto("p3","Quarto 01 - Fui abduzido 👽🛸","Cômodos","Cama de casal e ventilação.","images/quarto_abduzido.jpg"),
         GalleryPhoto("p4","Quarto 01 - Segundo ângulo","Cômodos","Segundo ângulo do Quarto 01.","images/quarto_abduzido_angulo2.jpg"),
-        GalleryPhoto("p5","Quarto 02 - Escritório no Paraíso","Cômodos","Cama retrátil e Home Office.","images/quarto_escritorio.jpg"),
-        GalleryPhoto("p6","Sala - Divindade ancestral","Cômodos","Sala com sofá bicama e projetor smart.","images/sala_divindade.jpg"),
-        GalleryPhoto("p7","Cozinha - Chef no rolê","Cômodos","Cozinha equipada para a estadia.","images/cozinha_chef.jpg"),
+        GalleryPhoto("p5","Quarto 02 - Escritório no Paraíso 💻🌴","Cômodos","Cama retrátil e Home Office.","images/quarto_escritorio.jpg"),
+        GalleryPhoto("p6","Sala - Divindade ancestral 🎬✨","Cômodos","Sala com sofá bicama e projetor smart.","images/sala_divindade.jpg"),
+        GalleryPhoto("p7","Cozinha - Chef no rolê 🍳🧑‍🍳","Cômodos","Cozinha equipada para a estadia.","images/cozinha_chef.jpg"),
         GalleryPhoto("p8","Praia de Tabatinga","Praias de Conde","Falésias e piscinas naturais.","images/tabatinga.jpg"),
         GalleryPhoto("p9","Praia de Coqueirinho","Praias de Conde","Coqueirais, cânions e mirantes.","images/coqueirinho.jpg"),
         GalleryPhoto("p10","Vênus Astronauta","Mascote","A mascote da Vênus Beach House.","images/cat_profile.jpg")

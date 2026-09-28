@@ -17,6 +17,9 @@ function validBackupKey(value) {
 export function productionConfigErrors(env = process.env) {
   if (String(env.NODE_ENV || "") !== "production") return [];
   const errors = [];
+  if (String(env.VERCEL || "") === "1") {
+    errors.push("O backend Node/SQLite nao deve operar em Vercel Functions: use hospedagem com armazenamento persistente ou migre o banco antes de operar reservas reais.");
+  }
 
   if (!httpsUrl(env.APP_URL)) errors.push("APP_URL deve ser HTTPS válido.");
   if (!/^[a-f0-9]{32}:[a-f0-9]{128}$/i.test(String(env.ADMIN_PASSWORD_HASH || ""))) {

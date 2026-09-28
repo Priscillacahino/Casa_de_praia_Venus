@@ -187,7 +187,7 @@ export function openDatabase(path) {
   const defaults = {
     pricingEnabled: false,
     cleaningFeeCents: 0,
-    depositPercent: 50,
+    depositPercent: 20,
     maxGuests: 6,
     minLeadDays: 0,
     maxAdvanceDays: 1825,
@@ -204,12 +204,14 @@ export function openDatabase(path) {
   db.prepare("INSERT OR IGNORE INTO settings(id,value) VALUES(1,?)").run(JSON.stringify(defaults));
   const currentSettings = JSON.parse(db.prepare("SELECT value FROM settings WHERE id=1").get().value);
   const mergedSettings = { ...defaults, ...currentSettings };
-  // Migracao operacional v2.3.2: sinal de referencia = 50%.
-  // Depois desta migracao, o percentual continua configuravel no painel.
-  if (!mergedSettings.depositPolicyVersion) {
-    mergedSettings.depositPercent = 50;
-    mergedSettings.depositPolicyVersion = 2;
+  // Migracao operacional v2.3.3: sinal de referencia = 20% e saldo de 80% no check-in.
+  // O percentual continua configuravel no painel, mas bases da v2.3.2 sao alinhadas uma unica vez.
+  if (Number(mergedSettings.depositPolicyVersion || 0) < 3) {
+    mergedSettings.depositPercent = 20;
+    mergedSettings.depositPolicyVersion = 3;
   }
+  if (!mergedSettings.whatsappNumber) mergedSettings.whatsappNumber = "5583986705999";
+  if (!mergedSettings.googleMapsUrl) mergedSettings.googleMapsUrl = "https://maps.app.goo.gl/QdquwUhCt9KzitQr8";
   db.prepare("UPDATE settings SET value=? WHERE id=1").run(JSON.stringify(mergedSettings));
 
   db.prepare("INSERT OR IGNORE INTO legal_approval(id) VALUES(1)").run();

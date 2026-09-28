@@ -71,7 +71,7 @@ async function load() {
           <button class="button confirm">Confirmar</button>
           <button class="button cancel">Cancelar</button>
           <button class="button payment">Registrar pagamento/estorno</button>
-          <button class="button term">Termo assinado</button>
+          ${req.documentId ? `<a class="button" href="/api/admin/reservations/${esc(r.id)}/signed-term" target="_blank" rel="noopener">Baixar termo enviado</a><button class="button validate-existing-term" data-sha="${esc(req.documentHash || "")}">Validar assinatura GOV.BR</button>` : `<button class="button term">Anexar termo manualmente</button>`}
           <button class="button hold">${r.holdExpiresAt ? "Renovar prioridade" : "Conceder prioridade"}</button>
           ${r.holdExpiresAt ? '<button class="button release-hold">Liberar prioridade</button>' : ""}
         </div>` : r.status === "confirmed" ? `<div class="actions"><button class="button payment">Registrar pagamento/estorno</button><button class="button cancel">Cancelar reserva</button></div>` : r.status === "cancelled" && (r.paidCents || 0) > 0 ? `<div class="actions"><button class="button payment">Registrar estorno</button></div>` : ""}
@@ -85,6 +85,7 @@ async function load() {
       card.querySelector(".cancel")?.addEventListener("click", () => changeStatus(id, "cancelled"));
       card.querySelector(".payment")?.addEventListener("click", () => payment(id));
       card.querySelector(".term")?.addEventListener("click", () => term(id));
+      card.querySelector(".validate-existing-term")?.addEventListener("click", (e) => validateExistingTerm(id, e.currentTarget.dataset.sha));
       card.querySelector(".hold")?.addEventListener("click", () => grantHold(id));
       card.querySelector(".release-hold")?.addEventListener("click", () => releaseHold(id));
       card.querySelector(".rotate-token")?.addEventListener("click", () => rotateToken(id));
@@ -205,6 +206,18 @@ function renderReviews(reviews) {
   });
 }
 
+async function validateExistingTerm(id, sha256) {
+  if (!sha256) return alert("Hash do documento não disponível.");
+  if (!confirm("Antes de continuar, valide o PDF original e a assinatura no serviço oficial VALIDAR/ITI. Confirma que assinatura, identidade e conteúdo foram conferidos?")) return;
+  const reviewer = prompt("Responsável pela conferência da assinatura/identidade:");
+  const reference = prompt("Referência/protocolo da validação GOV.BR/VALIDAR:");
+  if (!reviewer || !reference) return;
+  try {
+    await api(`/admin/reservations/${id}/validate-term`, "POST", { sha256, signatureChecked:true, identityChecked:true, contentChecked:true, reviewer, reference });
+    alert("Validação do termo registrada.");
+    await load();
+  } catch (e) { alert(e.message); }
+}
 async function term(id) {
   const input = document.createElement("input"); input.type = "file"; input.accept = "application/pdf";
   input.onchange = async () => {
@@ -226,7 +239,7 @@ async function term(id) {
 
 async function loadCompliance() {
   const c = await api("/admin/compliance");
-  $("#compliance").innerHTML = `<p><strong>Versão:</strong> ${esc(c.version)}</p><p><strong>Hash do termo:</strong> <code>${esc(c.termHash)}</code></p><p><strong>Aprovação jurídica:</strong> ${c.approval?.approved === 1 ? "registrada" : "pendente"}</p><div class="actions"><button class="button" id="legalApprove">Registrar aprovação validada</button><button class="button" id="banking">Configurar dados bancários</button><a class="button" href="/api/admin/term-template">Baixar minuta</a></div>`;
+  $("#compliance").innerHTML = `<p><strong>Versão:</strong> ${esc(c.version)}</p><p><strong>Hash do termo:</strong> <code>${esc(c.termHash)}</code></p><p><strong>Aprovação jurídica:</strong> ${c.approval?.approved === 1 ? "registrada" : "pendente"}</p><div class="actions"><button class="button" id="legalApprove">Registrar aprovação validada</button><button class="button" id="banking">Configurar dados bancários</button><a class="button" href="/api/admin/term-template">Baixar minuta</a><a class="button" href="https://www.gov.br/pt-br/servicos/realizar-validacao-de-assinaturas-eletronicas-validar" target="_blank" rel="noopener noreferrer">Abrir VALIDAR/ITI</a></div>`;
   $("#legalApprove").onclick = async () => {
     const reviewer = prompt("Responsável/revisor jurídico:"); const reference = prompt("Referência do parecer/documento:");
     if (!reviewer || !reference) return;
