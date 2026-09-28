@@ -162,3 +162,9 @@ A revisão jurídica, o domínio HTTPS, os segredos/MFA, os dados bancários, o 
 ## Distribuição direta do Android
 
 O aplicativo Android será distribuído pela página oficial da casa, acessada a partir do Instagram, e não pela Google Play. O fluxo exige APK release assinado, URL HTTPS e SHA-256 publicado. Consulte `docs/DISTRIBUICAO_ANDROID_DIRETA.md`.
+## Ajuste v2.3.1 — galeria e consistência visual
+
+- fotos dos ambientes Web e Android padronizadas para os mesmos arquivos canônicos;
+- aliases antigos que apontavam para imagens duplicadas foram substituídos pelo conteúdo correto;
+- site deixa de depender dos nomes temporários com timestamp;
+- cache PWA renovado para evitar exibição de fotos antigas após atualização.

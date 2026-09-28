@@ -86,3 +86,18 @@ test("Android permite pin SHA-256 do Guia e configuração externa de assinatura
   assert.match(gradle, /VENUS_KEYSTORE_PATH/);
   assert.match(guide, /MessageDigest\.getInstance\("SHA-256"\)/);
 });
+
+test("galeria usa nomes canônicos e evita aliases temporários com timestamp", () => {
+  const html = readFileSync(join(root, "public", "index.html"), "utf8");
+  for (const image of [
+    "/images/quarto_abduzido.jpg",
+    "/images/quarto_escritorio.jpg",
+    "/images/sala_divindade.jpg",
+    "/images/cozinha_chef.jpg",
+    "/images/piscina_churrasqueira.jpg",
+    "/images/area_externa_rede.jpg",
+  ]) {
+    assert.match(html, new RegExp(image.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  }
+  assert.doesNotMatch(html, /_178947\d+\.jpg/);
+});
