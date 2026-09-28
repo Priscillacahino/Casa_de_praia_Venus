@@ -116,6 +116,10 @@ test("cancelamento exige código privado, bloqueia nova entrada e depende de dec
   try {
     const reservation = await createReservation(call, "Hóspede Cancelamento Seguro");
     db.prepare("UPDATE legal_approval SET approved=1,term_hash=? WHERE id=1").run(TERM_HASH);
+    db.prepare(`INSERT INTO signed_terms(id,reservation_id,pdf,sha256,term_hash,validated_at,reviewer,validation_reference)
+      VALUES(?,?,?,?,?,CURRENT_TIMESTAMP,'Teste automatizado','VALIDAR-TESTE')`).run(
+      randomUUID(), reservation.id, Buffer.from("%PDF-1.4\n%%EOF"), `sha-${reservation.id}`, TERM_HASH,
+    );
     db.prepare("UPDATE banking SET value=? WHERE id=1").run(JSON.stringify({ bank:"Banco Teste", holder:"Titular", holderDocument:"12345678900", branch:"0001", account:"12345-6", accountType:"corrente", pixKey:"pix@example.com" }));
     const paymentOptions = await call(`/reservations/${reservation.id}/payment-options`, "GET", undefined, { "X-Reservation-Token":reservation.manageToken });
     assert.equal(paymentOptions.status, 200);
@@ -164,6 +168,10 @@ test("aviso de pagamento do hóspede só é encerrado após conciliação admini
   try {
     const reservation = await createReservation(call, "Hóspede Pagamento Manual");
     db.prepare("UPDATE legal_approval SET approved=1,term_hash=? WHERE id=1").run(TERM_HASH);
+    db.prepare(`INSERT INTO signed_terms(id,reservation_id,pdf,sha256,term_hash,validated_at,reviewer,validation_reference)
+      VALUES(?,?,?,?,?,CURRENT_TIMESTAMP,'Teste automatizado','VALIDAR-TESTE')`).run(
+      randomUUID(), reservation.id, Buffer.from("%PDF-1.4\n%%EOF"), `sha-${reservation.id}`, TERM_HASH,
+    );
     const whatsappStarted = await call(`/reservations/${reservation.id}/whatsapp-started`, "POST", {}, { "X-Reservation-Token":reservation.manageToken });
     assert.equal(whatsappStarted.status, 201);
     const reported = await call(`/reservations/${reservation.id}/payment-reported`, "POST", {}, { "X-Reservation-Token":reservation.manageToken });

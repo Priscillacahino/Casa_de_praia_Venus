@@ -30,6 +30,14 @@ const cancellationButton = $("#requestCancellation");
 const reviewSection = $("#avaliar");
 const reviewForm = $("#reviewForm");
 const reviewResult = $("#reviewResult");
+const contactForm = $("#contactForm");
+const contactResult = $("#contactResult");
+const termWorkflow = $("#termWorkflow");
+const termStatus = $("#termStatus");
+const prepareTermButton = $("#prepareTerm");
+const signedTermFile = $("#signedTermFile");
+const printableTerm = $("#printableTerm");
+const printableTermText = $("#printableTermText");
 
 function saveReservationAccess(id, token) {
   currentReservationAccess = { id, token };
@@ -106,6 +114,7 @@ async function loadReservationStatus() {
   reportPaymentButton?.classList.add("hidden");
   cancellationButton?.classList.add("hidden");
   paymentInstructions.classList.add("hidden");
+  termWorkflow?.classList.add("hidden");
   trackingResult.className = "notice";
   trackingResult.textContent = "Consultando andamento…";
   try {
@@ -129,8 +138,23 @@ async function loadReservationStatus() {
     trackingResult.className = "notice ok";
     trackingResult.innerHTML = `<strong>${statusLabel}</strong><br>${d.checkIn} → ${d.checkOut} · ${d.quote.nights} noite(s)<br>Total contratado: ${money(d.quote.totalCents)} · Recebido: ${money(d.paidCents)} · Saldo: ${money(d.balanceCents)}.<br>${priority}${paymentInfo}${cancellationInfo}${d.reviewSubmitted ? "<br>Avaliação da estadia já enviada." : ""}`;
     reviewSection?.classList.toggle("hidden", !d.reviewEligible);
+    if (d.status === "requested") {
+      termWorkflow?.classList.remove("hidden");
+      if (termStatus) {
+        termStatus.className = d.signatureReady ? "notice ok" : "notice";
+        termStatus.textContent = d.signatureReady
+          ? "Termo assinado e validado. O pagamento da reserva pode seguir pelo canal oficial quando as demais condições estiverem válidas."
+          : d.signedTermUploaded
+            ? "PDF assinado enviado. Aguarde a validação administrativa antes do pagamento."
+            : d.legalReady
+              ? "Prepare o termo, assine pelo GOV.BR e envie o PDF assinado."
+              : "A versão atual do termo ainda aguarda a aprovação necessária para contratação.";
+      }
+      if (prepareTermButton) prepareTermButton.disabled = !d.legalReady;
+      if (signedTermFile) signedTermFile.disabled = !d.legalReady || d.signatureReady;
+    }
     if ((d.status === "requested" || d.status === "confirmed") && cancellation?.status !== "pending") {
-      whatsappButton?.classList.remove("hidden");
+      if (d.signatureReady) whatsappButton?.classList.remove("hidden");
       if (d.balanceCents > 0 && !d.paymentReported && d.whatsappStarted) reportPaymentButton?.classList.remove("hidden");
       cancellationButton?.classList.remove("hidden");
     }
@@ -215,6 +239,9 @@ whatsappButton?.addEventListener("click", async () => {
     if (!p.legalApproved) {
       paymentInstructions.textContent = "A etapa de pagamento ainda não foi liberada porque o termo vigente não possui aprovação registrada.";
       return;
+    }    if (!p.signatureReady) {
+      paymentInstructions.textContent = "O termo assinado ainda precisa ser enviado e validado antes do pagamento.";
+      return;
     }
     if (!p.reservationEligible) {
       paymentInstructions.textContent = "Esta solicitação ainda não está liberada para pagamento. Aguarde a prioridade das datas ou a orientação da administração.";
@@ -275,10 +302,48 @@ reportPaymentButton?.addEventListener("click", async () => {
 });
 
 
+contactForm?.addEventListener("submit", async (e) => {
+  e.preventDefault(); contactResult.classList.add("hidden"); if (!contactForm.reportValidity()) return;
+  const button=contactForm.querySelector("button[type=submit]"); button.disabled=true;
+  try { await api("/messages",{method:"POST",body:JSON.stringify({name:contactForm.elements.name.value,email:contactForm.elements.email.value,phone:contactForm.elements.phone.value,dates:contactForm.elements.dates.value,message:contactForm.elements.message.value,website:contactForm.elements.website.value,consent:contactForm.elements.consent.checked})}); contactResult.className="notice ok"; contactResult.textContent="Mensagem registrada. A administração poderá responder pelos canais informados."; contactForm.reset(); }
+  catch(error){ contactResult.className="notice error"; contactResult.textContent=error.message; }
+  finally{ button.disabled=false; }
+});
+
+prepareTermButton?.addEventListener("click", async () => {
+  if(!currentReservationAccess)return; prepareTermButton.disabled=true;
+  try{
+    const pkg=await api(`/reservations/${encodeURIComponent(currentReservationAccess.id)}/term-package`,{headers:{"X-Reservation-Token":currentReservationAccess.token}}); const r=pkg.reservation;
+    const header=["QUADRO DA RESERVA GERADO PELO SISTEMA",`Protocolo: ${r.id}`,`Hóspede: ${r.name}`,`Período: ${r.checkIn} a ${r.checkOut}`,`Hóspedes: ${r.guests}`,`Valor total: ${money(r.totalCents)}`,`Sinal de 20%: ${money(r.depositCents)}`,`Saldo de 80%: ${money(r.balanceCents)}`,`Versão do termo: ${pkg.termVersion}`,`SHA-256 do termo: ${pkg.termHash}`].join("\n");
+    printableTermText.textContent=`${header}\n\n${pkg.termText}`; printableTerm.classList.remove("hidden"); window.print();
+  }catch(error){alert(error.message)}finally{prepareTermButton.disabled=false}
+});
+
+signedTermFile?.addEventListener("change", async () => {
+  const file=signedTermFile.files?.[0]; if(!file||!currentReservationAccess)return;
+  if(file.type!=="application/pdf"&&!file.name.toLowerCase().endsWith(".pdf")){signedTermFile.value="";return alert("Envie o PDF original assinado.")}
+  if(file.size>3*1024*1024){signedTermFile.value="";return alert("O PDF deve ter no máximo 3 MB.")}
+  if(!confirm("Confirma o envio do PDF assinado? A administração ainda validará a assinatura e a integridade do documento.")){signedTermFile.value="";return}
+  try{const bytes=new Uint8Array(await file.arrayBuffer());let binary="";for(let i=0;i<bytes.length;i+=0x8000)binary+=String.fromCharCode(...bytes.subarray(i,i+0x8000));await api(`/reservations/${encodeURIComponent(currentReservationAccess.id)}/signed-term`,{method:"POST",headers:{"X-Reservation-Token":currentReservationAccess.token},body:JSON.stringify({base64:btoa(binary)})});termStatus.className="notice ok";termStatus.textContent="PDF assinado enviado. Aguarde a validação administrativa antes do pagamento.";signedTermFile.value="";await loadReservationStatus()}catch(error){termStatus.className="notice error";termStatus.textContent=error.message}
+});
+
+
 (async () => {
   try {
     const pub = await api("/public");
     publicSettings = pub.settings || {};
+    const emailCard = $("#contactEmailCard");
+    const emailText = $("#contactEmailText");
+    if (emailCard && emailText) {
+      const email = String(publicSettings.email || "").trim();
+      if (email) {
+        emailText.textContent = email;
+        emailCard.href = `mailto:${email}`;
+        emailCard.classList.remove("hidden");
+      } else {
+        emailCard.classList.add("hidden");
+      }
+    }
     const reviewsBox = $("#publicReviews");
     const reviewStats = $("#reviewStats");
     const reviews = Array.isArray(pub.reviews) ? pub.reviews : [];

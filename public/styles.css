@@ -56,3 +56,21 @@
 .reviews-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.review-card .stars{color:var(--accent);font-weight:900;letter-spacing:.08em}.review-card small{color:var(--muted)}
 .hero-img{border:1px solid var(--line)}
 @media(max-width:800px){.amenities-grid,.beach-grid,.two-info,.reviews-grid{grid-template-columns:1fr}.host-section{grid-template-columns:1fr}.host-photo{width:160px;height:160px}}
+
+
+/* v2.3.3 - marca, contatos e termo */
+.brand-logo{width:46px;height:46px;border-radius:14px;object-fit:cover;border:1px solid var(--line);box-shadow:0 5px 14px rgba(43,36,31,.12)}
+.header-whatsapp{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 14px;border-radius:999px;background:#20c965;color:#fff;font-weight:800;font-size:13px;white-space:nowrap}
+.hero-beaches{display:flex;flex-wrap:wrap;gap:8px 18px;padding-left:20px;margin:10px 0 14px;color:var(--ink);font-weight:700}
+.whatsapp-action{border-color:#20a85a;color:#167944}
+.room-description{margin-top:7px!important;color:var(--muted)!important;font-weight:500!important;white-space:normal!important;line-height:1.4}
+.cancellation-policy{margin-top:16px}
+.contact-layout{display:grid;grid-template-columns:.85fr 1.15fr;gap:28px;align-items:start}.contact-cards{display:grid;gap:14px}
+.contact-card{display:grid;grid-template-columns:48px 1fr;gap:14px;align-items:start;padding:18px;border-radius:22px;border:1px solid var(--line);background:#fff;box-shadow:var(--shadow);transition:transform .15s ease}.contact-card:hover{transform:translateY(-2px)}
+.contact-card small,.contact-card strong,.contact-card span{display:block}.contact-card small{font-size:11px;font-weight:900;letter-spacing:.04em;margin-bottom:3px}.contact-card strong{font-size:17px;margin-bottom:4px}.contact-card span span{font-size:13px;color:var(--muted)}
+.contact-icon{display:grid!important;place-items:center;width:48px;height:48px;border-radius:14px;background:#fff;font-size:23px}.contact-whatsapp{background:#ecfbf3;border-color:#a8e9c6}.contact-whatsapp small{color:#087b44}.contact-instagram{background:#fff3f7;border-color:#f2c8d8}.contact-instagram small{color:#c5175a}.contact-location{background:#eef8ff;border-color:#b8def7}.contact-location small{color:#0879b9}.contact-email{background:#fff9e9;border-color:#f1d688}.contact-email small{color:#a96800}
+.contact-form-head{display:flex;justify-content:space-between;gap:16px;align-items:center}.contact-form-head h3{margin:2px 0 0}.contact-safe{font-size:12px;color:#087b44;background:#ecfbf3;border:1px solid #a8e9c6;border-radius:999px;padding:6px 9px;white-space:nowrap}.contact-honeypot{position:absolute!important;left:-9999px!important;width:1px!important;height:1px!important;overflow:hidden!important}.contact-actions{margin-top:0}.contact-actions .button{flex:1}
+.whatsapp-float{position:fixed;right:18px;bottom:18px;z-index:30;display:flex;align-items:center;gap:9px;padding:10px 16px;border-radius:999px;background:#20c965;color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.18);font-weight:800}.whatsapp-float small,.whatsapp-float strong{display:block}.whatsapp-float small{font-size:9px;line-height:1}.whatsapp-float strong{font-size:13px}.whatsapp-float-icon{font-size:22px}
+.term-workflow{margin-top:18px}.term-workflow h3{margin-top:4px}.file-button{cursor:pointer}.printable-term{background:#fff;color:#111;padding:28px}.printable-term pre{white-space:pre-wrap;font:14px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}
+@media(max-width:980px){.topbar nav{display:none}.contact-layout{grid-template-columns:1fr}.header-whatsapp{display:none}}@media(max-width:800px){.whatsapp-float{right:12px;bottom:12px}.hero-beaches{display:grid;grid-template-columns:1fr 1fr}.contact-form-head{align-items:flex-start}.contact-safe{white-space:normal}}
+@media print{body *{visibility:hidden!important}#printableTerm,#printableTerm *{visibility:visible!important}#printableTerm{display:block!important;position:absolute;left:0;top:0;width:100%;padding:18mm;background:#fff;color:#000}#printableTerm pre{font-size:10.5pt;line-height:1.42}}

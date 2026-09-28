@@ -199,3 +199,19 @@ O e-mail de contato continua pendente de substituição e não deve ser tratado 
 - termo vigente aprovado, elegibilidade da reserva e saldo pendente são verificados antes do handoff;
 - avaliações públicas são renderizadas como texto, sem interpretar HTML fornecido por hóspedes;
 - o aviso de pagamento continua sem equivaler a conciliação ou confirmação bancária.
+
+## v2.3.3 — contato direto, termo GOV.BR e política 20/80
+
+- logotipo oficial no cabeçalho;
+- WhatsApp e Instagram acessíveis sem obrigar abertura de reserva;
+- formulário de contato como alternativa;
+- informação de cascata removida;
+- descrições e emojis dos ambientes alinhados;
+- valores fictícios removidos da tabela pública; a cotação do servidor é a fonte válida;
+- sinal de 20% e saldo de 80% no check-in;
+- política de cancelamento: 100% do sinal com 48h ou mais, 50% entre 24h e menos de 48h e 0% abaixo de 24h, ressalvados direitos legais;
+- termo personalizado, assinatura no GOV.BR, upload do PDF e validação administrativa;
+- pagamento da reserva só é liberado depois da validação do termo;
+- dados bancários continuam fora do site público;
+- backend SQLite é bloqueado em Vercel Functions no modo produção para impedir falsa persistência;
+- Guia Vênus, MFA/TOTP, auditoria, privacidade, backups e conciliação permanecem.

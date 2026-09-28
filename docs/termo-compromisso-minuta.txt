@@ -1,21 +1,21 @@
 TERMO DE COMPROMISSO DE RESERVA DA VÊNUS BEACH HOUSE
-Versão proposta 2026-09-16 — MINUTA NÃO VIGENTE
+Versão proposta 2026-09-28 — MINUTA NÃO VIGENTE
 Uso e implementação condicionados à validação jurídica.
 
 1. Identificação e objeto
-As partes e os dados específicos da reserva serão identificados no quadro da reserva: responsável pela propriedade, hóspede contratante, endereço do imóvel, período, horários de entrada e saída, número de hóspedes e valores. Este instrumento disciplina a solicitação e a confirmação da estadia e as condições de sinal, cancelamento e reembolso.
+As partes e os dados específicos da reserva serão identificados no quadro da reserva: responsável pela propriedade, hóspede contratante, endereço do imóvel, período, horários de entrada e saída, número de hóspedes e valores. Este instrumento disciplina a solicitação e a confirmação da estadia e as condições de sinal, saldo, cancelamento e reembolso.
 
 2. Condições para efetivação da reserva
 O envio de uma solicitação não confirma nem garante a disponibilidade do período. A reserva somente será efetivada após o cumprimento cumulativo de três requisitos: assinatura do termo pelo hóspede; validação da assinatura, da integridade do documento e de sua correspondência com a reserva pela administração; e confirmação do recebimento efetivo do sinal de 20% do valor total contratado.
 A administração verificará novamente a disponibilidade antes de comunicar a confirmação por escrito. O envio de comprovante bancário não equivale à confirmação de recebimento. Se o período não puder ser confirmado após um pagamento, os valores recebidos serão integralmente restituídos de imediato, salvo remarcação expressamente aceita pelo hóspede.
 
-3. Sinal e meios de pagamento
-O sinal corresponde a 20% do valor total da reserva e será abatido do saldo. O orçamento deverá informar o total, eventual limpeza, valor do sinal e prazo de pagamento do saldo. Serão aceitos Pix e transferência bancária, mediante identificação da reserva e confirmação da entrada dos recursos na conta indicada pela propriedade.
+3. Sinal, saldo e meios de pagamento
+O sinal corresponde a 20% do valor total da reserva e será abatido do saldo. Os 80% restantes serão pagos no check-in, salvo condição específica previamente registrada por escrito pela administração e aceita pelo hóspede. O orçamento deverá informar o total, eventual limpeza, valor do sinal e prazo de pagamento do saldo. Serão aceitos Pix e transferência bancária, mediante identificação da reserva e confirmação da entrada dos recursos na conta indicada pela propriedade.
 Banco: ____________________  Titular: ____________________
 CPF do titular: ____________________  Agência: ____________________
 Conta e dígito: ____________________  Tipo de conta: ____________________
 Chave Pix: ____________________
-Os dados bancários deverão ser preenchidos e conferidos antes de habilitar cobranças. Enquanto não forem disponibilizados, não será solicitado pagamento pelo sistema.
+Os dados bancários deverão ser preenchidos e conferidos antes de habilitar cobranças. Enquanto não forem disponibilizados, não será solicitado pagamento pelo sistema. No site público, esses dados não serão exibidos; a orientação de Pix ou transferência será feita pelo canal oficial de WhatsApp.
 
 4. Direito de arrependimento nas reservas a distância
 Nas reservas contratadas pelo site, WhatsApp, telefone ou outros meios a distância, a Vênus Beach House assegura ao hóspede o cancelamento sem multa no prazo de sete dias corridos contados da contratação, sem prejuízo de condição legal mais favorável.
@@ -45,6 +45,7 @@ Força maior, impossibilidade de prestação do serviço e outras circunstância
 10. Assinatura eletrônica e validação
 O documento definitivo deverá ser assinado por meio que permita verificar a autoria e a integridade, como o serviço de assinatura gov.br. O arquivo eletrônico original assinado deverá ser preservado. Imagem de assinatura, impressão digitalizada ou simples aceite em caixa de seleção não substituem a validação exigida neste fluxo.
 A administração deverá conferir a identidade do signatário, a integridade do documento, os dados da reserva e as assinaturas exigidas pelo jurídico, conservando o arquivo e o registro da validação. A validação técnica da assinatura não equivale à aprovação jurídica do conteúdo.
+No fluxo do site, o hóspede prepara o termo da própria reserva em PDF, assina o arquivo no serviço oficial GOV.BR e envia o PDF original assinado pelo acompanhamento protegido por protocolo e código privado. O envio do arquivo não libera automaticamente o pagamento: a administração deve validar o documento antes da continuidade do fluxo financeiro.
 
 QUADRO DA RESERVA A PREENCHER ANTES DA ASSINATURA
 Protocolo: ____________________
@@ -55,7 +56,7 @@ Contato do hóspede: ____________________
 Check-in e horário: ____________________  Check-out e horário: ____________________
 Quantidade de hóspedes: ____________________
 Valor total: ____________________  Limpeza incluída no total: ____________________
-Sinal de 20%: ____________________  Saldo: ____________________
-Prazo e condições de pagamento do saldo: ____________________
+Sinal de 20%: ____________________  Saldo de 80%: ____________________
+Prazo e condições de pagamento do saldo: check-in, salvo condição específica registrada por escrito.
 Data da contratação: ____________________
 Assinaturas eletrônicas: conforme orientação jurídica e fluxo de validação.

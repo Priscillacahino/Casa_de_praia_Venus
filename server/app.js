@@ -284,7 +284,8 @@ export function createApp(db, options = {}) {
       WHERE reservation_id=? AND event IN ('payment.recorded','payment.refund_recorded') ORDER BY id DESC LIMIT 1`).get(row.id);
     const paymentReported = !!paymentReport && (!reconciledPayment || paymentReport.id > reconciledPayment.id);
     const whatsappStarted = !!db.prepare(`SELECT id FROM reservation_events
-      WHERE reservation_id=? AND event='whatsapp.started' ORDER BY id DESC LIMIT 1`).get(row.id);
+      WHERE reservation_id=? AND event='whatsapp.started' ORDER BY id DESC LIMIT 1`).get(row.id);    const requirements = readiness(db, row);
+
     return {
       id: row.id,
       status: row.status,
@@ -294,7 +295,7 @@ export function createApp(db, options = {}) {
       hasPet: row.has_pet === 1,
       quote: {
         nights: quote.nights || 0, totalCents: quote.totalCents || 0,
-        depositCents: quote.depositCents || 0, depositPercent: quote.depositPercent || 50,
+        depositCents: quote.depositCents || 0, depositPercent: quote.depositPercent || 20,
       },
       paidCents,
       balanceCents: Math.max(0, (quote.totalCents || 0) - paidCents),
@@ -303,6 +304,9 @@ export function createApp(db, options = {}) {
       reviewSubmitted: !!review,
       paymentReported,
       whatsappStarted,
+      legalReady: requirements.legalReady,
+      signatureReady: requirements.signatureReady,
+      signedTermUploaded: !!requirements.documentId,
       paymentReportedAt: paymentReported ? paymentReport.created_at : null,
       cancellationRequest: cancellation ? {
         id: cancellation.id, status: cancellation.status, reason: cancellation.reason || "",
@@ -417,6 +421,21 @@ export function createApp(db, options = {}) {
     if (!row || !verifyReservationToken(row, token)) throw new AppError("Reserva não encontrada.", 404);
     json(ctx.res, 200, publicReservationState(row));
   });
+  register("GET", "/api/reservations/:id/term-package", (ctx) => {
+    const row=db.prepare("SELECT * FROM reservations WHERE id=? AND status!='blocked'").get(ctx.params.id); const token=String(ctx.req.headers["x-reservation-token"]||"");
+    if(!row||!verifyReservationToken(row,token))throw new AppError("Reserva não encontrada.",404); if(!["requested","confirmed"].includes(row.status))throw new AppError("O termo não está disponível neste estado.",409);
+    const l=legal(db); if(l?.approved!==1||l.term_hash!==TERM_HASH)throw new AppError("A versão atual do termo ainda não foi liberada para contratação.",503); const q=JSON.parse(row.quote||"{}");
+    json(ctx.res,200,{termVersion:TERM_VERSION,termHash:TERM_HASH,termText:TERM_TEXT,reservation:{id:row.id,name:row.name,checkIn:row.check_in,checkOut:row.check_out,guests:row.guests,totalCents:q.totalCents||0,depositCents:q.depositCents||0,balanceCents:Math.max(0,(q.totalCents||0)-(q.depositCents||0))}});
+  });
+
+  register("POST", "/api/reservations/:id/signed-term", (ctx) => {
+    const row=db.prepare("SELECT * FROM reservations WHERE id=? AND status!='blocked'").get(ctx.params.id); const token=String(ctx.req.headers["x-reservation-token"]||"");
+    if(!row||!verifyReservationToken(row,token))throw new AppError("Reserva não encontrada.",404); if(row.status!=="requested")throw new AppError("O termo assinado é enviado enquanto a solicitação está pendente.",409);
+    if(db.prepare("SELECT id FROM cancellation_requests WHERE reservation_id=? AND status='pending'").get(row.id))throw new AppError("Há uma solicitação de cancelamento pendente.",409);
+    const l=legal(db); if(l?.approved!==1||l.term_hash!==TERM_HASH)throw new AppError("A versão atual do termo ainda não foi liberada para contratação.",409);
+    const result=saveSignedTerm(db,row.id,ctx.body.base64,(action,resource,details)=>audit(ctx,action,resource,details,"guest")); reservationEvent(row.id,"signature.uploaded_by_guest","guest",{sha256:result.sha256,termHash:TERM_HASH}); json(ctx.res,201,result);
+  });
+
 
   register("POST", "/api/reservations/:id/whatsapp-started", (ctx) => {
     const row = db.prepare("SELECT * FROM reservations WHERE id=? AND status!='blocked'").get(ctx.params.id);
@@ -430,6 +449,9 @@ export function createApp(db, options = {}) {
     const legalApproved = l?.approved === 1 && l.term_hash === TERM_HASH;
     if (!legalApproved) {
       throw new AppError("A etapa de pagamento ainda não foi liberada porque o termo vigente não possui aprovação registrada.", 409);
+    }    const signature = readiness(db, row);
+    if (!signature.signatureReady) {
+      throw new AppError("Termo assinado ainda não foi validado. Conclua a assinatura pelo GOV.BR e aguarde a validação administrativa.", 409);
     }
     const hold = getReservationHold(db, row.id);
     const reservationEligible = row.status === "confirmed" || (row.status === "requested" && !!hold);
@@ -551,7 +573,8 @@ export function createApp(db, options = {}) {
     const enabled = l?.approved === 1 && l.term_hash === TERM_HASH;
     const hold = getReservationHold(db, row.id);
     const pendingCancellation = db.prepare("SELECT id FROM cancellation_requests WHERE reservation_id=? AND status='pending'").get(row.id);
-    const allowed = enabled && !pendingCancellation && (row.status === "confirmed" || (row.status === "requested" && !!hold));
+    const requirements = readiness(db, row);
+    const allowed = enabled && requirements.signatureReady && !pendingCancellation && (row.status === "confirmed" || (row.status === "requested" && !!hold));
     const empty = { bank: "", holder: "", holderDocument: "", branch: "", account: "", accountType: "", pixKey: "" };
     json(ctx.res, 200, {
       paymentFlow: "whatsapp",
@@ -977,6 +1000,8 @@ export function createApp(db, options = {}) {
             ? { scope:"login", max:8, windowMs:600000 }
             : url.pathname === "/api/reservations"
               ? { scope:"reservation-create", max:12, windowMs:3600000 }
+              : /\/api\/reservations\/[^/]+\/signed-term$/.test(url.pathname)
+                ? { scope:"signed-term-upload", max:4, windowMs:3600000 }
               : /\/api\/reservations\/[^/]+\/payment-reported$/.test(url.pathname)
                 ? { scope:"payment-report", max:8, windowMs:3600000 }
               : /\/api\/reservations\/[^/]+\/cancellation-request$/.test(url.pathname)

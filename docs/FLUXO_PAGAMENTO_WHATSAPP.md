@@ -1,21 +1,21 @@
-# Fluxo de pagamento assistido por WhatsApp
+# Fluxo de reserva, termo e pagamento assistido por WhatsApp — v2.3.3
 
-## Objetivo
-Manter o site como fonte oficial da reserva e do status, mas deixar a escolha e o envio dos dados de Pix/transferência para o atendimento humano pelo WhatsApp.
+1. Hóspede consulta datas e envia solicitação.
+2. Sistema gera protocolo, código privado e prioridade temporária quando possível.
+3. Versão vigente do termo precisa estar aprovada.
+4. Hóspede prepara o termo da própria reserva, salva em PDF e assina no serviço oficial GOV.BR.
+5. Hóspede envia o PDF assinado pelo acompanhamento da reserva.
+6. Administração valida assinatura, identidade, integridade e correspondência com a reserva.
+7. Só depois da validação o botão de pagamento específico é liberado.
+8. Hóspede continua pelo WhatsApp; o código privado nunca é enviado.
+9. Administração orienta Pix/transferência.
+10. Sinal operacional: 20%. Saldo: 80% no check-in, salvo ajuste registrado.
+11. Hóspede pode avisar no site que pagou; isso não confirma recebimento.
+12. Administração confere o banco e registra a conciliação.
+13. Reserva só é confirmada após termo validado, sinal mínimo conciliado e nova verificação de disponibilidade.
 
-## Jornada
-1. Hóspede informa datas, hóspedes e demais dados no site.
-2. O sistema gera protocolo, código privado e prioridade temporária quando disponível.
-3. No acompanhamento, o hóspede usa **Continuar pelo WhatsApp**. A mensagem leva protocolo, datas e quantidade de hóspedes, mas nunca o código privado.
-4. Administração orienta Pix ou transferência no WhatsApp.
-5. Depois de pagar, o hóspede volta ao site e usa **Já realizei um pagamento**.
-6. O site mostra **pagamento informado / aguardando conferência**. Isso não altera o valor recebido.
-7. Administração confere o extrato bancário e registra a transação conciliada no painel.
-8. Depois das demais exigências da reserva, a administração confirma a reserva.
-9. O hóspede consulta novamente protocolo + código privado e vê a reserva confirmada no site.
+Cancelamento contratual: 48h ou mais = 100% do sinal; 24h a menos de 48h = 50%; menos de 24h = 0%. Não há estorno automático.
 
-## Regra de segurança
-Comprovante, mensagem de WhatsApp e clique em “Já realizei um pagamento” não comprovam recebimento. Somente a conferência bancária e o registro administrativo alteram o valor recebido.
+WhatsApp e Instagram permanecem disponíveis para dúvidas mesmo sem abertura de reserva. O Guia Vênus permanece integrado.
 
-## Dados bancários
-O site público não entrega chave Pix, conta, agência ou documento do titular. Esses dados ficam no fluxo administrativo e são informados ao hóspede pelo canal oficial de atendimento.
+Regra operacional: o WhatsApp geral pode ser usado para dúvidas e disponibilidade, mas a administração só deve enviar dados de pagamento depois de conferir no sistema o protocolo, o termo validado e a elegibilidade da reserva.

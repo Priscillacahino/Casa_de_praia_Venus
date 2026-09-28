@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { createHash, randomUUID } from "node:crypto";
 import { AppError, text, transaction } from "./domain.js";
 
-export const TERM_VERSION = "2026-09-16-v1";
+export const TERM_VERSION = "2026-09-28-v2";
 export const TERM_TEXT = readFileSync(new URL("../docs/termo-compromisso-minuta.txt", import.meta.url), "utf8");
 export const TERM_HASH = createHash("sha256").update(TERM_TEXT).digest("hex");
 
@@ -46,12 +46,12 @@ export function assertConfirmationReady(db, row) {
 export function saveSignedTerm(db, reservationId, base64, audit) {
   const r = db.prepare("SELECT * FROM reservations WHERE id=?").get(reservationId);
   if (!r || r.status !== "requested") throw new AppError("Anexe documentos somente a pedidos pendentes.");
-  if (typeof base64 !== "string" || base64.length > 7500000 || !/^[A-Za-z0-9+/]*={0,2}$/.test(base64)) {
-    throw new AppError("Arquivo PDF inválido ou maior que 5 MB.");
+  if (typeof base64 !== "string" || base64.length > 4300000 || !/^[A-Za-z0-9+/]*={0,2}$/.test(base64)) {
+    throw new AppError("Arquivo PDF inválido ou maior que 3 MB.");
   }
   const bytes = Buffer.from(base64, "base64");
-  if (bytes.length > 5 * 1024 * 1024 || bytes.subarray(0, 5).toString() !== "%PDF-") {
-    throw new AppError("Envie o arquivo PDF original assinado, até 5 MB.");
+  if (bytes.length > 3 * 1024 * 1024 || bytes.subarray(0, 5).toString() !== "%PDF-") {
+    throw new AppError("Envie o arquivo PDF original assinado, até 3 MB.");
   }
   const sha = createHash("sha256").update(bytes).digest("hex");
   const id = randomUUID();
