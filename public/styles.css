@@ -42,3 +42,17 @@
 .photo-hold small{max-width:520px;color:var(--muted)}
 .hero-photo-hold{min-height:460px;border-radius:30px}
 @media(max-width:800px){.hero-photo-hold{min-height:300px}}
+
+
+/* v2.3.2 - identidade visual recuperada sem remover hardening */
+.amenities-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:22px}
+.beach-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:22px}
+.beach-card{padding:0;overflow:hidden}.beach-card img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}.beach-card div{padding:18px}.beach-card p{margin:0}
+.host-tip{margin-top:18px;padding:16px 18px;border-radius:18px;background:var(--accent2);border:1px solid #e2c3a3}
+.pricing-table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:20px;background:var(--surface);box-shadow:var(--shadow)}
+.pricing-table{width:100%;border-collapse:collapse;min-width:620px}.pricing-table th,.pricing-table td{padding:15px 18px;text-align:left;border-bottom:1px solid var(--line)}.pricing-table th{background:var(--accent2)}.pricing-table tr:last-child td{border-bottom:0}
+.two-info{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:16px}.clean-list{padding-left:20px;margin:8px 0 0}.clean-list li+li{margin-top:7px}
+.host-section{display:grid;grid-template-columns:220px 1fr;gap:30px;align-items:center}.host-photo{width:220px;height:220px;border-radius:50%;object-fit:cover;box-shadow:var(--shadow);border:8px solid #fff}
+.reviews-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.review-card .stars{color:var(--accent);font-weight:900;letter-spacing:.08em}.review-card small{color:var(--muted)}
+.hero-img{border:1px solid var(--line)}
+@media(max-width:800px){.amenities-grid,.beach-grid,.two-info,.reviews-grid{grid-template-columns:1fr}.host-section{grid-template-columns:1fr}.host-photo{width:160px;height:160px}}

@@ -283,6 +283,8 @@ export function createApp(db, options = {}) {
     const reconciledPayment = db.prepare(`SELECT id FROM reservation_events
       WHERE reservation_id=? AND event IN ('payment.recorded','payment.refund_recorded') ORDER BY id DESC LIMIT 1`).get(row.id);
     const paymentReported = !!paymentReport && (!reconciledPayment || paymentReport.id > reconciledPayment.id);
+    const whatsappStarted = !!db.prepare(`SELECT id FROM reservation_events
+      WHERE reservation_id=? AND event='whatsapp.started' ORDER BY id DESC LIMIT 1`).get(row.id);
     return {
       id: row.id,
       status: row.status,
@@ -292,7 +294,7 @@ export function createApp(db, options = {}) {
       hasPet: row.has_pet === 1,
       quote: {
         nights: quote.nights || 0, totalCents: quote.totalCents || 0,
-        depositCents: quote.depositCents || 0, depositPercent: quote.depositPercent || 20,
+        depositCents: quote.depositCents || 0, depositPercent: quote.depositPercent || 50,
       },
       paidCents,
       balanceCents: Math.max(0, (quote.totalCents || 0) - paidCents),
@@ -300,6 +302,7 @@ export function createApp(db, options = {}) {
       reviewEligible: row.status === "confirmed" && row.check_out <= today() && !review,
       reviewSubmitted: !!review,
       paymentReported,
+      whatsappStarted,
       paymentReportedAt: paymentReported ? paymentReport.created_at : null,
       cancellationRequest: cancellation ? {
         id: cancellation.id, status: cancellation.status, reason: cancellation.reason || "",
@@ -415,11 +418,50 @@ export function createApp(db, options = {}) {
     json(ctx.res, 200, publicReservationState(row));
   });
 
+  register("POST", "/api/reservations/:id/whatsapp-started", (ctx) => {
+    const row = db.prepare("SELECT * FROM reservations WHERE id=? AND status!='blocked'").get(ctx.params.id);
+    const token = String(ctx.req.headers["x-reservation-token"] || "");
+    if (!row || !verifyReservationToken(row, token)) throw new AppError("Reserva não encontrada.", 404);
+    if (!["requested","confirmed"].includes(row.status)) throw new AppError("Esta reserva não pode iniciar atendimento de pagamento.", 409);
+    if (db.prepare("SELECT id FROM cancellation_requests WHERE reservation_id=? AND status='pending'").get(row.id)) {
+      throw new AppError("Há uma solicitação de cancelamento pendente. Não inicie novo pagamento.", 409);
+    }
+    const l = legal(db);
+    const legalApproved = l?.approved === 1 && l.term_hash === TERM_HASH;
+    if (!legalApproved) {
+      throw new AppError("A etapa de pagamento ainda não foi liberada porque o termo vigente não possui aprovação registrada.", 409);
+    }
+    const hold = getReservationHold(db, row.id);
+    const reservationEligible = row.status === "confirmed" || (row.status === "requested" && !!hold);
+    if (!reservationEligible) {
+      throw new AppError("Esta solicitação ainda não está liberada para pagamento.", 409);
+    }
+    const quote = JSON.parse(row.quote || "{}");
+    if (paidFor(row.id) >= (quote.totalCents || 0)) {
+      throw new AppError("Não há saldo pendente nesta reserva.", 409);
+    }
+    if (!settings().whatsappNumber) throw new AppError("WhatsApp oficial ainda não configurado.", 409);
+    const previous = db.prepare(`SELECT id,created_at FROM reservation_events
+      WHERE reservation_id=? AND event='whatsapp.started' ORDER BY id DESC LIMIT 1`).get(row.id);
+    if (previous) return json(ctx.res, 200, { ok:true, alreadyStarted:true, startedAt:previous.created_at });
+    reservationEvent(row.id, "whatsapp.started", "guest", {
+      legalTermHash: TERM_HASH,
+      reservationStatus: row.status,
+      holdExpiresAt: hold?.expiresAtIso || null,
+    });
+    audit(ctx, "whatsapp.started", row.id, {}, "guest");
+    const created = db.prepare(`SELECT created_at FROM reservation_events
+      WHERE reservation_id=? AND event='whatsapp.started' ORDER BY id DESC LIMIT 1`).get(row.id);
+    json(ctx.res, 201, { ok:true, startedAt:created?.created_at || null });
+  });
   register("POST", "/api/reservations/:id/payment-reported", (ctx) => {
     const row = db.prepare("SELECT * FROM reservations WHERE id=? AND status!='blocked'").get(ctx.params.id);
     const token = String(ctx.req.headers["x-reservation-token"] || "");
     if (!row || !verifyReservationToken(row, token)) throw new AppError("Reserva não encontrada.", 404);
     if (!["requested","confirmed"].includes(row.status)) throw new AppError("Esta reserva não aceita informação de pagamento.", 409);
+    if (!db.prepare(`SELECT id FROM reservation_events WHERE reservation_id=? AND event='whatsapp.started' ORDER BY id DESC LIMIT 1`).get(row.id)) {
+      throw new AppError("Inicie primeiro o atendimento pelo WhatsApp oficial antes de informar um pagamento.", 409);
+    }
     if (db.prepare("SELECT id FROM cancellation_requests WHERE reservation_id=? AND status='pending'").get(row.id)) {
       throw new AppError("Há uma solicitação de cancelamento pendente. Não informe novo pagamento.", 409);
     }

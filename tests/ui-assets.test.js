@@ -6,11 +6,21 @@ import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-test("site público não publica fotos da casa sem origem validada", () => {
+test("site público usa apenas fotos da casa validadas/aprovadas", () => {
   const html = readFileSync(join(root, "public", "index.html"), "utf8");
-  assert.match(html, /Fotos reais em atualização/);
-  assert.doesNotMatch(html, /<img[^>]+\/images\/(?:quarto_abduzido|quarto_escritorio|sala_divindade|cozinha_chef|piscina_churrasqueira|area_externa_rede)/);
-  assert.doesNotMatch(html, /data-gallery-images=/);
+  for (const image of [
+    "piscina_churrasqueira.jpg",
+    "area_externa_rede.jpg",
+    "quarto_abduzido.jpg",
+    "quarto_abduzido_angulo2.jpg",
+    "quarto_escritorio.jpg",
+    "sala_divindade.jpg",
+    "cozinha_chef.jpg",
+  ]) {
+    assert.ok(existsSync(join(root, "public", "images", image)), image);
+    assert.match(html, new RegExp(image.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  }
+  assert.doesNotMatch(html, /_178947\d+\.(?:jpg|png)/);
 });
 
 test("PWA mantém atalhos da casa, reserva e guia", () => {
@@ -82,19 +92,26 @@ test("Android permite pin SHA-256 do Guia e configuração externa de assinatura
   assert.match(guide, /MessageDigest\.getInstance\("SHA-256"\)/);
 });
 
-test("Android não associa fotos não validadas aos ambientes da casa", () => {
+test("Android usa as mesmas fotos validadas da experiência web", () => {
   const data = readFileSync(join(root, "app", "src", "main", "java", "com", "aistudio", "venusbeachhouse", "data", "HouseData.kt"), "utf8");
   for (const image of [
     "piscina_churrasqueira.jpg",
+    "area_externa_rede.jpg",
     "quarto_abduzido.jpg",
     "quarto_abduzido_angulo2.jpg",
     "quarto_escritorio.jpg",
-    "area_externa_rede.jpg",
     "sala_divindade.jpg",
     "cozinha_chef.jpg",
   ]) {
-    assert.doesNotMatch(data, new RegExp(image.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.match(data, new RegExp(image.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.ok(existsSync(join(root, "app", "src", "main", "assets", "images", image)), image);
   }
-  const assetImage = readFileSync(join(root, "app", "src", "main", "java", "com", "aistudio", "venusbeachhouse", "ui", "components", "AssetImage.kt"), "utf8");
-  assert.match(assetImage, /assetPath\.isBlank\(\)/);
+});
+
+test("avaliações públicas são renderizadas sem HTML de usuário", () => {
+  const app = readFileSync(join(root, "public", "app.js"), "utf8");
+  assert.match(app, /reviewsBox\.replaceChildren\(\)/);
+  assert.match(app, /comment\.textContent = String\(r\.comment/);
+  assert.match(app, /title\.textContent = String\(r\.name/);
+  assert.doesNotMatch(app, /reviewsBox\.innerHTML = reviews\.length/);
 });

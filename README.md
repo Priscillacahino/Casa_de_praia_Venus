@@ -169,12 +169,33 @@ O aplicativo Android será distribuído pela página oficial da casa, acessada a
 - site deixa de depender dos nomes temporários com timestamp;
 - cache PWA renovado para evitar exibição de fotos antigas após atualização.
 
-## Imagens da casa — validação obrigatória
+## Imagens da casa — curadoria validada
 
-As imagens anteriormente associadas aos ambientes foram retiradas da interface pública e do uso no Android porque a origem não pôde ser confirmada como sendo os arquivos reais fornecidos pela proprietária.
+A experiência visual foi restaurada com as fotografias históricas reais já presentes no projeto original e com a imagem aprovada da área externa com rede.
 
-Até nova validação:
-- o site exibe um aviso neutro no lugar das fotos da casa;
-- o Android usa fallback visual neutro nos ambientes;
-- nenhuma imagem ilustrativa deve ser apresentada como foto real da propriedade;
-- novas fotos só devem ser publicadas após conferência com os arquivos originais.
+Regras de governança:
+- não usar imagens ilustrativas como se fossem fotos da propriedade;
+- Web e Android utilizam os mesmos arquivos canônicos;
+- novas fotos só entram após validação da proprietária;
+- descrições de ambientes permanecem objetivas e sem detalhamento decorativo desnecessário.
+
+## Consolidação v2.3.2
+
+A apresentação volta a se aproximar da estrutura visual do protótipo do AI Studio, sem substituir o backend endurecido do GitHub. Permanecem:
+- LGPD e minimização de dados;
+- painel administrativo protegido, MFA/TOTP e sessões curtas;
+- auditoria e governança;
+- cálculo e revalidação de preço no servidor;
+- dados bancários fora do site público;
+- pagamento tratado pelo WhatsApp e confirmação somente após conciliação administrativa;
+- Guia Vênus integrado ao site;
+- avaliações públicas somente após estadia concluída e moderação.
+
+O e-mail de contato continua pendente de substituição e não deve ser tratado como canal definitivo.
+
+### Revisão final de segurança v2.3.2
+
+- o início do fluxo de pagamento pelo WhatsApp é validado também no backend;
+- termo vigente aprovado, elegibilidade da reserva e saldo pendente são verificados antes do handoff;
+- avaliações públicas são renderizadas como texto, sem interpretar HTML fornecido por hóspedes;
+- o aviso de pagamento continua sem equivaler a conciliação ou confirmação bancária.
