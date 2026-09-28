@@ -1,4 +1,4 @@
-﻿name: Security and build checks
+name: Security and build checks
 
 on:
   push:
@@ -31,7 +31,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
         with:
           gradle-version: '8.9'
       - run: gradle --no-daemon lintDebug assembleDebug assembleRelease
