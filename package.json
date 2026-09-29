@@ -1,9 +1,9 @@
 {
   "name": "venus-beach-house",
-  "version": "2.3.3",
+  "version": "2.3.4",
   "private": true,
   "type": "module",
-  "description": "Vênus Beach House — Android + API financeira controlada + Guia Vênus PB",
+  "description": "Vênus Casa de Praia — Android + API financeira controlada + Guia Vênus PB",
   "engines": {
     "node": ">=24.0.0"
   },

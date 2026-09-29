@@ -55,7 +55,7 @@ fun PropertyOverview(
             Box(modifier = Modifier.fillMaxSize()) {
                 AssetImage(
                     assetPath = house.heroMainAsset,
-                    contentDescription = "Piscina em L e Churrasqueira na Vênus Beach House",
+                    contentDescription = "Piscina em L e Churrasqueira na Vênus Casa de Praia",
                     modifier = Modifier.fillMaxSize(),
                     shape = RoundedCornerShape(24.dp)
                 )

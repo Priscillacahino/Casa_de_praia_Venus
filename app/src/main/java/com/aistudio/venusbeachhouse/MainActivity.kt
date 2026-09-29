@@ -58,13 +58,13 @@ fun VenusBeachHouseApp(viewModel: VenusViewModel) {
                     }.padding(end=4.dp)) {
                         AssetImage(assetPath=HouseData.HOUSE_INFO.catProfileAsset, contentDescription="Mascote Vênus", modifier=Modifier.size(36.dp), shape=CircleShape)
                         Spacer(Modifier.width(10.dp))
-                        Column { Text("Vênus Beach House",fontWeight=FontWeight.Bold);Text("Conde - PB",fontSize=10.sp,color=AmberDark) }
+                        Column { Text("Vênus Casa de Praia",fontWeight=FontWeight.Bold);Text("Conde - PB",fontSize=10.sp,color=AmberDark) }
                     }
                 },
                 actions = {
                     IconButton({viewModel.openGallery(0)}){Icon(Icons.Default.PhotoLibrary,"Galeria")}
                     IconButton({
-                        val share=Intent(Intent.ACTION_SEND).apply{type="text/plain";putExtra(Intent.EXTRA_TEXT,"Conheça a Vênus Beach House em Conde - PB: ${HouseData.HOUSE_INFO.instagramUrl}")}
+                        val share=Intent(Intent.ACTION_SEND).apply{type="text/plain";putExtra(Intent.EXTRA_TEXT,"Conheça a Vênus Casa de Praia em Conde - PB: ${HouseData.HOUSE_INFO.instagramUrl}")}
                         context.startActivity(Intent.createChooser(share,"Compartilhar"))
                     }){Icon(Icons.Default.Share,"Compartilhar")}
                 },
@@ -81,7 +81,7 @@ fun VenusBeachHouseApp(viewModel: VenusViewModel) {
         },
         floatingActionButton = {
             FloatingActionButton(onClick={
-                val url="https://api.whatsapp.com/send?phone=${HouseData.HOUSE_INFO.whatsappNumber}&text=${Uri.encode("Olá! Gostaria de falar sobre a Vênus Beach House.")}"
+                val url="https://api.whatsapp.com/send?phone=${HouseData.HOUSE_INFO.whatsappNumber}&text=${Uri.encode("Olá! Gostaria de falar sobre a Vênus Casa de Praia.")}"
                 context.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(url)))
             },containerColor=WhatsAppGreen,contentColor=Color.White,shape=CircleShape){Icon(Icons.Default.Chat,"WhatsApp")}
         }

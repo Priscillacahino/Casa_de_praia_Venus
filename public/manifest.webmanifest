@@ -1,6 +1,6 @@
 {
   "id": "/",
-  "name": "Vênus Beach House",
+  "name": "Vênus Casa de Praia",
   "short_name": "Vênus",
   "description": "Casa, ambientes, reservas e Guia Vênus PB.",
   "lang": "pt-BR",
@@ -35,7 +35,7 @@
     {
       "name": "Guia Vênus PB",
       "short_name": "Guia PB",
-      "url": "/guia"
+      "url": "/guia/index.html"
     }
   ]
 }

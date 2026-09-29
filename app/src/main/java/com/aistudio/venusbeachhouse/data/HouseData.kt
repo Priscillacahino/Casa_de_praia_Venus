@@ -13,8 +13,8 @@ object HouseData {
         "https://raw.githubusercontent.com/Priscillacahino/guia_lugares_pb/main/guia_offline.html"
 
     val HOUSE_INFO = HouseInfo(
-        name = "Vênus Beach House",
-        tagline = "Venus, sua casa de praia!",
+        name = "Vênus Casa de Praia",
+        tagline = "Vênus, sua casa de praia!",
         intro = "Aqui você viverá momentos de alegria, confraternização e união. Será um refúgio para relaxar e se divertir junto aos amigos e à família.",
         locationShort = "Conde, Litoral Sul da Paraíba, Brasil",
         locationDetails = "Estamos no litoral sul da Paraíba, próximos à Praia do Amor, Jacumã, Carapibus, Tabatinga e Coqueirinho, em Conde.",
@@ -36,11 +36,11 @@ object HouseData {
         RoomItem("quarto-01","Quarto 01 - Fui abduzido 👽🛸","Conforto para descansar","👽🛸","quarto",
             "Este quarto conta com cama de casal, ventilador e porta para acesso ao banheiro principal.",
             listOf("Cama de casal","Ventilador","Acesso ao banheiro principal"),
-            "images/quarto_abduzido.jpg","Quarto 01 - Fui Abduzido na Vênus Beach House"),
+            "images/quarto_abduzido.jpg","Quarto 01 - Fui Abduzido na Vênus Casa de Praia"),
         RoomItem("quarto-02","Quarto 02 - Escritório no Paraíso 💻🌴","Descanso & Home Office","💻🌴","quarto",
             "Este quarto conta com cama de casal retrátil, ventilador, mesa retrátil, cadeira e suporte para monitor.",
             listOf("Cama de casal retrátil","Mesa retrátil e cadeira","Suporte para monitor","Ventilador"),
-            "images/quarto_escritorio.jpg","Quarto 02 - Escritório no Paraíso na Vênus Beach House"),
+            "images/quarto_escritorio.jpg","Quarto 02 - Escritório no Paraíso na Vênus Casa de Praia"),
         RoomItem("area-externa-02","Área externa 02 - Suave na nave 🌴🪢","Rede & Jardim Suspenso","🌴🪢","externo",
             "Neste espaço temos o nosso jardim suspenso para dar vida ao ambiente e uma rede tipicamente nordestina para que você possa relaxar ao ar livre.",
             listOf("Rede nordestina","Jardim suspenso","Espaço para descanso"),
@@ -95,6 +95,6 @@ object HouseData {
         GalleryPhoto("p7","Cozinha - Chef no rolê 🍳🧑‍🍳","Cômodos","Cozinha equipada para a estadia.","images/cozinha_chef.jpg"),
         GalleryPhoto("p8","Praia de Tabatinga","Praias de Conde","Falésias e piscinas naturais.","images/tabatinga.jpg"),
         GalleryPhoto("p9","Praia de Coqueirinho","Praias de Conde","Coqueirais, cânions e mirantes.","images/coqueirinho.jpg"),
-        GalleryPhoto("p10","Vênus Astronauta","Mascote","A mascote da Vênus Beach House.","images/cat_profile.jpg")
+        GalleryPhoto("p10","Vênus Astronauta","Mascote","A mascote da Vênus Casa de Praia.","images/cat_profile.jpg")
     )
 }

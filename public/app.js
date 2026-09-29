@@ -261,7 +261,7 @@ whatsappButton?.addEventListener("click", async () => {
     currentReservationState.whatsappStarted = true;
     const d = currentReservationState;
     const message = [
-      "Olá! Quero continuar a minha solicitação de reserva da Vênus Beach House.",
+      "Olá! Quero continuar a minha solicitação de reserva da Vênus Casa de Praia.",
       `Protocolo: ${d.id}`,
       `Datas: ${d.checkIn} a ${d.checkOut}`,
       `Hóspedes: ${d.guests}`,
