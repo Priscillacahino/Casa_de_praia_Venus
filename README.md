@@ -1,259 +1,200 @@
+<div align="center">
+
+<img src="public/images/venus-logo.jpg" alt="Vênus Casa de Praia" width="130">
+
 # Vênus Casa de Praia 🏖️
 
-Aplicação em evolução para apoiar a futura operação da **Vênus Casa de Praia**, em Conde-PB, reunindo experiência do hóspede, solicitação de reservas, controles administrativos e o **Guia Vênus PB**.
+### Uma casa de praia real transformada em uma experiência digital.
 
-> **Status: pré-produção.** O código contém controles técnicos para reservas e registros financeiros, mas pagamentos reais só devem ser habilitados depois de concluir o *production gate* descrito em `docs/AUDITORIA_RIGOROSA_2026-09-18.md`.
+**Conde · Litoral Sul da Paraíba**
 
-## Dois aplicativos em um
+[Ver site](https://casa-de-praia-venus.vercel.app/) ·
+[Instagram](https://www.instagram.com/venuscasadepraiapb/) ·
+[Guia Vênus PB](https://guia-lugares-pb.vercel.app/)
 
-A experiência passa a unir dois projetos sem misturar suas responsabilidades:
+</div>
 
-- **Casa Vênus:** informações da hospedagem, contato, consulta de reserva e fluxo administrativo;
-- **Guia Vênus PB:** João Pessoa, Cabedelo e Conde, sincronizado do repositório `Priscillacahino/guia_lugares_pb`, com leitura dentro do aplicativo e download offline.
+---
 
-O guia continua independente, então pode evoluir sem duplicar manualmente dezenas de locais dentro do projeto da casa.
+<p align="center">
+  <img src="public/images/piscina_churrasqueira.jpg" alt="Vênus Casa de Praia" width="900">
+</p>
 
-## Experiência mobile da casa
+## 🌴 O projeto
 
-A interface web também funciona como uma apresentação da hospedagem em telas pequenas:
+A **Vênus Casa de Praia** nasceu como um projeto pessoal para organizar e melhorar a experiência de quem se hospeda na casa.
 
-- galeria responsiva de ambientes com ampliação em modal;
-- navegação horizontal por cartões no celular;
-- imagens servidas pelo próprio projeto, sem CDN obrigatória;
-- atalhos PWA para ambientes, reserva e Guia Vênus;
-- página offline explícita para diferenciar conteúdo em cache de funções que exigem servidor;
-- interface web carregada com sucesso em Windows e acessada por dispositivo móvel na mesma rede local durante a homologação.
+A ideia é simples: quem conhece a Vênus pelo Instagram consegue entrar no site, conhecer os ambientes, consultar datas, iniciar uma reserva, continuar o atendimento pelo WhatsApp e acompanhar a confirmação.
 
-O inventário e a curadoria das imagens ficam em `docs/INVENTARIO_IMAGENS.md`.
+Além da hospedagem, o projeto também conecta o hóspede ao **Guia Vênus PB**, com indicações para aproveitar melhor João Pessoa e o Litoral Sul da Paraíba.
 
-## Arquitetura
+> Um projeto que une **experiência do cliente, organização de processos, UX/UI e tecnologia** em uma situação real.
 
-```text
-Hóspede
- ├─ Android (Kotlin + Jetpack Compose)
- │   ├─ Casa / cômodos / praias / contato
- │   ├─ Reserva segura → portal web quando configurado
- │   └─ Guia Vênus → cache + WebView restrita + download
- │
- └─ Web/PWA
-     ├─ Cotação → API (fonte autoritativa)
-     ├─ Solicitação idempotente
-     └─ Guia Vênus → /guia
+---
 
-Administração
- └─ /admin
-     ├─ MFA/TOTP em produção
-     ├─ tarifas e configuração
-     ├─ PDF assinado + validação humana
-     ├─ pagamento/estorno conciliado
-     ├─ moderação de avaliações
-     └─ auditoria + CSV + ICS
 
-Backend Node 24 + SQLite
- ├─ regras de preço/disponibilidade
- ├─ transações e unicidade bancária
- ├─ compliance do termo
- ├─ trilha encadeada por hash
- ├─ backup criptografável
- └─ retenção/anomização controlada
-```
+## 🌐 Veja o projeto em funcionamento
 
-## Motor de reservas V2
+A Vênus já possui uma experiência digital navegável, criada para apresentar a casa, facilitar o contato e organizar a jornada do hóspede.
 
-O projeto agora inclui um fluxo de solicitação mais próximo de operação real:
+<p align="center">
+  <a href="https://casa-de-praia-venus.vercel.app/">
+    <img src="docs/images/venus-site-preview.png" alt="Prévia visual da experiência digital da Vênus Casa de Praia" width="100%">
+  </a>
+</p>
 
-- política configurável de antecedência, duração máxima e capacidade;
-- prioridade temporária de datas com expiração automática;
-- fila segura para solicitações concorrentes;
-- código privado de acompanhamento do hóspede, sem conta e sem token na URL;
-- consulta de situação, valores recebidos e saldo;
-- pagamento negociado manualmente pelo WhatsApp oficial, sem publicar dados bancários no site;
-- hóspede pode informar que realizou o pagamento, mas somente a conciliação administrativa altera o valor recebido;
-- histórico operacional por reserva;
-- solicitação de cancelamento autenticada pelo mesmo código privado, com análise administrativa e sem estorno automático.
+<p align="center">
+  <strong>👉 <a href="https://casa-de-praia-venus.vercel.app/">Acessar a Vênus Casa de Praia</a></strong>
+</p>
 
-Detalhes: `docs/MOTOR_RESERVAS_V2_2026-09-18.md`.
+A imagem acima reúne elementos reais do projeto e da identidade visual para apresentar, em uma única composição, a evolução da casa para uma experiência digital.
 
-## Princípios financeiros
+---
 
-- valores em **centavos inteiros**;
-- preço calculado e revalidado no servidor;
-- o Android não possui tabela de preço hardcoded;
-- comprovante não equivale a pagamento recebido;
-- pagamento só é registrado como liquidado depois de conferência bancária;
-- referência bancária é única;
-- uma reserva só pode ser confirmada após termo vigente + PDF validado + sinal mínimo conforme percentual configurado + nova checagem de conflito;
-- estorno não pode tornar o saldo negativo e pagamento não pode ultrapassar o total contratado.
+## 🏡 Conheça a casa
 
-## Segurança incorporada
+<table>
+<tr>
+<td width="50%" align="center">
+<img src="public/images/quarto_abduzido.jpg" width="100%"><br>
+<b>Fui abduzido 👽🛸</b>
+</td>
+<td width="50%" align="center">
+<img src="public/images/quarto_escritorio.jpg" width="100%"><br>
+<b>Escritório no Paraíso 💻🌴</b>
+</td>
+</tr>
 
-- senha administrativa com `scrypt`;
-- MFA/TOTP obrigatório em produção;
-- sessão administrativa HttpOnly + SameSite Strict, com duração de 2 horas;
-- proteção por origem em operações de escrita;
-- rate limiting para login e alterações;
-- CSP, HSTS em produção, `nosniff`, bloqueio de framing e permissões de navegador restritas;
-- auditoria com identificador de requisição e cadeia de hashes;
-- backup AES-256-GCM quando chave configurada — obrigatório em produção;
-- painel administrativo fora do cache offline e marcado para não indexação;
-- dados bancários não são publicados no fluxo público; o WhatsApp funciona apenas como ponte de atendimento e o site permanece como fonte oficial do status;
-- Android sem Auto Backup e sem tráfego HTTP claro;
-- release Android com minificação/shrink;
-- nenhuma senha, banco, backup, keystore ou `.env` deve ser versionado.
+<tr>
+<td width="50%" align="center">
+<img src="public/images/area_externa_rede.jpg" width="100%"><br>
+<b>Suave na nave 🌴🪢</b>
+</td>
+<td width="50%" align="center">
+<img src="public/images/piscina_churrasqueira.jpg" width="100%"><br>
+<b>Ilhado em Vênus 🏊‍♂️🥩</b>
+</td>
+</tr>
 
-## Rodar o backend
+<tr>
+<td width="50%" align="center">
+<img src="public/images/cozinha_chef.jpg" width="100%"><br>
+<b>Chef no rolê 🍳🧑‍🍳</b>
+</td>
+<td width="50%" align="center">
+<img src="public/images/sala_divindade.jpg" width="100%"><br>
+<b>Divindade ancestral 🎬✨</b>
+</td>
+</tr>
+</table>
 
-Requer **Node.js 24+**. O backend endurecido não depende de pacotes NPM externos em runtime.
+<p align="center">
+🏊 Piscina privativa &nbsp; • &nbsp;
+🔥 Churrasqueira &nbsp; • &nbsp;
+💻 Home Office &nbsp; • &nbsp;
+🐾 Pet Friendly &nbsp; • &nbsp;
+👥 Até 6 hóspedes
+</p>
 
-```bash
-cp .env.example .env
-npm run admin:password
-npm run admin:totp
-npm run reservation:secret
-npm test
-npm run lint
-npm start
-```
+---
 
-Em produção, configure os segredos no provedor — não no repositório. `RESERVATION_TOKEN_SECRET` deve ser exclusivo do acompanhamento das reservas.
+## 🌊 Perto de alguns dos cenários mais bonitos da Paraíba
 
-Rotas:
+<table>
+<tr>
+<td width="50%" align="center">
+<img src="public/images/tabatinga.jpg" width="100%"><br>
+<b>Tabatinga</b>
+</td>
+<td width="50%" align="center">
+<img src="public/images/coqueirinho.jpg" width="100%"><br>
+<b>Coqueirinho</b>
+</td>
+</tr>
+</table>
 
-- `/` — experiência web do hóspede
-- `/admin` — painel administrativo
-- `/guia/index.html` — Guia Vênus integrado
-- `/guia-venus-offline.html` — arquivo HTML autônomo para uso offline
-- `/api/health` — health check
+A casa fica em **Conde-PB**, próxima a Jacumã, Carapibus, Praia do Amor, Tabatinga, Coqueirinho e outros destinos do Litoral Sul.
 
-## Android
+---
 
-O aplicativo móvel usa Kotlin + Jetpack Compose. Para o botão **Abrir reserva segura** apontar ao portal real, configure:
+## ✨ Da descoberta à confirmação
 
-```properties
-VENUS_BOOKING_URL=https://seu-dominio/#reserva
-```
+<p align="center">
 
-O workflow de CI usa JDK 17 + Gradle 8.9. A chave de assinatura de produção deve ficar fora do GitHub.
+**Instagram**
+↓
+**Conhece a casa**
+↓
+**Consulta as datas**
+↓
+**Solicita a reserva**
+↓
+**Continua pelo WhatsApp**
+↓
+**Acompanha a confirmação no site**
 
-## Guia Vênus
+</p>
 
-Fonte oficial:
+O objetivo é deixar a jornada mais clara, simples e organizada, sem depender de várias conversas e informações espalhadas.
 
-`https://github.com/Priscillacahino/guia_lugares_pb`
+---
 
-O módulo baixa somente por HTTPS, valida o conteúdo básico, mantém cache privado e restringe a WebView. Links externos são abertos no navegador do dispositivo.
+## 🗺️ Guia Vênus PB
 
-## Auditoria e documentação
+O projeto também integra um guia turístico próprio com praias, gastronomia e lugares para conhecer.
 
-- `docs/AUDITORIA_RIGOROSA_2026-09-18.md` — achados, correções e riscos residuais
-- `docs/THREAT_MODEL.md` — modelo de ameaças
-- `docs/DEPLOY.md` — publicação segura e backups
-- `docs/HOMOLOGACAO_V2_2.md` — roteiro de homologação e gates externos
-- `docs/STATUS_V2_2_0.md` — estado consolidado da versão 2.2.0
-- `docs/PRODUCTION_READINESS_2026-09-28.md` — hardening adicional e bloqueios externos restantes
-- `docs/INCIDENT_RESPONSE.md` — procedimento operacional de resposta a incidentes
-- `SECURITY.md` — regras de segurança do repositório
-- `docs/termo-compromisso-minuta.txt` — minuta existente; continua condicionada à revisão jurídica
+A ideia é que a experiência não termine na hospedagem: a Vênus também ajuda o visitante a descobrir a região.
 
-## Antes de operar com dinheiro real
+<p align="center">
+<b>Casa + hospedagem + turismo local em uma única experiência.</b>
+</p>
 
-A revisão jurídica, o domínio HTTPS, os segredos/MFA, os dados bancários, o teste de backup/restore, o APK release e os testes em dispositivo real são **bloqueios de produção**, não itens opcionais.
+---
 
-## Distribuição direta do Android
+## 🐾 A anfitriã
 
-O aplicativo Android será distribuído pela página oficial da casa, acessada a partir do Instagram, e não pela Google Play. O fluxo exige APK release assinado, URL HTTPS e SHA-256 publicado. Consulte `docs/DISTRIBUICAO_ANDROID_DIRETA.md`.
-## Ajuste v2.3.1 — galeria e consistência visual
+<p align="center">
+<img src="public/images/cat_profile.jpg" alt="Vênus" width="220">
+</p>
 
-- fotos dos ambientes Web e Android padronizadas para os mesmos arquivos canônicos;
-- aliases antigos que apontavam para imagens duplicadas foram substituídos pelo conteúdo correto;
-- site deixa de depender dos nomes temporários com timestamp;
-- cache PWA renovado para evitar exibição de fotos antigas após atualização.
+A identidade do projeto é inspirada na **Vênus**, mascote da casa.
 
-## Imagens da casa — curadoria validada
+Ela representa o lado leve, acolhedor e divertido da experiência — presente desde o visual até os nomes dos ambientes.
 
-A experiência visual foi restaurada com as fotografias históricas reais já presentes no projeto original e com a imagem aprovada da área externa com rede.
+---
 
-Regras de governança:
-- não usar imagens ilustrativas como se fossem fotos da propriedade;
-- Web e Android utilizam os mesmos arquivos canônicos;
-- novas fotos só entram após validação da proprietária;
-- descrições de ambientes permanecem objetivas e sem detalhamento decorativo desnecessário.
+## 💡 O que este projeto representa
 
-## Consolidação v2.3.2
+Este projeto foi criado para explorar, na prática:
 
-A apresentação volta a se aproximar da estrutura visual do protótipo do AI Studio, sem substituir o backend endurecido do GitHub. Permanecem:
-- LGPD e minimização de dados;
-- painel administrativo protegido, MFA/TOTP e sessões curtas;
-- auditoria e governança;
-- cálculo e revalidação de preço no servidor;
-- dados bancários fora do site público;
-- pagamento tratado pelo WhatsApp e confirmação somente após conciliação administrativa;
-- Guia Vênus integrado ao site;
-- avaliações públicas somente após estadia concluída e moderação.
+**CX / Customer Experience** · **Customer Success** · **UX/UI** · **Processos** · **Reservas** · **Atendimento** · **Tecnologia**
 
-O e-mail de contato continua pendente de substituição e não deve ser tratado como canal definitivo.
+O foco não é apenas desenvolver uma aplicação, mas pensar na experiência completa: antes, durante e depois da hospedagem.
 
-### Revisão final de segurança v2.3.2
+---
 
-- o início do fluxo de pagamento pelo WhatsApp é validado também no backend;
-- termo vigente aprovado, elegibilidade da reserva e saldo pendente são verificados antes do handoff;
-- avaliações públicas são renderizadas como texto, sem interpretar HTML fornecido por hóspedes;
-- o aviso de pagamento continua sem equivaler a conciliação ou confirmação bancária.
+## 🛠️ Por trás da experiência
 
-## v2.3.3 — contato direto, termo GOV.BR e política 20/80
+`Web/PWA` · `Node.js` · `SQLite` · `JavaScript` · `Kotlin` · `Jetpack Compose` · `GitHub Actions`
 
-- logotipo oficial no cabeçalho;
-- WhatsApp e Instagram acessíveis sem obrigar abertura de reserva;
-- formulário de contato como alternativa;
-- informação de cascata removida;
-- descrições e emojis dos ambientes alinhados;
-- valores fictícios removidos da tabela pública; a cotação do servidor é a fonte válida;
-- sinal de 20% e saldo de 80% no check-in;
-- política de cancelamento: 100% do sinal com 48h ou mais, 50% entre 24h e menos de 48h e 0% abaixo de 24h, ressalvados direitos legais;
-- termo personalizado, assinatura no GOV.BR, upload do PDF e validação administrativa;
-- pagamento da reserva só é liberado depois da validação do termo;
-- dados bancários continuam fora do site público;
-- backend SQLite é bloqueado em Vercel Functions no modo produção para impedir falsa persistência;
-- Guia Vênus, MFA/TOTP, auditoria, privacidade, backups e conciliação permanecem.
+Os detalhes de arquitetura, segurança, reservas, pagamentos e homologação ficam na pasta [`docs/`](docs/), mantendo este README focado na **apresentação do projeto**.
 
-## v2.3.4 — marca, texto e Guia Vênus offline
+---
 
-- nome público padronizado para **Vênus Casa de Praia**;
-- título inicial corrigido para **Vênus, sua casa de praia!**;
-- revisão de pontuação e concordância na página principal;
-- retirada do texto “Fotos reais e nomenclaturas originais, com descrições simples e objetivas.”;
-- Guia Vênus disponível em rota estática `/guia/index.html`, compatível com a hospedagem do front-end na Vercel;
-- versão autônoma `/guia-venus-offline.html`, com dados, busca e filtros incorporados no próprio arquivo;
-- cache PWA atualizado para incluir o Guia Vênus;
-- backend mantém fallback local do guia e deixa de depender do arquivo remoto inexistente `guia_offline.html`.
+## 🚧 Status
 
-## v2.3.5 — português/espanhol com seletor por bandeiras
+**Projeto em evolução e homologação.**
 
-- interface pública Web/PWA com seletor **🇧🇷 Português / 🇪🇸 Español** no cabeçalho;
-- padrão visual inspirado no seletor do portfólio: dois botões compactos, lado a lado, com idioma ativo destacado;
-- idioma salvo somente no navegador do visitante;
-- textos da hospedagem, formulários, estados de reserva, mensagens de interface e WhatsApp adaptados para espanhol;
-- nomes próprios dos ambientes e a marca **Vênus Casa de Praia** permanecem inalterados;
-- valores continuam em BRL e são formatados conforme o idioma selecionado;
-- conteúdo de avaliações escrito pelos hóspedes não é traduzido automaticamente;
-- documento contratual/termo continua sendo gerado em português (Brasil), evitando divergência entre versões jurídicas;
-- painel administrativo permanece em português;
-- cache PWA atualizado para incluir o módulo de idiomas.
+A experiência visual e os principais fluxos já estão implementados. A operação comercial definitiva ainda depende da conclusão das etapas de produção e validação.
 
-A tradução é de interface. As regras de segurança, LGPD, reserva, termo GOV.BR, política 20/80, pagamento por WhatsApp e conciliação bancária não são alteradas.
+---
 
-## v2.3.6 — fluxo Instagram, disponibilidade e retorno do WhatsApp
+<div align="center">
 
-- calendário visual consulta a disponibilidade diretamente na API do servidor;
-- datas confirmadas, bloqueadas ou com prioridade temporária ativa aparecem indisponíveis;
-- seleção visual preenche os mesmos campos de check-in/check-out usados pela cotação autoritativa;
-- protocolo e código privado podem permanecer temporariamente no `sessionStorage` da aba para facilitar o retorno do WhatsApp;
-- código privado continua fora da URL e não é enviado ao WhatsApp;
-- ao retornar para a aba, o site consulta novamente o andamento sem polling contínuo;
-- linha de progresso mostra Datas → Solicitação → Termo → WhatsApp/pagamento → Conferência → Confirmada;
-- confirmação fica destacada quando o backend informa `confirmed`;
-- novos elementos mantêm português/espanhol;
-- `.env.example` deixa de referenciar o antigo `guia_offline.html`;
-- PWA atualizado para `venus-shell-v12`.
+### Vênus, sua casa de praia! 🌴
 
-O fluxo financeiro permanece seguro: informar pagamento não equivale a conciliação; a confirmação continua condicionada às regras do servidor e à conferência administrativa.
+**Projeto pessoal de Priscilla Cahino**
+
+[GitHub](https://github.com/Priscillacahino)
+
+</div>
