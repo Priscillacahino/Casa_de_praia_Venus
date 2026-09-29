@@ -1,6 +1,8 @@
 const $ = (s) => document.querySelector(s);
-const money = (cents) => new Intl.NumberFormat("pt-BR", { style:"currency", currency:"BRL" }).format((cents || 0) / 100);
-const when = (iso) => iso ? new Intl.DateTimeFormat("pt-BR", { dateStyle:"short", timeStyle:"short" }).format(new Date(iso)) : "—";
+const tr = (text) => window.VenusI18n?.translate(text) || text;
+const locale = () => window.VenusI18n?.getLocale?.() || "pt-BR";
+const money = (cents) => new Intl.NumberFormat(locale(), { style:"currency", currency:"BRL" }).format((cents || 0) / 100);
+const when = (iso) => iso ? new Intl.DateTimeFormat(locale(), { dateStyle:"short", timeStyle:"short" }).format(new Date(iso)) : "—";
 
 const api = async (path, options = {}) => {
   const response = await fetch("/api" + path, {
@@ -8,8 +10,8 @@ const api = async (path, options = {}) => {
     ...options,
     headers:{ ...(options.body ? { "Content-Type":"application/json" } : {}), ...(options.headers || {}) },
   });
-  const data = await response.json().catch(() => ({ error:"Resposta inválida do servidor." }));
-  if (!response.ok) throw new Error(data.error || "Não foi possível concluir.");
+  const data = await response.json().catch(() => ({ error:tr("Resposta inválida do servidor.") }));
+  if (!response.ok) throw new Error(tr(data.error || "Não foi possível concluir."));
   return data;
 };
 
@@ -173,10 +175,10 @@ trackingForm.addEventListener("submit", async (e) => {
 
 cancellationButton?.addEventListener("click", async () => {
   if (!currentReservationAccess) return;
-  const reason = prompt("Motivo do cancelamento (opcional, até 1000 caracteres):", "");
+  const reason = prompt(tr("Motivo do cancelamento (opcional, até 1000 caracteres):"), "");
   if (reason === null) return;
-  if (reason.length > 1000) return alert("O motivo deve ter no máximo 1000 caracteres.");
-  if (!confirm("Registrar a solicitação de cancelamento? Isso não gera estorno automático; a administração fará a análise e o eventual reembolso.")) return;
+  if (reason.length > 1000) return alert(tr("O motivo deve ter no máximo 1000 caracteres."));
+  if (!confirm(tr("Registrar a solicitação de cancelamento? Isso não gera estorno automático; a administração fará a análise e o eventual reembolso."))) return;
   cancellationButton.disabled = true;
   try {
     await api(`/reservations/${encodeURIComponent(currentReservationAccess.id)}/cancellation-request`, {
@@ -184,10 +186,10 @@ cancellationButton?.addEventListener("click", async () => {
       headers:{ "X-Reservation-Token":currentReservationAccess.token },
       body:JSON.stringify({ reason }),
     });
-    alert("Solicitação de cancelamento registrada. Acompanhe o andamento por este mesmo protocolo e código privado.");
+    alert(tr("Solicitação de cancelamento registrada. Acompanhe o andamento por este mesmo protocolo e código privado."));
     await loadReservationStatus();
   } catch (e) {
-    alert(e.message);
+    alert(tr(e.message));
   } finally {
     cancellationButton.disabled = false;
   }
@@ -252,7 +254,7 @@ whatsappButton?.addEventListener("click", async () => {
       return;
     }
     const phone = String(publicSettings.whatsappNumber || "").replace(/\D/g, "");
-    if (!phone) throw new Error("WhatsApp oficial não configurado.");
+    if (!phone) throw new Error(tr("WhatsApp oficial não configurado."));
     await api(`/reservations/${encodeURIComponent(currentReservationAccess.id)}/whatsapp-started`, {
       method:"POST",
       headers:{ "X-Reservation-Token":currentReservationAccess.token },
@@ -260,13 +262,22 @@ whatsappButton?.addEventListener("click", async () => {
     });
     currentReservationState.whatsappStarted = true;
     const d = currentReservationState;
-    const message = [
-      "Olá! Quero continuar a minha solicitação de reserva da Vênus Casa de Praia.",
-      `Protocolo: ${d.id}`,
-      `Datas: ${d.checkIn} a ${d.checkOut}`,
-      `Hóspedes: ${d.guests}`,
-      "Gostaria de receber as orientações para pagamento por Pix ou transferência.",
-    ].join("\n");
+    const isSpanish = window.VenusI18n?.getLanguage?.() === "es";
+    const message = isSpanish
+      ? [
+          "¡Hola! Quiero continuar mi solicitud de reserva de Vênus Casa de Praia.",
+          `Protocolo: ${d.id}`,
+          `Fechas: ${d.checkIn} a ${d.checkOut}`,
+          `Huéspedes: ${d.guests}`,
+          "Me gustaría recibir las instrucciones para el pago por Pix o transferencia.",
+        ].join("\n")
+      : [
+          "Olá! Quero continuar a minha solicitação de reserva da Vênus Casa de Praia.",
+          `Protocolo: ${d.id}`,
+          `Datas: ${d.checkIn} a ${d.checkOut}`,
+          `Hóspedes: ${d.guests}`,
+          "Gostaria de receber as orientações para pagamento por Pix ou transferência.",
+        ].join("\n");
     paymentInstructions.className = "notice ok";
     paymentInstructions.textContent = "O WhatsApp será aberto com os dados básicos da reserva. O código privado não será enviado.";
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
@@ -278,7 +289,7 @@ whatsappButton?.addEventListener("click", async () => {
 
 reportPaymentButton?.addEventListener("click", async () => {
   if (!currentReservationAccess) return;
-  if (!confirm("Você já realizou o Pix ou a transferência combinada pelo WhatsApp? Este aviso não confirma o pagamento; a administração ainda fará a conferência bancária.")) return;
+  if (!confirm(tr("Você já realizou o Pix ou a transferência combinada pelo WhatsApp? Este aviso não confirma o pagamento; a administração ainda fará a conferência bancária."))) return;
   reportPaymentButton.disabled = true;
   paymentInstructions.className = "notice";
   paymentInstructions.textContent = "Registrando seu aviso de pagamento…";
@@ -316,14 +327,14 @@ prepareTermButton?.addEventListener("click", async () => {
     const pkg=await api(`/reservations/${encodeURIComponent(currentReservationAccess.id)}/term-package`,{headers:{"X-Reservation-Token":currentReservationAccess.token}}); const r=pkg.reservation;
     const header=["QUADRO DA RESERVA GERADO PELO SISTEMA",`Protocolo: ${r.id}`,`Hóspede: ${r.name}`,`Período: ${r.checkIn} a ${r.checkOut}`,`Hóspedes: ${r.guests}`,`Valor total: ${money(r.totalCents)}`,`Sinal de 20%: ${money(r.depositCents)}`,`Saldo de 80%: ${money(r.balanceCents)}`,`Versão do termo: ${pkg.termVersion}`,`SHA-256 do termo: ${pkg.termHash}`].join("\n");
     printableTermText.textContent=`${header}\n\n${pkg.termText}`; printableTerm.classList.remove("hidden"); window.print();
-  }catch(error){alert(error.message)}finally{prepareTermButton.disabled=false}
+  }catch(error){alert(tr(error.message))}finally{prepareTermButton.disabled=false}
 });
 
 signedTermFile?.addEventListener("change", async () => {
   const file=signedTermFile.files?.[0]; if(!file||!currentReservationAccess)return;
-  if(file.type!=="application/pdf"&&!file.name.toLowerCase().endsWith(".pdf")){signedTermFile.value="";return alert("Envie o PDF original assinado.")}
-  if(file.size>3*1024*1024){signedTermFile.value="";return alert("O PDF deve ter no máximo 3 MB.")}
-  if(!confirm("Confirma o envio do PDF assinado? A administração ainda validará a assinatura e a integridade do documento.")){signedTermFile.value="";return}
+  if(file.type!=="application/pdf"&&!file.name.toLowerCase().endsWith(".pdf")){signedTermFile.value="";return alert(tr("Envie o PDF original assinado."))}
+  if(file.size>3*1024*1024){signedTermFile.value="";return alert(tr("O PDF deve ter no máximo 3 MB."))}
+  if(!confirm(tr("Confirma o envio do PDF assinado? A administração ainda validará a assinatura e a integridade do documento."))){signedTermFile.value="";return}
   try{const bytes=new Uint8Array(await file.arrayBuffer());let binary="";for(let i=0;i<bytes.length;i+=0x8000)binary+=String.fromCharCode(...bytes.subarray(i,i+0x8000));await api(`/reservations/${encodeURIComponent(currentReservationAccess.id)}/signed-term`,{method:"POST",headers:{"X-Reservation-Token":currentReservationAccess.token},body:JSON.stringify({base64:btoa(binary)})});termStatus.className="notice ok";termStatus.textContent="PDF assinado enviado. Aguarde a validação administrativa antes do pagamento.";signedTermFile.value="";await loadReservationStatus()}catch(error){termStatus.className="notice error";termStatus.textContent=error.message}
 });
 
