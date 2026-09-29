@@ -226,3 +226,18 @@ O e-mail de contato continua pendente de substituição e não deve ser tratado 
 - versão autônoma `/guia-venus-offline.html`, com dados, busca e filtros incorporados no próprio arquivo;
 - cache PWA atualizado para incluir o Guia Vênus;
 - backend mantém fallback local do guia e deixa de depender do arquivo remoto inexistente `guia_offline.html`.
+
+## v2.3.5 — português/espanhol com seletor por bandeiras
+
+- interface pública Web/PWA com seletor **🇧🇷 Português / 🇪🇸 Español** no cabeçalho;
+- padrão visual inspirado no seletor do portfólio: dois botões compactos, lado a lado, com idioma ativo destacado;
+- idioma salvo somente no navegador do visitante;
+- textos da hospedagem, formulários, estados de reserva, mensagens de interface e WhatsApp adaptados para espanhol;
+- nomes próprios dos ambientes e a marca **Vênus Casa de Praia** permanecem inalterados;
+- valores continuam em BRL e são formatados conforme o idioma selecionado;
+- conteúdo de avaliações escrito pelos hóspedes não é traduzido automaticamente;
+- documento contratual/termo continua sendo gerado em português (Brasil), evitando divergência entre versões jurídicas;
+- painel administrativo permanece em português;
+- cache PWA atualizado para incluir o módulo de idiomas.
+
+A tradução é de interface. As regras de segurança, LGPD, reserva, termo GOV.BR, política 20/80, pagamento por WhatsApp e conciliação bancária não são alteradas.
