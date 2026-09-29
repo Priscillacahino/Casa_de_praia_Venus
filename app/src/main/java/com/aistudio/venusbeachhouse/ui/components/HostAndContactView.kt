@@ -21,7 +21,7 @@ fun HostAndContactView(viewModel: VenusViewModel, state: VenusUiState, modifier:
     val context=LocalContext.current;val house=HouseData.HOUSE_INFO
     Column(modifier.fillMaxWidth().padding(16.dp)) {
         Text("Contato",style=MaterialTheme.typography.headlineMedium)
-        Text("Fale diretamente com a responsável pela Vênus Beach House.",modifier=Modifier.padding(top=6.dp,bottom=16.dp))
+        Text("Fale diretamente com a responsável pela Vênus Casa de Praia.",modifier=Modifier.padding(top=6.dp,bottom=16.dp))
         Card(shape=RoundedCornerShape(18.dp),modifier=Modifier.fillMaxWidth()) { Column(Modifier.padding(18.dp)) {
             Text("Canais oficiais",style=MaterialTheme.typography.titleLarge)
             Row(Modifier.fillMaxWidth().padding(top=12.dp),horizontalArrangement=Arrangement.spacedBy(8.dp)) {

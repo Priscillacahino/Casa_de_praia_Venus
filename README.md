@@ -1,6 +1,6 @@
-# Vênus Beach House 🏖️
+# Vênus Casa de Praia 🏖️
 
-Aplicação em evolução para apoiar a futura operação da **Vênus Beach House**, em Conde-PB, reunindo experiência do hóspede, solicitação de reservas, controles administrativos e o **Guia Vênus PB**.
+Aplicação em evolução para apoiar a futura operação da **Vênus Casa de Praia**, em Conde-PB, reunindo experiência do hóspede, solicitação de reservas, controles administrativos e o **Guia Vênus PB**.
 
 > **Status: pré-produção.** O código contém controles técnicos para reservas e registros financeiros, mas pagamentos reais só devem ser habilitados depois de concluir o *production gate* descrito em `docs/AUDITORIA_RIGOROSA_2026-09-18.md`.
 
@@ -121,8 +121,8 @@ Rotas:
 
 - `/` — experiência web do hóspede
 - `/admin` — painel administrativo
-- `/guia` — Guia Vênus integrado
-- `/guia?download=1` — download do guia
+- `/guia/index.html` — Guia Vênus integrado
+- `/guia-venus-offline.html` — arquivo HTML autônomo para uso offline
 - `/api/health` — health check
 
 ## Android
@@ -215,3 +215,14 @@ O e-mail de contato continua pendente de substituição e não deve ser tratado 
 - dados bancários continuam fora do site público;
 - backend SQLite é bloqueado em Vercel Functions no modo produção para impedir falsa persistência;
 - Guia Vênus, MFA/TOTP, auditoria, privacidade, backups e conciliação permanecem.
+
+## v2.3.4 — marca, texto e Guia Vênus offline
+
+- nome público padronizado para **Vênus Casa de Praia**;
+- título inicial corrigido para **Vênus, sua casa de praia!**;
+- revisão de pontuação e concordância na página principal;
+- retirada do texto “Fotos reais e nomenclaturas originais, com descrições simples e objetivas.”;
+- Guia Vênus disponível em rota estática `/guia/index.html`, compatível com a hospedagem do front-end na Vercel;
+- versão autônoma `/guia-venus-offline.html`, com dados, busca e filtros incorporados no próprio arquivo;
+- cache PWA atualizado para incluir o Guia Vênus;
+- backend mantém fallback local do guia e deixa de depender do arquivo remoto inexistente `guia_offline.html`.

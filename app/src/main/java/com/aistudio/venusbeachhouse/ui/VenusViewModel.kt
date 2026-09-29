@@ -62,6 +62,6 @@ class VenusViewModel : ViewModel() {
         val period = if (state.checkInDate.isNotBlank() && state.checkOutDate.isNotBlank())
             "\n📅 Período pretendido: ${state.checkInDate} até ${state.checkOutDate}" else ""
         val petText = if (state.hasPet) "\n🐾 Levo pet" else ""
-        return "Olá! Gostaria de consultar disponibilidade e valor para a Vênus Beach House.$period\n👥 Hóspedes: ${state.guestsCount}$petText\nSe houver disponibilidade, gostaria de receber as orientações do fluxo oficial de reserva."
+        return "Olá! Gostaria de consultar disponibilidade e valor para a Vênus Casa de Praia.$period\n👥 Hóspedes: ${state.guestsCount}$petText\nSe houver disponibilidade, gostaria de receber as orientações do fluxo oficial de reserva."
     }
 }

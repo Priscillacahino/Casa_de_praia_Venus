@@ -103,33 +103,41 @@ async function readJson(req) {
 
 async function loadGuideHtml() {
   const cachePath = resolve(process.env.GUIDE_CACHE_PATH || "./data/guia-venus-pb.html");
-  const source = process.env.GUIDE_SOURCE_URL
-    || "https://raw.githubusercontent.com/Priscillacahino/guia_lugares_pb/main/guia_offline.html";
+  const bundledPath = resolve("./public/guia/index.html");
+  const source = String(process.env.GUIDE_SOURCE_URL || "").trim();
   const expectedHash = String(process.env.GUIDE_EXPECTED_SHA256 || "").trim().toLowerCase();
 
-  const validateGuide = (html) => {
+  const validateGuide = (html, enforceHash = false) => {
     if (html.length < 1000 || html.length > 600000 || !/Guia V[eê]nus/i.test(html)) {
       throw new Error("Conteúdo do guia não passou na validação.");
     }
-    if (expectedHash && !/^[a-f0-9]{64}$/.test(expectedHash)) {
+    if (enforceHash && expectedHash && !/^[a-f0-9]{64}$/.test(expectedHash)) {
       throw new Error("GUIDE_EXPECTED_SHA256 inválido.");
     }
-    if (expectedHash && sha256(html) !== expectedHash) {
+    if (enforceHash && expectedHash && sha256(html) !== expectedHash) {
       throw new Error("O Guia Vênus não corresponde ao SHA-256 configurado.");
     }
     return html;
   };
 
+  if (!source && existsSync(bundledPath)) {
+    return validateGuide(readFileSync(bundledPath, "utf8"), false);
+  }
+
   try {
+    if (!source) throw new Error("GUIDE_SOURCE_URL não configurado.");
     const response = await fetch(source, { signal: AbortSignal.timeout(7000), redirect: "follow" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const html = validateGuide(await response.text());
+    const html = validateGuide(await response.text(), true);
     mkdirSync(dirname(cachePath), { recursive: true, mode: 0o700 });
     writeFileSync(cachePath, html, { mode: 0o600 });
     return html;
   } catch (error) {
     if (existsSync(cachePath)) {
-      try { return validateGuide(readFileSync(cachePath, "utf8")); } catch {}
+      try { return validateGuide(readFileSync(cachePath, "utf8"), true); } catch {}
+    }
+    if (existsSync(bundledPath)) {
+      try { return validateGuide(readFileSync(bundledPath, "utf8"), false); } catch {}
     }
     throw new AppError("O Guia Vênus está temporariamente indisponível.", 503);
   }

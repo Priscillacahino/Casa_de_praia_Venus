@@ -30,7 +30,7 @@ test("PWA mantém atalhos da casa, reserva e guia", () => {
   const urls = new Set((manifest.shortcuts || []).map((item) => item.url));
   assert.ok(urls.has("/#ambientes"));
   assert.ok(urls.has("/#reserva"));
-  assert.ok(urls.has("/guia"));
+  assert.ok(urls.has("/guia/index.html"));
 });
 
 test("proteção de arquivos estáticos permanece compatível com caminhos Windows", () => {

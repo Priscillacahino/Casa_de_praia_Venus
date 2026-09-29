@@ -1,5 +1,5 @@
-const CACHE="venus-shell-v9";
-const SHELL=["/","/styles.css","/app.js","/offline.html","/manifest.webmanifest","/privacidade.html","/privacy.js","/termos.html","/terms.js","/images/venus-logo.jpg"];
+const CACHE="venus-shell-v10";
+const SHELL=["/","/styles.css","/app.js","/offline.html","/manifest.webmanifest","/privacidade.html","/privacy.js","/termos.html","/terms.js","/images/venus-logo.jpg","/guia/index.html","/guia-venus-offline.html"];
 
 self.addEventListener("install",(event)=>{
   event.waitUntil(caches.open(CACHE).then((cache)=>cache.addAll(SHELL)).then(()=>self.skipWaiting()));
@@ -11,7 +11,7 @@ self.addEventListener("activate",(event)=>{
 
 self.addEventListener("fetch",(event)=>{
   const url=new URL(event.request.url);
-  if (event.request.method!=="GET" || url.pathname.startsWith("/api/") || url.pathname==="/guia" || url.pathname==="/admin" || url.pathname==="/admin.html" || url.pathname==="/admin.js") return;
+  if (event.request.method!=="GET" || url.pathname.startsWith("/api/") || url.pathname==="/admin" || url.pathname==="/admin.html" || url.pathname==="/admin.js") return;
   event.respondWith(fetch(event.request).then((response)=>{
     const copy=response.clone();
     caches.open(CACHE).then((cache)=>cache.put(event.request,copy));
