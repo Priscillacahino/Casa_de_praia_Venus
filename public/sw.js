@@ -1,5 +1,5 @@
-const CACHE="venus-shell-v11";
-const SHELL=["/","/styles.css","/i18n.js","/app.js","/offline.html","/manifest.webmanifest","/privacidade.html","/privacy.js","/termos.html","/terms.js","/images/venus-logo.jpg","/guia/index.html","/guia-venus-offline.html"];
+const CACHE="venus-shell-v12";
+const SHELL=["/","/styles.css","/i18n.js","/app.js","/booking-experience.js","/offline.html","/manifest.webmanifest","/privacidade.html","/privacy.js","/termos.html","/terms.js","/images/venus-logo.jpg","/guia/index.html","/guia-venus-offline.html"];
 
 self.addEventListener("install",(event)=>{
   event.waitUntil(caches.open(CACHE).then((cache)=>cache.addAll(SHELL)).then(()=>self.skipWaiting()));
