@@ -190,6 +190,24 @@
       <span class="eyebrow">Reserva segura</span>
       <h2>Consulte valor e disponibilidade no servidor.</h2>
       <p class="muted">O navegador não calcula preços por conta própria. O valor exibido vem da API e é revalidado quando o pedido é enviado.</p>
+      <div id="availabilityCalendar" class="availability-calendar card" aria-labelledby="availabilityTitle">
+        <div class="availability-head">
+          <div><span class="eyebrow">Escolha as datas</span><h3 id="availabilityTitle">Disponibilidade</h3></div>
+          <div class="availability-nav">
+            <button id="availabilityPrev" class="availability-nav-button" type="button" aria-label="Mês anterior">‹</button>
+            <strong id="availabilityMonth"></strong>
+            <button id="availabilityNext" class="availability-nav-button" type="button" aria-label="Próximo mês">›</button>
+          </div>
+        </div>
+        <div class="availability-legend" aria-label="Legenda da disponibilidade">
+          <span><i class="legend-dot is-free"></i>Disponível</span>
+          <span><i class="legend-dot is-unavailable"></i>Indisponível</span>
+          <span><i class="legend-dot is-selected"></i>Selecionado</span>
+        </div>
+        <div id="availabilityWeekdays" class="availability-weekdays" aria-hidden="true"></div>
+        <div id="availabilityDays" class="availability-days"></div>
+        <p id="availabilityStatus" class="availability-status" role="status" aria-live="polite">Carregando disponibilidade…</p>
+      </div>
       <div id="quote" class="notice" role="status" aria-live="polite">Informe check-in e check-out para consultar.</div>
       <div id="reservationResult" class="notice hidden" role="status" aria-live="polite"></div>
     </div>
@@ -210,6 +228,19 @@
       <span class="eyebrow">Acompanhar solicitação</span>
       <h2>Consulte o andamento sem criar uma conta.</h2>
       <p class="muted">O protocolo identifica a solicitação. O código privado funciona como uma chave de acesso: não compartilhe com terceiros. Se houver risco de exposição, a administração pode substituí-lo e o anterior deixa de funcionar.</p>
+      <div class="reservation-journey">
+        <span class="eyebrow">Etapas da reserva</span>
+        <ol id="reservationProgress" class="reservation-progress">
+          <li data-step="dates"><span>1</span><small>Datas</small></li>
+          <li data-step="request"><span>2</span><small>Solicitação</small></li>
+          <li data-step="term"><span>3</span><small>Termo</small></li>
+          <li data-step="whatsapp"><span>4</span><small>WhatsApp / pagamento</small></li>
+          <li data-step="bank"><span>5</span><small>Conferência bancária</small></li>
+          <li data-step="confirmed"><span>6</span><small>Confirmada</small></li>
+        </ol>
+        <small class="muted">Ao retornar do WhatsApp para esta aba, o site consulta novamente o andamento. O código privado não é enviado ao WhatsApp.</small>
+      </div>
+      <div id="reservationConfirmation" class="notice reservation-confirmation hidden" role="status" aria-live="polite"></div>
       <div id="trackingResult" class="notice" role="status" aria-live="polite">Nenhuma solicitação consultada neste dispositivo.</div>
       <div id="paymentInstructions" class="notice hidden" role="status" aria-live="polite"></div>
 <div id="termWorkflow" class="card term-workflow hidden">
@@ -226,6 +257,8 @@
       <label>Protocolo<input name="reservationId" autocomplete="off" required></label>
       <label>Código privado de acompanhamento<input name="manageToken" autocomplete="off" required></label>
       <button class="button primary full" type="submit">Consultar andamento</button>
+      <button class="button full secondary hidden" id="forgetReservationAccess" type="button">Esquecer acesso deste dispositivo</button>
+      <small class="muted">Para facilitar o retorno do WhatsApp, o protocolo e o código privado ficam temporariamente apenas nesta aba do navegador.</small>
       <button class="button full hidden" id="continueWhatsApp" type="button">Continuar pelo WhatsApp</button>
       <button class="button full hidden" id="reportPayment" type="button">Já realizei um pagamento</button>
       <button class="button full hidden" id="requestCancellation" type="button">Solicitar cancelamento</button>
@@ -315,5 +348,6 @@
 <footer><span>Vênus Casa de Praia</span><a href="/admin">Administração</a></footer>
 <script src="/i18n.js" defer></script>
 <script src="/app.js" defer></script>
+<script src="/booking-experience.js" defer></script>
 </body>
 </html>

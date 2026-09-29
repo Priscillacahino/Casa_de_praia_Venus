@@ -55,7 +55,7 @@ test("v2.3.4 disponibiliza o Guia Vênus estático e em arquivo offline autônom
 
 test("v2.3.4 inclui o guia no cache PWA e preserva fallback seguro no backend", () => {
   const sw = readFileSync(join(root, "public", "sw.js"), "utf8");
-  assert.match(sw, /venus-shell-v11/);
+  assert.match(sw, /const CACHE="venus-shell-v\d+";/);
   assert.match(sw, /"\/guia\/index\.html"/);
   assert.match(sw, /"\/guia-venus-offline\.html"/);
   assert.doesNotMatch(sw, /url\.pathname==="\/guia"/);

@@ -38,7 +38,7 @@ test("v2.3.5 localiza mensagens dinâmicas e inclui i18n no cache PWA", () => {
   assert.match(app, /getLocale/);
   assert.match(app, /¡Hola! Quiero continuar mi solicitud de reserva/);
   assert.match(app, /confirm\(tr\(/);
-  assert.match(sw, /venus-shell-v11/);
+  assert.match(sw, /const CACHE="venus-shell-v\d+";/);
   assert.match(sw, /"\/i18n\.js"/);
-  assert.equal(pkg.version, "2.3.5");
+  assert.match(pkg.version, /^2\.3\.\d+$/);
 });

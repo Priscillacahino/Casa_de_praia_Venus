@@ -122,6 +122,8 @@ async function loadReservationStatus() {
   try {
     const d = await api(`/reservations/${encodeURIComponent(id)}/status`, { headers:{ "X-Reservation-Token":token } });
     currentReservationState = d;
+    window.__venusReservationState = d;
+    window.dispatchEvent(new CustomEvent("venus:reservationstate", { detail:d }));
     const statusLabel = ({ requested:"Solicitação em análise", confirmed:"Reserva confirmada", cancelled:"Solicitação cancelada" })[d.status] || d.status;
     const priority = d.hold?.active
       ? `Prioridade temporária ativa até ${when(d.hold.expiresAt)}.`

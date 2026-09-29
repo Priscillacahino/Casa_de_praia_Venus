@@ -241,3 +241,19 @@ O e-mail de contato continua pendente de substituição e não deve ser tratado 
 - cache PWA atualizado para incluir o módulo de idiomas.
 
 A tradução é de interface. As regras de segurança, LGPD, reserva, termo GOV.BR, política 20/80, pagamento por WhatsApp e conciliação bancária não são alteradas.
+
+## v2.3.6 — fluxo Instagram, disponibilidade e retorno do WhatsApp
+
+- calendário visual consulta a disponibilidade diretamente na API do servidor;
+- datas confirmadas, bloqueadas ou com prioridade temporária ativa aparecem indisponíveis;
+- seleção visual preenche os mesmos campos de check-in/check-out usados pela cotação autoritativa;
+- protocolo e código privado podem permanecer temporariamente no `sessionStorage` da aba para facilitar o retorno do WhatsApp;
+- código privado continua fora da URL e não é enviado ao WhatsApp;
+- ao retornar para a aba, o site consulta novamente o andamento sem polling contínuo;
+- linha de progresso mostra Datas → Solicitação → Termo → WhatsApp/pagamento → Conferência → Confirmada;
+- confirmação fica destacada quando o backend informa `confirmed`;
+- novos elementos mantêm português/espanhol;
+- `.env.example` deixa de referenciar o antigo `guia_offline.html`;
+- PWA atualizado para `venus-shell-v12`.
+
+O fluxo financeiro permanece seguro: informar pagamento não equivale a conciliação; a confirmação continua condicionada às regras do servidor e à conferência administrativa.
