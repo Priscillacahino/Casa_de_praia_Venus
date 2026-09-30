@@ -46,9 +46,9 @@ test("v2.3.6 corrige fonte do guia e atualiza PWA sem enfraquecer backend", () =
 
   assert.doesNotMatch(env, /guia_offline\.html/);
   assert.match(env, /Casa_de_praia_Venus\/main\/public\/guia\/index\.html/);
-  assert.match(sw, /venus-shell-v12/);
+  assert.match(sw, /venus-shell-v\d+/);
   assert.match(sw, /"\/booking-experience\.js"/);
-  assert.equal(pkg.version, "2.3.6");
+  assert.match(pkg.version, /^2\.3\.\d+$/);
 
   assert.match(runtime, /VERCEL/);
   assert.match(runtime, /armazenamento persistente/);

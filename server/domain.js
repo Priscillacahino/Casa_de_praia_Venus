@@ -94,7 +94,7 @@ export function assertBookingWindow(db, start, end, { referenceDate = today() } 
   return { ...policy, nights: days.length };
 }
 
-export function calculateQuote(db, start, end, { checkPast = true } = {}) {
+export function calculateQuote(db, start, end, { checkPast = true, guests = 2 } = {}) {
   const days = datesBetween(start, end);
   if (checkPast) assertBookingWindow(db, start, end);
 
@@ -102,6 +102,19 @@ export function calculateQuote(db, start, end, { checkPast = true } = {}) {
   if (!settings.pricingEnabled) {
     throw new AppError("Tarifas ainda não publicadas. Consulte a anfitriã.", 422);
   }
+
+  const maxGuests = integer(settings.maxGuests ?? 6, "Máximo de hóspedes", 1, 50);
+  const guestCount = integer(Number(guests), "Hóspedes", 1, maxGuests);
+  const includedGuests = integer(settings.includedGuests ?? 2, "Hóspedes incluídos", 1, maxGuests);
+  const additionalGuestFeeCents = integer(
+    settings.additionalGuestFeeCents ?? 5000,
+    "Adicional por hóspede",
+    0,
+  );
+  const holidayDates = new Set(
+    (Array.isArray(settings.holidayDates) ? settings.holidayDates : [])
+      .map((value) => date(String(value))),
+  );
 
   const rules = db.prepare(
     "SELECT * FROM rates WHERE start_date < ? AND end_date > ? ORDER BY start_date",
@@ -113,11 +126,15 @@ export function calculateQuote(db, start, end, { checkPast = true } = {}) {
       throw new AppError("Não há tarifa cadastrada para todas as noites selecionadas.", 422);
     }
     const weekend = [5, 6].includes(new Date(day + "T12:00:00Z").getUTCDay());
+    const holiday = holidayDates.has(day);
+    const specialRate = weekend || holiday;
     return {
       date: day,
-      rateCents: weekend ? rule.weekend_cents : rule.weekday_cents,
+      rateCents: specialRate ? rule.weekend_cents : rule.weekday_cents,
       label: rule.label,
       minNights: rule.min_nights,
+      rateType: holiday ? "holiday" : weekend ? "weekend" : "weekday",
+      isHoliday: holiday,
     };
   });
 
@@ -127,12 +144,20 @@ export function calculateQuote(db, start, end, { checkPast = true } = {}) {
   }
 
   const subtotalCents = nightlyDetails.reduce((sum, n) => sum + n.rateCents, 0);
-  const totalCents = subtotalCents + settings.cleaningFeeCents;
+  const additionalGuests = Math.max(0, guestCount - includedGuests);
+  const guestFeeCents = additionalGuests * additionalGuestFeeCents;
+  const cleaningFeeCents = integer(settings.cleaningFeeCents ?? 0, "Limpeza", 0);
+  const totalCents = subtotalCents + guestFeeCents + cleaningFeeCents;
   return {
     nights: days.length,
+    guests: guestCount,
+    includedGuests,
+    additionalGuests,
+    additionalGuestFeeCents,
+    guestFeeCents,
     nightlyDetails,
     subtotalCents,
-    cleaningFeeCents: settings.cleaningFeeCents,
+    cleaningFeeCents,
     totalCents,
     depositCents: Math.round((totalCents * settings.depositPercent) / 100),
     depositPercent: settings.depositPercent,

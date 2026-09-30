@@ -1,7 +1,6 @@
 package com.aistudio.venusbeachhouse
 
 import android.content.Context
-import com.aistudio.venusbeachhouse.data.HouseData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -20,7 +19,7 @@ object GuideRepository {
             return@withContext cache.readText(Charsets.UTF_8)
         }
         try {
-            val sourceUrl = URL(HouseData.GUIDE_SOURCE_URL)
+            val sourceUrl = URL(BuildConfig.GUIDE_SOURCE_URL)
             if (sourceUrl.protocol != "https" || sourceUrl.host != "raw.githubusercontent.com") error("Origem do guia não permitida")
             val connection = (sourceUrl.openConnection() as HttpURLConnection).apply {
                 connectTimeout = 7_000

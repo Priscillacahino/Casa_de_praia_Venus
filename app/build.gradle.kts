@@ -12,13 +12,16 @@ android {
         applicationId = "com.aistudio.venusbeachhouse"
         minSdk = 26
         targetSdk = 35
-        versionCode = 234
-        versionName = "2.3.4"
+        versionCode = 237
+        versionName = "2.3.7"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
         val bookingUrl = (project.findProperty("VENUS_BOOKING_URL") as String?) ?: System.getenv("VENUS_BOOKING_URL") ?: ""
+        val guideUrl = (project.findProperty("VENUS_GUIDE_URL") as String?) ?: System.getenv("VENUS_GUIDE_URL")
+            ?: "https://raw.githubusercontent.com/Priscillacahino/Casa_de_praia_Venus/main/public/guia/index.html"
         val guideHash = (project.findProperty("VENUS_GUIDE_SHA256") as String?) ?: System.getenv("VENUS_GUIDE_SHA256") ?: ""
         buildConfigField("String", "BOOKING_URL", "\"${bookingUrl.replace("\\", "\\\\").replace("\"", "\\\"")}\"")
+        buildConfigField("String", "GUIDE_SOURCE_URL", "\"${guideUrl.replace("\\", "\\\\").replace("\"", "\\\"")}\"")
         buildConfigField("String", "GUIDE_EXPECTED_SHA256", "\"${guideHash.replace("\\", "\\\\").replace("\"", "\\\"")}\"")
     }
 

@@ -49,20 +49,21 @@ function saveReservationAccess(id, token) {
 
 async function refreshQuote() {
   const checkIn = form.elements.checkIn.value, checkOut = form.elements.checkOut.value;
+  const guests = Number(form.elements.guests.value || 2);
   currentQuote = null;
   if (!checkIn || !checkOut) {
     quoteBox.className = "notice";
     quoteBox.textContent = "Informe check-in e check-out para consultar.";
     return;
   }
-  lastQuoteKey = checkIn + "|" + checkOut;
+  lastQuoteKey = [checkIn, checkOut, guests].join("|");
   quoteBox.textContent = "Consultando valor e disponibilidade…";
   try {
-    const q = await api("/quote", { method:"POST", body:JSON.stringify({ checkIn, checkOut }) });
-    if (lastQuoteKey !== checkIn + "|" + checkOut) return;
+    const q = await api("/quote", { method:"POST", body:JSON.stringify({ checkIn, checkOut, guests }) });
+    if (lastQuoteKey !== [checkIn, checkOut, guests].join("|")) return;
     currentQuote = q;
     quoteBox.className = "notice ok";
-    quoteBox.innerHTML = `<strong>${q.nights} noite(s) · ${money(q.totalCents)}</strong><br>Diárias: ${money(q.subtotalCents)} · Limpeza: ${money(q.cleaningFeeCents)} · Sinal previsto (${q.depositPercent}%): ${money(q.depositCents)}.`;
+    quoteBox.innerHTML = `<strong>${q.nights} noite(s) · ${money(q.totalCents)}</strong><br>Diárias: ${money(q.subtotalCents)} · Hóspedes adicionais: ${money(q.guestFeeCents)} · Limpeza: ${money(q.cleaningFeeCents)} · Sinal previsto (${q.depositPercent}%): ${money(q.depositCents)}.`;
   } catch (e) {
     quoteBox.className = "notice error";
     quoteBox.textContent = e.message;
@@ -71,6 +72,7 @@ async function refreshQuote() {
 
 form.elements.checkIn.addEventListener("change", refreshQuote);
 form.elements.checkOut.addEventListener("change", refreshQuote);
+form.elements.guests.addEventListener("change", refreshQuote);
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();

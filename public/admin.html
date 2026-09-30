@@ -36,7 +36,9 @@
     <form id="settingsForm" class="card form">
       <label class="check"><input name="pricingEnabled" type="checkbox"> Publicar tarifas e permitir cotações</label>
       <div class="two"><label>Taxa de limpeza (R$)<input name="cleaningFee" type="number" min="0" step="0.01" required></label><label>Sinal mínimo (%)<input name="depositPercent" type="number" min="1" max="100" required></label></div>
-      <label>Máximo de hóspedes<input name="maxGuests" type="number" min="1" max="50" required></label>
+      <div class="two"><label>Máximo de hóspedes<input name="maxGuests" type="number" min="1" max="50" required></label><label>Hóspedes incluídos na diária<input name="includedGuests" type="number" min="1" max="6" value="2" required></label></div>
+      <label>Adicional por hóspede (R$) — cobrado uma única vez por hospedagem<input name="additionalGuestFee" type="number" min="0" step="0.01" value="50.00" required></label>
+      <label>Feriados / datas com tarifa de FDS<textarea name="holidayDates" rows="4" placeholder="2026-10-12&#10;2026-11-02"></textarea><small class="muted">Informe uma data por linha no formato AAAA-MM-DD.</small></label>
       <div class="two"><label>Antecedência mínima (dias)<input name="minLeadDays" type="number" min="0" max="365" required></label><label>Antecedência máxima (dias)<input name="maxAdvanceDays" type="number" min="1" max="3650" required></label></div>
       <div class="two"><label>Máximo de noites por estadia<input name="maxNights" type="number" min="1" max="366" required></label><label>Prioridade temporária da solicitação (minutos)<input name="requestHoldMinutes" type="number" min="5" max="1440" required></label></div>
       <div class="two"><label>WhatsApp (somente números)<input name="whatsappNumber" required></label><label>E-mail<input name="email" type="email" required></label></div>
@@ -49,9 +51,9 @@
 
     <h3>Tarifas</h3>
     <form id="rateForm" class="card form">
-      <div class="two"><label>Descrição<input name="label" required></label><label>Mínimo de noites<input name="minNights" type="number" min="1" value="2" required></label></div>
+      <div class="two"><label>Descrição<input name="label" required></label><label>Mínimo de noites<input name="minNights" type="number" min="1" value="1" required></label></div>
       <div class="two"><label>Início<input name="startDate" type="date" required></label><label>Fim<input name="endDate" type="date" required></label></div>
-      <div class="two"><label>Semana (R$)<input name="weekday" type="number" min="1" step="0.01" required></label><label>Sex/Sáb (R$)<input name="weekend" type="number" min="1" step="0.01" required></label></div>
+      <div class="two"><label>Dias úteis (R$)<input name="weekday" type="number" min="1" step="0.01" value="120.00" required></label><label>Sex/Sáb/Feriado (R$)<input name="weekend" type="number" min="1" step="0.01" value="150.00" required></label></div>
       <button class="button primary">Cadastrar tarifa</button>
     </form>
 

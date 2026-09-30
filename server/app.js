@@ -369,7 +369,9 @@ export function createApp(db, options = {}) {
   });
   register("POST", "/api/quote", (ctx) => {
     assertAvailable(db, ctx.body.checkIn, ctx.body.checkOut);
-    json(ctx.res, 200, calculateQuote(db, ctx.body.checkIn, ctx.body.checkOut));
+    json(ctx.res, 200, calculateQuote(db, ctx.body.checkIn, ctx.body.checkOut, {
+      guests: ctx.body.guests ?? 2,
+    }));
   });
   register("POST", "/api/reservations", (ctx) => {
     const b = ctx.body;
@@ -397,7 +399,7 @@ export function createApp(db, options = {}) {
       integer(b.guests, "Hóspedes", 1, settings().maxGuests);
       // Solicitações concorrentes podem entrar na fila; somente reservas confirmadas/bloqueios impedem o pedido.
       assertAvailable(db, b.checkIn, b.checkOut, "", { includeHolds: false });
-      const quote = calculateQuote(db, b.checkIn, b.checkOut);
+      const quote = calculateQuote(db, b.checkIn, b.checkOut, { guests: b.guests });
       if (b.expectedTotalCents !== quote.totalCents) throw new AppError("A tarifa foi atualizada. Consulte o valor novamente.", 409);
       const id = randomUUID();
       db.prepare(`INSERT INTO reservations
@@ -659,6 +661,7 @@ export function createApp(db, options = {}) {
 
   register("PUT", "/api/admin/settings", (ctx) => {
     const b = ctx.body;
+    const current = settings();
     const url = (value, allowedHosts, allowEmpty = false) => {
       if (!value && allowEmpty) return "";
       try {
@@ -670,10 +673,20 @@ export function createApp(db, options = {}) {
     const whatsappNumber = text(b.whatsappNumber, "WhatsApp", 10, 15);
     if (!/^\d{10,15}$/.test(whatsappNumber)) throw new AppError("WhatsApp: use somente números, incluindo país e DDD.");
     const email = contact({ name: "Admin", email: b.email, phone: "" }).email;
+    const maxGuests = integer(b.maxGuests, "Hóspedes", 1, 50);
+    const includedGuests = integer(b.includedGuests, "Hóspedes incluídos", 1, maxGuests);
+    const holidayInput = Array.isArray(b.holidayDates) ? b.holidayDates : [];
+    if (holidayInput.length > 366) throw new AppError("Cadastre no máximo 366 feriados/datas especiais.");
+    const holidayDates = [...new Set(holidayInput.map((value) => date(String(value))))].sort();
     const value = {
+      ...current,
       pricingEnabled: b.pricingEnabled === true,
-      cleaningFeeCents: integer(b.cleaningFeeCents, "Limpeza"), depositPercent: integer(b.depositPercent, "Percentual do sinal", 1, 100),
-      maxGuests: integer(b.maxGuests, "Hóspedes", 1, 50),
+      cleaningFeeCents: integer(b.cleaningFeeCents, "Limpeza"),
+      depositPercent: integer(b.depositPercent, "Percentual do sinal", 1, 100),
+      maxGuests,
+      includedGuests,
+      additionalGuestFeeCents: integer(b.additionalGuestFeeCents, "Adicional por hóspede", 0),
+      holidayDates,
       minLeadDays: integer(b.minLeadDays, "Antecedência mínima", 0, 365),
       maxAdvanceDays: integer(b.maxAdvanceDays, "Antecedência máxima", 1, 3650),
       maxNights: integer(b.maxNights, "Máximo de noites", 1, 366),
@@ -701,7 +714,12 @@ export function createApp(db, options = {}) {
       throw new AppError("Use o endereço de incorporação do Google Maps.");
     }
     db.prepare("UPDATE settings SET value=? WHERE id=1").run(JSON.stringify(value));
-    audit(ctx, "settings.updated", "1", { pricingEnabled: value.pricingEnabled });
+    audit(ctx, "settings.updated", "1", {
+      pricingEnabled: value.pricingEnabled,
+      includedGuests: value.includedGuests,
+      additionalGuestFeeCents: value.additionalGuestFeeCents,
+      holidayCount: value.holidayDates.length,
+    });
     json(ctx.res, 200, value);
   }, true);
 
@@ -715,7 +733,7 @@ export function createApp(db, options = {}) {
       const id = randomUUID();
       db.prepare("INSERT INTO rates VALUES(?,?,?,?,?,?,?)").run(
         id, text(b.label, "Descrição", 2, 120), start, end,
-        integer(b.weekdayCents, "Diária", 1), integer(b.weekendCents, "Diária de sexta/sábado", 1),
+        integer(b.weekdayCents, "Diária", 1), integer(b.weekendCents, "Diária de sexta/sábado/feriado", 1),
         integer(b.minNights, "Mínimo de noites", 1, 366),
       );
       audit(ctx, "rate.created", id, { start, end });

@@ -1,5 +1,7 @@
 # Homologação — Vênus Beach House v2.2.0
 
+> Documento histórico da v2.2.0. Para a base atual, use `docs/CHECKLIST_PUBLICACAO_V2_3_7.md`.
+
 Este roteiro separa o que já foi validado no repositório do que precisa ser comprovado no ambiente real antes de qualquer operação comercial.
 
 ## 1. Preparação do ambiente

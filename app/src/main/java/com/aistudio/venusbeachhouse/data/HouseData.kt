@@ -9,9 +9,6 @@ import com.aistudio.venusbeachhouse.model.NearbyBeachGuide
 import com.aistudio.venusbeachhouse.model.RoomItem
 
 object HouseData {
-    const val GUIDE_SOURCE_URL =
-        "https://raw.githubusercontent.com/Priscillacahino/guia_lugares_pb/main/guia_offline.html"
-
     val HOUSE_INFO = HouseInfo(
         name = "Vênus Casa de Praia",
         tagline = "Vênus, sua casa de praia!",
