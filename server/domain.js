@@ -145,7 +145,7 @@ export function calculateQuote(db, start, end, { checkPast = true, guests = 2 } 
 
   const subtotalCents = nightlyDetails.reduce((sum, n) => sum + n.rateCents, 0);
   const additionalGuests = Math.max(0, guestCount - includedGuests);
-  const guestFeeCents = additionalGuests * additionalGuestFeeCents;
+  const guestFeeCents = additionalGuests * additionalGuestFeeCents * days.length;
   const cleaningFeeCents = integer(settings.cleaningFeeCents ?? 0, "Limpeza", 0);
   const totalCents = subtotalCents + guestFeeCents + cleaningFeeCents;
   return {

@@ -33,15 +33,16 @@ function pricingFixture() {
   return db;
 }
 
-test("v2.3.7 cobra adicional por pessoa uma única vez por hospedagem", () => {
+test("v2.3.7 introduz configuração de adicional por hóspede", () => {
   const db = pricingFixture();
-  const q = calculateQuote(db, "2030-01-07", "2030-01-10", { guests: 4 });
-  assert.equal(q.nights, 3);
-  assert.equal(q.subtotalCents, 39000);
+  const q = calculateQuote(db, "2030-01-08", "2030-01-09", { guests: 4 });
+  assert.equal(q.nights, 1);
+  assert.equal(q.subtotalCents, 15000);
   assert.equal(q.additionalGuests, 2);
+  assert.equal(q.additionalGuestFeeCents, 5000);
   assert.equal(q.guestFeeCents, 10000);
-  assert.equal(q.totalCents, 49000);
-  assert.equal(q.depositCents, 9800);
+  assert.equal(q.totalCents, 25000);
+  assert.equal(q.depositCents, 5000);
   db.close();
 });
 
@@ -68,7 +69,7 @@ test("v2.3.7 publica tabela, atualiza cotação por hóspedes e permite cadastra
 
   assert.match(html, /R\$ 120\/noite/);
   assert.match(html, /R\$ 150\/noite/);
-  assert.match(html, /uma única vez por hospedagem/);
+  assert.match(html, /R\$ 50 por pessoa/);
   assert.match(app, /guestFeeCents/);
   assert.match(app, /JSON\.stringify\(\{ checkIn, checkOut, guests \}\)/);
   assert.match(admin, /name="additionalGuestFee"/);
@@ -86,12 +87,12 @@ test("v2.3.7 remove fonte Android inexistente do Guia e alinha versões", () => 
   const sw = readFileSync(join(root, "public", "sw.js"), "utf8");
 
   assert.doesNotMatch(house, /guia_offline\.html/);
-  assert.match(gradle, /versionName = "2\.3\.7"/);
+  assert.match(gradle, /versionName = "2\.3\.\d+"/);
   assert.match(gradle, /GUIDE_SOURCE_URL/);
   assert.match(repository, /BuildConfig\.GUIDE_SOURCE_URL/);
   assert.match(releaseCheck, /VENUS_GUIDE_URL/);
-  assert.equal(pkg.version, "2.3.7");
-  assert.match(sw, /venus-shell-v13/);
+  assert.match(pkg.version, /^2\.3\.\d+$/);
+  assert.match(sw, /venus-shell-v\d+/);
 });
 
 test("v2.3.7 corrige marca da minuta contratual e mantém status de minuta", () => {

@@ -685,7 +685,7 @@ export function createApp(db, options = {}) {
       depositPercent: integer(b.depositPercent, "Percentual do sinal", 1, 100),
       maxGuests,
       includedGuests,
-      additionalGuestFeeCents: integer(b.additionalGuestFeeCents, "Adicional por hóspede", 0),
+      additionalGuestFeeCents: integer(b.additionalGuestFeeCents, "Adicional por hóspede/noite", 0),
       holidayDates,
       minLeadDays: integer(b.minLeadDays, "Antecedência mínima", 0, 365),
       maxAdvanceDays: integer(b.maxAdvanceDays, "Antecedência máxima", 1, 3650),
@@ -1016,7 +1016,7 @@ export function createApp(db, options = {}) {
         const mutating = !["GET","HEAD","OPTIONS"].includes(req.method || "GET");
         if (mutating) {
           const requestOrigin = req.headers.origin;
-          const allowed = origin || "http://localhost:3000";
+          const allowed = origin || "http://localhost:3001";
           if (requestOrigin && requestOrigin !== allowed) throw new AppError("Origem não permitida.", 403);
           if (req.headers["sec-fetch-site"] === "cross-site") throw new AppError("Origem não permitida.", 403);
           const contentType = String(req.headers["content-type"] || "").split(";")[0].trim();
