@@ -39,6 +39,7 @@ export function openDatabase(path) {
       name TEXT NOT NULL,
       email TEXT NOT NULL,
       phone TEXT NOT NULL,
+      cpf TEXT NOT NULL DEFAULT '',
       check_in TEXT NOT NULL,
       check_out TEXT NOT NULL,
       guests INTEGER NOT NULL,
@@ -162,6 +163,7 @@ export function openDatabase(path) {
 
   // Safe migrations from the previous schema.
   addColumnIfMissing(db, "reservations", "token_version", "INTEGER NOT NULL DEFAULT 1");
+  addColumnIfMissing(db, "reservations", "cpf", "TEXT NOT NULL DEFAULT ''");
   addColumnIfMissing(db, "reviews", "reservation_id", "TEXT REFERENCES reservations(id)");
 
   for (const [name, def] of [
@@ -237,6 +239,6 @@ export function openDatabase(path) {
     ON payments(method, bank_reference)
     WHERE bank_reference IS NOT NULL AND bank_reference <> '';`);
 
-  db.exec("PRAGMA user_version=8");
+  db.exec("PRAGMA user_version=9");
   return db;
 }

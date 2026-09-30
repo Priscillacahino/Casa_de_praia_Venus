@@ -1,62 +1,230 @@
-TERMO DE COMPROMISSO DE RESERVA DA VÊNUS CASA DE PRAIA
+TERMO DE COMPROMISSO DE RESERVA E CIÊNCIA DE CONSERVAÇÃO
+VÊNUS CASA DE PRAIA
 Versão proposta 2026-09-30 — MINUTA NÃO VIGENTE
-Uso e implementação condicionados à validação jurídica.
+Uso e implementação condicionados à validação jurídica da versão exata.
 
-1. Identificação e objeto
-As partes e os dados específicos da reserva serão identificados no quadro da reserva: responsável pela propriedade, hóspede contratante, endereço do imóvel, período, horários de entrada e saída, número de hóspedes e valores. Este instrumento disciplina a solicitação e a confirmação da estadia e as condições de sinal, saldo, cancelamento e reembolso.
+1. IDENTIFICAÇÃO E OBJETO
 
-2. Condições para efetivação da reserva
-O envio de uma solicitação não confirma nem garante a disponibilidade do período. A reserva somente será efetivada após o cumprimento cumulativo de três requisitos: assinatura do termo pelo hóspede; validação da assinatura, da integridade do documento e de sua correspondência com a reserva pela administração; e confirmação do recebimento efetivo do sinal de 20% do valor total contratado.
-A administração verificará novamente a disponibilidade antes de comunicar a confirmação por escrito. O envio de comprovante bancário não equivale à confirmação de recebimento. Se o período não puder ser confirmado após um pagamento, os valores recebidos serão integralmente restituídos de imediato, salvo remarcação expressamente aceita pelo hóspede.
+Os dados específicos da reserva serão apresentados no quadro gerado automaticamente pelo sistema, incluindo protocolo, hóspede responsável, CPF, contato, período, quantidade de hóspedes e valores da contratação.
 
-3. Sinal, saldo e meios de pagamento
-O sinal corresponde a 20% do valor total da reserva e será abatido do saldo. Os 80% restantes serão pagos no check-in, salvo condição específica previamente registrada por escrito pela administração e aceita pelo hóspede. O orçamento deverá informar o total, eventual limpeza, valor do sinal e prazo de pagamento do saldo. Serão aceitos Pix e transferência bancária, mediante identificação da reserva e confirmação da entrada dos recursos na conta indicada pela propriedade.
-Banco: ____________________  Titular: ____________________
-CPF do titular: ____________________  Agência: ____________________
-Conta e dígito: ____________________  Tipo de conta: ____________________
-Chave Pix: ____________________
-Os dados bancários deverão ser preenchidos e conferidos antes de habilitar cobranças. Enquanto não forem disponibilizados, não será solicitado pagamento pelo sistema. No site público, esses dados não serão exibidos; a orientação de Pix ou transferência será feita pelo canal oficial de WhatsApp.
+Este instrumento disciplina a solicitação e confirmação da hospedagem, pagamento, cancelamento, utilização e conservação do imóvel e dos bens disponibilizados.
 
-4. Direito de arrependimento nas reservas a distância
-Nas reservas contratadas pelo site, WhatsApp, telefone ou outros meios a distância, a Vênus Casa de Praia assegura ao hóspede o cancelamento sem multa no prazo de sete dias corridos contados da contratação, sem prejuízo de condição legal mais favorável.
-Nesse período, serão devolvidos integralmente e de imediato todos os valores pagos, monetariamente atualizados. A política de devolução de 100%, 50% ou 0% do sinal não será aplicada ao exercício desse direito.
+2. CONDIÇÕES PARA EFETIVAÇÃO DA RESERVA
 
-5. Cancelamento por iniciativa do hóspede
-Fora das hipóteses legais de restituição integral, aplicam-se as seguintes faixas, contadas até o horário de check-in contratado:
+O envio de uma solicitação não confirma nem garante a disponibilidade do período.
+
+A reserva somente será efetivada após o cumprimento cumulativo dos seguintes requisitos:
+
+- assinatura eletrônica do termo pelo hóspede responsável;
+- validação da assinatura, da integridade do documento e de sua correspondência com a reserva pela administração;
+- confirmação do recebimento efetivo do sinal de 20% do valor total contratado;
+- nova verificação da disponibilidade do período.
+
+O envio de comprovante bancário não equivale à confirmação do recebimento.
+
+3. SINAL, SALDO E MEIOS DE PAGAMENTO
+
+O sinal corresponde a 20% do valor total da reserva e será abatido do saldo.
+
+Os 80% restantes serão pagos no check-in, salvo condição específica previamente registrada por escrito e aceita pelo hóspede.
+
+Os pagamentos poderão ser realizados por Pix ou transferência bancária conforme orientação enviada pelo canal oficial da Vênus Casa de Praia.
+
+Os dados bancários não serão publicados no site.
+
+4. DIREITO DE ARREPENDIMENTO NAS RESERVAS A DISTÂNCIA
+
+Nas reservas contratadas pelo site, WhatsApp, telefone ou outros meios a distância, serão preservados os direitos legalmente aplicáveis ao consumidor, inclusive eventual direito de arrependimento dentro do prazo previsto em lei, sem prejuízo de condição legal mais favorável.
+
+5. CANCELAMENTO POR INICIATIVA DO HÓSPEDE
+
+Fora das hipóteses legais de restituição integral, aplicam-se as seguintes condições, calculadas até o horário de check-in contratado:
+
 48 horas ou mais de antecedência: devolução de 100% do sinal pago.
+
 De 24 horas até menos de 48 horas de antecedência: devolução de 50% do sinal pago.
+
 Menos de 24 horas de antecedência: devolução de 0% do sinal pago.
-Os percentuais incidem exclusivamente sobre o sinal efetivamente pago, não sobre o valor total da hospedagem. A retenção é o limite da penalidade de cancelamento e poderá ser reduzida quando resultar em cobrança desproporcional ou contrariar direitos legais. Valores antecipados além do sinal serão integralmente devolvidos no cancelamento anterior ao início da hospedagem.
 
-6. Comunicação do cancelamento
-O pedido poderá ser enviado pelo site, WhatsApp ou e-mail oficial, com identificação da reserva. A antecedência será calculada entre o horário do envio registrado e o horário de check-in contratado, considerando o horário local da propriedade, em Conde, Paraíba. A demora da administração em responder não prejudicará o prazo do hóspede.
+Os percentuais incidem exclusivamente sobre o sinal efetivamente pago.
 
-7. Cancelamento ou descumprimento pela propriedade
-Se a propriedade cancelar a reserva ou não puder oferecer a hospedagem nas condições contratadas, a tabela de retenção não será aplicada. Caso o hóspede opte pela resolução do contrato, os valores pagos serão integralmente restituídos de imediato, preservados os demais direitos legais.
+Valores antecipados além do sinal serão tratados conforme as condições da contratação e a legislação aplicável.
 
-8. Forma e prazo de reembolso
-Nos cancelamentos por iniciativa do hóspede sujeitos à política contratual, fora do direito de arrependimento, a devolução devida será realizada em até sete dias úteis contados do recebimento da solicitação de cancelamento.
-Para pagamentos por Pix, a devolução será feita preferencialmente pela função de devolução da transação original. Para transferência bancária, a restituição será realizada à conta de origem ou por outro meio acordado com o pagador, com verificação de titularidade. Será fornecido comprovante.
-O prazo de sete dias úteis não se aplica ao direito de arrependimento nem às situações em que a legislação determinar restituição imediata. Não serão descontadas tarifas administrativas ou de processamento do reembolso devido.
+6. COMUNICAÇÃO DO CANCELAMENTO
 
-9. Situações excepcionais e preservação de direitos
-Força maior, impossibilidade de prestação do serviço e outras circunstâncias relevantes serão avaliadas conforme a legislação e a boa-fé, sem aplicação automática da perda do sinal. Estas condições serão disponibilizadas antes do pagamento e da assinatura. A assinatura não representa renúncia a direitos legais.
+O pedido poderá ser enviado pelos canais oficiais, com identificação da reserva.
 
-10. Assinatura eletrônica e validação
-O documento definitivo deverá ser assinado por meio que permita verificar a autoria e a integridade, como o serviço de assinatura gov.br. O arquivo eletrônico original assinado deverá ser preservado. Imagem de assinatura, impressão digitalizada ou simples aceite em caixa de seleção não substituem a validação exigida neste fluxo.
-A administração deverá conferir a identidade do signatário, a integridade do documento, os dados da reserva e as assinaturas exigidas pelo jurídico, conservando o arquivo e o registro da validação. A validação técnica da assinatura não equivale à aprovação jurídica do conteúdo.
-No fluxo do site, o hóspede prepara o termo da própria reserva em PDF, assina o arquivo no serviço oficial GOV.BR e envia o PDF original assinado pelo acompanhamento protegido por protocolo e código privado. O envio do arquivo não libera automaticamente o pagamento: a administração deve validar o documento antes da continuidade do fluxo financeiro.
+A antecedência será considerada a partir do registro da solicitação em relação ao horário de check-in contratado.
 
-QUADRO DA RESERVA A PREENCHER ANTES DA ASSINATURA
-Protocolo: ____________________
-Responsável pela propriedade e identificação: ____________________
-Endereço completo do imóvel: ____________________
-Hóspede e identificação: ____________________
-Contato do hóspede: ____________________
-Check-in e horário: ____________________  Check-out e horário: ____________________
-Quantidade de hóspedes: ____________________
-Valor total: ____________________  Limpeza incluída no total: ____________________
-Sinal de 20%: ____________________  Saldo de 80%: ____________________
-Prazo e condições de pagamento do saldo: check-in, salvo condição específica registrada por escrito.
-Data da contratação: ____________________
-Assinaturas eletrônicas: conforme orientação jurídica e fluxo de validação.
+7. CANCELAMENTO OU IMPOSSIBILIDADE PELA PROPRIEDADE
+
+Se a propriedade não puder oferecer a hospedagem nas condições contratadas, a política de retenção do sinal não será aplicada.
+
+Caso o hóspede opte pelo cancelamento, os valores recebidos serão restituídos, preservados os demais direitos aplicáveis.
+
+8. UTILIZAÇÃO DO IMÓVEL
+
+O imóvel deverá ser utilizado exclusivamente para a hospedagem correspondente à reserva realizada.
+
+O responsável pela reserva compromete-se a:
+
+- respeitar a quantidade de hóspedes informada;
+- utilizar o imóvel e seus equipamentos de maneira adequada;
+- preservar os ambientes e bens disponibilizados;
+- comunicar problemas relevantes percebidos durante a hospedagem;
+- não retirar bens pertencentes à propriedade.
+
+Desgastes naturais decorrentes do uso regular não serão considerados danos.
+
+9. SITUAÇÕES EXCEPCIONAIS
+
+Força maior, impossibilidade da prestação do serviço e outras circunstâncias relevantes serão avaliadas de acordo com a legislação aplicável e a boa-fé.
+
+A assinatura deste documento não representa renúncia a direitos legalmente assegurados.
+
+10. ASSINATURA ELETRÔNICA E VALIDAÇÃO
+
+O documento definitivo deverá ser assinado por meio que permita verificar autoria e integridade, utilizando o serviço oficial de assinatura eletrônica GOV.BR dentro do fluxo adotado pela Vênus Casa de Praia.
+
+O hóspede deverá conferir o documento, gerar ou salvar o PDF, realizar a assinatura eletrônica e devolver ao sistema o arquivo PDF original assinado.
+
+Imagem de assinatura, fotografia de assinatura, impressão posteriormente digitalizada ou simples caixa de aceite não substituem a validação prevista neste fluxo.
+
+O envio do PDF não libera automaticamente o pagamento.
+
+A administração deverá conferir identidade, assinatura, integridade, conteúdo e correspondência do documento com a respectiva reserva.
+
+11. CIÊNCIA E CONSERVAÇÃO DO IMÓVEL
+
+Esta seção integra o presente Termo de Compromisso e tem como objetivo informar de maneira simples e transparente os principais bens e estruturas disponibilizados durante a hospedagem.
+
+Não se trata de uma relação destinada a penalizar o hóspede por acontecimentos próprios do uso normal da casa.
+
+Seu objetivo é registrar o que pertence ao imóvel e manter uma relação transparente entre as partes.
+
+12. ESTRUTURA E ITENS DISPONIBILIZADOS
+
+SALA E ÁREA DE CONVIVÊNCIA
+
+O ambiente possui móveis e itens de uso cotidiano.
+
+É disponibilizado ventilador portátil/de pé.
+
+QUARTOS
+
+Os quartos possuem camas, colchões, móveis de apoio, roupas de cama e ventiladores fixados nas paredes.
+
+QUARTO / ESCRITÓRIO
+
+Existe suporte instalado para televisão, porém não há aparelho de televisão no imóvel.
+
+Essa informação é apenas descritiva.
+
+O suporte para televisão não está vinculado ao projetor smart.
+
+COZINHA
+
+A cozinha possui equipamentos, louças e utensílios destinados ao preparo e consumo de alimentos.
+
+Entre os principais equipamentos estão:
+
+- geladeira;
+- fogão;
+- cafeteira Três Corações;
+- air fryer;
+- liquidificador;
+- sanduicheira/grill.
+
+ÁREA EXTERNA
+
+São disponibilizados móveis e itens de convivência, incluindo rede e cadeiras de praia.
+
+13. BENS DE MAIOR RELEVÂNCIA
+
+Para fins de conservação e controle dos principais bens disponibilizados na hospedagem, destacam-se:
+
+- projetor smart;
+- cafeteira Três Corações;
+- air fryer;
+- liquidificador;
+- geladeira;
+- fogão;
+- ventilador portátil/de pé da sala;
+- ventiladores fixados nas paredes dos quartos;
+- controles remotos;
+- chaves e controles de acesso;
+- sanduicheira/grill;
+- secador de cabelo;
+- rede destinada à área externa;
+- 4 cadeiras de praia;
+- objetos decorativos pertencentes ao imóvel.
+
+Os objetos decorativos fazem parte da identidade da Vênus Casa de Praia e diversos deles possuem também valor afetivo para os responsáveis pela propriedade.
+
+Por esse motivo, deverão ser preservados e permanecer no imóvel.
+
+14. ITENS DE USO COTIDIANO
+
+Não serão relacionados individualmente:
+
+- pratos;
+- copos;
+- xícaras;
+- talheres;
+- panelas;
+- pequenos utensílios;
+- roupas de cama;
+- toalhas;
+- travesseiros;
+- demais itens domésticos comuns.
+
+Esses objetos são disponibilizados normalmente para uso durante a estadia.
+
+15. CHAVES, CONTROLES E ACESSOS
+
+As chaves, controles e demais meios de acesso entregues ao responsável pela reserva deverão permanecer sob sua responsabilidade durante a hospedagem e ser devolvidos ao final da estadia.
+
+16. DANOS, PERDAS OU RETIRADA DE BENS
+
+Não deverão ser retirados permanentemente, descartados, substituídos ou levados para fora da propriedade móveis, equipamentos, objetos decorativos ou demais bens pertencentes ao imóvel sem autorização.
+
+Caso algum objeto seja levado acidentalmente junto aos pertences dos hóspedes, deverá ser realizado contato para combinar sua devolução.
+
+Situações envolvendo dano relevante, desaparecimento ou retirada de bens poderão ser analisadas individualmente considerando as circunstâncias e os registros disponíveis.
+
+Não haverá atribuição automática de responsabilidade por desgaste natural decorrente do uso regular do imóvel.
+
+17. REGISTRO DAS CONDIÇÕES DO IMÓVEL
+
+Para segurança e transparência entre as partes, a administração poderá manter registros fotográficos das condições gerais da propriedade e de seus principais bens antes da entrada dos hóspedes.
+
+Esses registros terão caráter de referência.
+
+18. DIVERGÊNCIAS IDENTIFICADAS NA CHEGADA
+
+Caso o hóspede encontre defeito, avaria, ausência de item informado ou outra divergência ao chegar ao imóvel, deverá comunicar o responsável assim que possível.
+
+Dessa forma, situações anteriores à entrada poderão ser registradas e não serão atribuídas ao hóspede.
+
+19. PROTEÇÃO DOS DADOS
+
+O CPF será utilizado para identificar o responsável pela reserva e compor o respectivo termo.
+
+Não será necessária fotografia ou cópia do documento apenas para essa finalidade.
+
+Os dados pessoais serão utilizados nas atividades necessárias à reserva, hospedagem, comunicação, pagamento, segurança, cumprimento de obrigações relacionadas à contratação e atendimento de obrigações legais aplicáveis.
+
+20. CIÊNCIA E COMPROMISSO
+
+Ao assinar eletronicamente este documento, o responsável declara que:
+
+- conferiu os dados da hospedagem;
+- teve acesso às condições da contratação;
+- está ciente da política de cancelamento;
+- compreende que a reserva depende das validações previstas;
+- está ciente dos principais bens disponibilizados;
+- compromete-se a utilizar e conservar a propriedade com cuidado normal;
+- não deverá retirar bens pertencentes ao imóvel;
+- comunicará problemas relevantes identificados durante a hospedagem.
+
+Este documento busca estabelecer uma relação simples, transparente e equilibrada entre a Vênus Casa de Praia e seus hóspedes.

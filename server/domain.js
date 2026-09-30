@@ -55,6 +55,34 @@ export function integer(value, label, min = 0, max = 100000000) {
   return value;
 }
 
+export function cpf(value) {
+  const digits = String(value || "").replace(/\D/g, "");
+
+  if (!/^\d{11}$/.test(digits) || /^(\d)\1{10}$/.test(digits)) {
+    throw new AppError("CPF inválido.");
+  }
+
+  const checkDigit = (length) => {
+    let sum = 0;
+
+    for (let i = 0; i < length; i += 1) {
+      sum += Number(digits[i]) * (length + 1 - i);
+    }
+
+    const digit = (sum * 10) % 11;
+    return digit === 10 ? 0 : digit;
+  };
+
+  if (
+    checkDigit(9) !== Number(digits[9]) ||
+    checkDigit(10) !== Number(digits[10])
+  ) {
+    throw new AppError("CPF inválido.");
+  }
+
+  return digits;
+}
+
 export function contact(body) {
   const name = text(body.name, "Nome", 2, 120);
   const email = text(body.email, "E-mail", 5, 254).toLowerCase();

@@ -84,7 +84,7 @@ form.addEventListener("submit", async (e) => {
   button.disabled = true;
   const body = {
     checkIn:form.elements.checkIn.value, checkOut:form.elements.checkOut.value,
-    name:form.elements.name.value, email:form.elements.email.value, phone:form.elements.phone.value,
+    name:form.elements.name.value, cpf:form.elements.cpf.value, email:form.elements.email.value, phone:form.elements.phone.value,
     guests:Number(form.elements.guests.value), hasPet:form.elements.hasPet.checked, notes:form.elements.notes.value,
     consent:form.elements.consent.checked, expectedTotalCents:currentQuote.totalCents,
   };
@@ -329,7 +329,29 @@ prepareTermButton?.addEventListener("click", async () => {
   if(!currentReservationAccess)return; prepareTermButton.disabled=true;
   try{
     const pkg=await api(`/reservations/${encodeURIComponent(currentReservationAccess.id)}/term-package`,{headers:{"X-Reservation-Token":currentReservationAccess.token}}); const r=pkg.reservation;
-    const header=["QUADRO DA RESERVA GERADO PELO SISTEMA",`Protocolo: ${r.id}`,`Hóspede: ${r.name}`,`Período: ${r.checkIn} a ${r.checkOut}`,`Hóspedes: ${r.guests}`,`Valor total: ${money(r.totalCents)}`,`Sinal de 20%: ${money(r.depositCents)}`,`Saldo de 80%: ${money(r.balanceCents)}`,`Versão do termo: ${pkg.termVersion}`,`SHA-256 do termo: ${pkg.termHash}`].join("\n");
+    const cpfDigits=String(r.cpf||"").replace(/\D/g,"");
+    const cpfDisplay=cpfDigits.length===11
+      ? cpfDigits.slice(0,3)+"."+cpfDigits.slice(3,6)+"."+cpfDigits.slice(6,9)+"-"+cpfDigits.slice(9)
+      : "Não informado";
+    const emittedAt=r.emittedAt
+      ? new Intl.DateTimeFormat("pt-BR",{dateStyle:"short",timeStyle:"short"}).format(new Date(r.emittedAt))
+      : "—";
+    const header=[
+      "QUADRO DA RESERVA GERADO PELO SISTEMA",
+      `Protocolo: ${r.id}`,
+      `Hóspede responsável: ${r.name}`,
+      `CPF: ${cpfDisplay}`,
+      `Contato: ${r.phone || ""} · ${r.email || ""}`,
+      `Período: ${r.checkIn} a ${r.checkOut}`,
+      `Hóspedes: ${r.guests}`,
+      `Valor total: ${money(r.totalCents)}`,
+      `Taxa de limpeza: ${money(r.cleaningFeeCents || 0)}`,
+      `Sinal de 20%: ${money(r.depositCents)}`,
+      `Saldo de 80%: ${money(r.balanceCents)}`,
+      `Data de emissão: ${emittedAt}`,
+      `Versão do termo: ${pkg.termVersion}`,
+      `SHA-256 do termo: ${pkg.termHash}`
+    ].join("\n");
     printableTermText.textContent=`${header}\n\n${pkg.termText}`; printableTerm.classList.remove("hidden"); window.print();
   }catch(error){alert(tr(error.message))}finally{prepareTermButton.disabled=false}
 });

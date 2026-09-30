@@ -101,5 +101,5 @@ test("v2.3.7 corrige marca da minuta contratual e mantém status de minuta", () 
   assert.match(term, /VÊNUS CASA DE PRAIA/);
   assert.doesNotMatch(term, /VÊNUS BEACH HOUSE/);
   assert.match(term, /MINUTA NÃO VIGENTE/);
-  assert.match(compliance, /2026-09-30-v3/);
+  assert.match(compliance, /2026-09-30-v4/);
 });

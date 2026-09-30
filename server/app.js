@@ -5,7 +5,7 @@ import {
   randomBytes, randomUUID, createHash, createHmac, scryptSync, timingSafeEqual,
 } from "node:crypto";
 import {
-  AppError, today, date, datesBetween, text, integer, contact,
+  AppError, today, date, datesBetween, text, integer, contact, cpf,
   bookingPolicy, calculateQuote, assertAvailable, cleanupExpiredHolds, findHoldConflict,
   getReservationHold, grantReservationHold, releaseReservationHold, transaction, csv,
 } from "./domain.js";
@@ -325,11 +325,11 @@ export function createApp(db, options = {}) {
   };
 
   // Public endpoints.
-  register("GET", "/api/health", (ctx) => json(ctx.res, 200, { ok: true, version: 8 }));
+  register("GET", "/api/health", (ctx) => json(ctx.res, 200, { ok: true, version: 9 }));
   register("GET", "/api/ready", (ctx) => {
     const quick = db.prepare("PRAGMA quick_check(1)").get()?.quick_check;
     const schemaVersion = Number(db.prepare("PRAGMA user_version").get()?.user_version || 0);
-    const ok = quick === "ok" && schemaVersion === 8;
+    const ok = quick === "ok" && schemaVersion === 9;
     json(ctx.res, ok ? 200 : 503, { ok, schemaVersion });
   });
   register("GET", "/api/public", (ctx) => {
@@ -376,6 +376,7 @@ export function createApp(db, options = {}) {
   register("POST", "/api/reservations", (ctx) => {
     const b = ctx.body;
     const person = contact(b);
+    const documentCpf = b.cpf ? cpf(b.cpf) : "";
     if (!person.phone) throw new AppError("Informe seu telefone.");
     if (b.consent !== true) throw new AppError("Confirme o uso dos dados para atender à solicitação.");
     const requestKey = text(ctx.req.headers["idempotency-key"], "Identificador", 16, 100);
@@ -403,9 +404,9 @@ export function createApp(db, options = {}) {
       if (b.expectedTotalCents !== quote.totalCents) throw new AppError("A tarifa foi atualizada. Consulte o valor novamente.", 409);
       const id = randomUUID();
       db.prepare(`INSERT INTO reservations
-        (id,request_key,request_hash,name,email,phone,check_in,check_out,guests,has_pet,notes,status,quote)
-        VALUES(?,?,?,?,?,?,?,?,?,?,?,'requested',?)`).run(
-        id, requestKey, requestHash, person.name, person.email, person.phone,
+        (id,request_key,request_hash,name,email,phone,cpf,check_in,check_out,guests,has_pet,notes,status,quote)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,'requested',?)`).run(
+        id, requestKey, requestHash, person.name, person.email, person.phone, documentCpf,
         b.checkIn, b.checkOut, b.guests, b.hasPet === true ? 1 : 0,
         text(b.notes || "", "Observações", 0, 2000), JSON.stringify(quote),
       );
@@ -435,7 +436,7 @@ export function createApp(db, options = {}) {
     const row=db.prepare("SELECT * FROM reservations WHERE id=? AND status!='blocked'").get(ctx.params.id); const token=String(ctx.req.headers["x-reservation-token"]||"");
     if(!row||!verifyReservationToken(row,token))throw new AppError("Reserva não encontrada.",404); if(!["requested","confirmed"].includes(row.status))throw new AppError("O termo não está disponível neste estado.",409);
     const l=legal(db); if(l?.approved!==1||l.term_hash!==TERM_HASH)throw new AppError("A versão atual do termo ainda não foi liberada para contratação.",503); const q=JSON.parse(row.quote||"{}");
-    json(ctx.res,200,{termVersion:TERM_VERSION,termHash:TERM_HASH,termText:TERM_TEXT,reservation:{id:row.id,name:row.name,checkIn:row.check_in,checkOut:row.check_out,guests:row.guests,totalCents:q.totalCents||0,depositCents:q.depositCents||0,balanceCents:Math.max(0,(q.totalCents||0)-(q.depositCents||0))}});
+    json(ctx.res,200,{termVersion:TERM_VERSION,termHash:TERM_HASH,termText:TERM_TEXT,reservation:{id:row.id,name:row.name,cpf:row.cpf||"",email:row.email,phone:row.phone,checkIn:row.check_in,checkOut:row.check_out,guests:row.guests,totalCents:q.totalCents||0,cleaningFeeCents:q.cleaningFeeCents||0,depositCents:q.depositCents||0,balanceCents:Math.max(0,(q.totalCents||0)-(q.depositCents||0)),emittedAt:new Date().toISOString()}});
   });
 
   register("POST", "/api/reservations/:id/signed-term", (ctx) => {
