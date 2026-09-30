@@ -182,6 +182,9 @@ function renderSettings(s) {
   f.cleaningFee.value = ((s.cleaningFeeCents || 0) / 100).toFixed(2);
   f.depositPercent.value = s.depositPercent || 20;
   f.maxGuests.value = s.maxGuests || 6;
+  f.includedGuests.value = s.includedGuests || 2;
+  f.additionalGuestFee.value = ((s.additionalGuestFeeCents ?? 5000) / 100).toFixed(2);
+  f.holidayDates.value = Array.isArray(s.holidayDates) ? s.holidayDates.join("\n") : "";
   f.minLeadDays.value = s.minLeadDays ?? 0;
   f.maxAdvanceDays.value = s.maxAdvanceDays || 1825;
   f.maxNights.value = s.maxNights || 30;
@@ -273,7 +276,10 @@ $("#settingsForm").addEventListener("submit", async (e) => {
     await api("/admin/settings", "PUT", {
       pricingEnabled:f.pricingEnabled.checked,
       cleaningFeeCents:Math.round(Number(f.cleaningFee.value) * 100), depositPercent:Number(f.depositPercent.value),
-      maxGuests:Number(f.maxGuests.value), minLeadDays:Number(f.minLeadDays.value),
+      maxGuests:Number(f.maxGuests.value), includedGuests:Number(f.includedGuests.value),
+      additionalGuestFeeCents:Math.round(Number(f.additionalGuestFee.value) * 100),
+      holidayDates:f.holidayDates.value.split(/[\s,;]+/).map((value) => value.trim()).filter(Boolean),
+      minLeadDays:Number(f.minLeadDays.value),
       maxAdvanceDays:Number(f.maxAdvanceDays.value), maxNights:Number(f.maxNights.value),
       requestHoldMinutes:Number(f.requestHoldMinutes.value), whatsappNumber:f.whatsappNumber.value,
       email:f.email.value, googleMapsUrl:f.googleMapsUrl.value, mapsEmbedUrl:f.mapsEmbedUrl.value,

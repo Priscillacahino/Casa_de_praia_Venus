@@ -1,5 +1,7 @@
 # Production readiness — 28/09/2026
 
+> Fotografia histórica de 28/09/2026. O checklist consolidado atual está em `docs/CHECKLIST_PUBLICACAO_V2_3_7.md`.
+
 ## Implementado sem dependências externas
 - fluxo autenticado de solicitação de cancelamento pelo hóspede;
 - decisão administrativa separada, sem estorno automático;

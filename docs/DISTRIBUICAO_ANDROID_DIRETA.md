@@ -1,6 +1,6 @@
 # Distribuição direta do aplicativo Android
 
-A Vênus Beach House não depende da Google Play para distribuir o aplicativo. O modelo previsto é **Instagram oficial → página HTTPS da casa → botão de download do APK oficial**.
+A Vênus Casa de Praia não depende da Google Play para distribuir o aplicativo. O modelo previsto é **Instagram oficial → página HTTPS da casa → botão de download do APK oficial**.
 
 ## Regras de segurança
 
@@ -13,7 +13,7 @@ A Vênus Beach House não depende da Google Play para distribuir o aplicativo. O
 
 ## Geração do release
 
-Configure temporariamente no computador de release: `VENUS_BOOKING_URL`, `VENUS_GUIDE_SHA256`, `VENUS_KEYSTORE_PATH`, `VENUS_KEYSTORE_PASSWORD`, `VENUS_KEY_ALIAS` e `VENUS_KEY_PASSWORD`.
+Configure temporariamente no computador de release: `VENUS_BOOKING_URL`, `VENUS_GUIDE_URL`, `VENUS_GUIDE_SHA256`, `VENUS_KEYSTORE_PATH`, `VENUS_KEYSTORE_PASSWORD`, `VENUS_KEY_ALIAS` e `VENUS_KEY_PASSWORD`. Em release, `VENUS_GUIDE_URL` deve apontar para o arquivo do Guia fixado em um commit aprovado; não use `/main/`.
 
 Execute `npm.cmd run android:release-check` antes do build. Depois gere o APK release com Gradle. As credenciais de assinatura nunca devem entrar no repositório.
 

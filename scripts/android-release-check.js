@@ -7,6 +7,11 @@ try {
   const u = new URL(String(process.env.VENUS_BOOKING_URL || ""));
   if (u.protocol !== "https:") throw new Error();
 } catch { errors.push("VENUS_BOOKING_URL deve ser uma URL HTTPS."); }
+try {
+  const u = new URL(String(process.env.VENUS_GUIDE_URL || ""));
+  if (u.protocol !== "https:" || u.hostname !== "raw.githubusercontent.com") throw new Error();
+  if (/\/main\//.test(u.pathname)) errors.push("VENUS_GUIDE_URL de release deve apontar para um commit aprovado, não para /main/.");
+} catch { errors.push("VENUS_GUIDE_URL deve ser uma URL HTTPS raw.githubusercontent.com fixada em commit."); }
 if (!/^[a-f0-9]{64}$/i.test(String(process.env.VENUS_GUIDE_SHA256 || ""))) errors.push("VENUS_GUIDE_SHA256 deve conter 64 caracteres hexadecimais.");
 if (errors.length) { console.error("RELEASE ANDROID NÃO APROVADA:\n- " + errors.join("\n- ")); process.exit(1); }
 console.log("RELEASE ANDROID: configuração mínima aprovada para gerar APK assinado.");
