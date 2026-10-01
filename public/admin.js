@@ -31,31 +31,17 @@ async function load() {
     const withPriority = d.reservations.filter((r) => r.status === "requested" && r.holdExpiresAt).length;
     const confirmed = d.reservations.filter((r) => r.status === "confirmed").length;
     const cancellationPending = d.reservations.filter((r) => r.cancellationRequest?.status === "pending").length;
-    const paymentReportedPending = d.reservations.filter((r) => {
-      const reportIndex = (r.events || []).findIndex((e) => e.event === "payment.reported");
-      const reconcileIndex = (r.events || []).findIndex((e) => e.event === "payment.recorded" || e.event === "payment.refund_recorded");
-      return reportIndex >= 0 && (reconcileIndex < 0 || reportIndex < reconcileIndex);
-    }).length;
-    const received = d.finance?.summary?.netReceivedCents || 0;
     $("#summary").innerHTML = `
       <article class="card"><h3>${requested}</h3><p>solicitações pendentes</p></article>
       <article class="card"><h3>${withPriority}</h3><p>com prioridade temporária</p></article>
       <article class="card"><h3>${confirmed}</h3><p>reservas confirmadas</p></article>
-      <article class="card"><h3>${cancellationPending}</h3><p>cancelamentos aguardando análise</p></article>
-      <article class="card"><h3>${paymentReportedPending}</h3><p>pagamentos informados para conferir</p></article>
-      <article class="card"><h3>${money(received)}</h3><p>recebimento líquido registrado</p></article>`;
+      <article class="card"><h3>${cancellationPending}</h3><p>cancelamentos aguardando análise</p></article>`;
 
     $("#reservations").innerHTML = d.reservations.map((r) => {
       const q = r.quote || {}, req = r.requirements || {};
       const hold = r.holdExpiresAt
         ? `<strong>Prioridade até ${esc(when(r.holdExpiresAt))}</strong>`
         : `<span class="muted">Sem prioridade temporária</span>`;
-      const paymentReportIndex = (r.events || []).findIndex((e) => e.event === "payment.reported");
-      const paymentReconciledIndex = (r.events || []).findIndex((e) => e.event === "payment.recorded" || e.event === "payment.refund_recorded");
-      const paymentReportedPending = paymentReportIndex >= 0 && (paymentReconciledIndex < 0 || paymentReportIndex < paymentReconciledIndex);
-      const paymentReportBox = paymentReportedPending
-        ? `<div class="notice"><strong>Pagamento informado pelo hóspede</strong><p>Confira o crédito diretamente no banco. Só depois use “Registrar pagamento/estorno”.</p></div>`
-        : "";
       const cancellation = r.cancellationRequest;
       const cancellationBox = cancellation?.status === "pending"
         ? `<div class="notice"><strong>Cancelamento solicitado</strong><p>${esc(cancellation.reason || "Sem motivo informado")}</p><div class="actions"><button class="button accept-cancellation" data-cancellation="${esc(cancellation.id)}">Aceitar cancelamento</button><button class="button reject-cancellation" data-cancellation="${esc(cancellation.id)}">Não aceitar</button></div></div>`
@@ -64,17 +50,15 @@ async function load() {
         <strong>${esc(r.check_in)} → ${esc(r.check_out)}</strong> · ${esc(r.status)}<br>
         <span>${esc(r.name || "Bloqueio")} · ${q.totalCents ? money(q.totalCents) : "—"}</span>
         <p>${hold}</p>
-        <p class="muted">Termo jurídico: ${req.legalReady ? "OK" : "pendente"} · assinatura: ${req.signatureReady ? "OK" : "pendente"} · recebido: ${money(req.paidCents || 0)} / sinal ${money(req.requiredDepositCents || 0)}</p>
-        ${paymentReportBox}
+        <p class="muted">Termo jurídico: ${req.legalReady ? "OK" : "pendente"} · assinatura: ${req.signatureReady ? "OK" : "pendente"}</p>
         ${cancellationBox}
         ${r.status === "requested" ? `<div class="actions">
           <button class="button confirm">Confirmar</button>
           <button class="button cancel">Cancelar</button>
-          <button class="button payment">Registrar pagamento/estorno</button>
           ${req.documentId ? `<a class="button" href="/api/admin/reservations/${esc(r.id)}/signed-term" target="_blank" rel="noopener">Baixar termo enviado</a><button class="button validate-existing-term" data-sha="${esc(req.documentHash || "")}">Validar assinatura GOV.BR</button>` : `<button class="button term">Anexar termo manualmente</button>`}
           <button class="button hold">${r.holdExpiresAt ? "Renovar prioridade" : "Conceder prioridade"}</button>
           ${r.holdExpiresAt ? '<button class="button release-hold">Liberar prioridade</button>' : ""}
-        </div>` : r.status === "confirmed" ? `<div class="actions"><button class="button payment">Registrar pagamento/estorno</button><button class="button cancel">Cancelar reserva</button></div>` : r.status === "cancelled" && (r.paidCents || 0) > 0 ? `<div class="actions"><button class="button payment">Registrar estorno</button></div>` : ""}
+        </div>` : r.status === "confirmed" ? `<div class="actions"><button class="button cancel">Cancelar reserva</button></div>` : ""}
         ${r.request_key ? '<div class="actions"><button class="button rotate-token">Trocar código privado</button></div>' : ""}
       </article>`;
     }).join("") || "<p>Nenhum registro.</p>";
@@ -83,7 +67,6 @@ async function load() {
       const id = card.dataset.id;
       card.querySelector(".confirm")?.addEventListener("click", () => changeStatus(id, "confirmed"));
       card.querySelector(".cancel")?.addEventListener("click", () => changeStatus(id, "cancelled"));
-      card.querySelector(".payment")?.addEventListener("click", () => payment(id));
       card.querySelector(".term")?.addEventListener("click", () => term(id));
       card.querySelector(".validate-existing-term")?.addEventListener("click", (e) => validateExistingTerm(id, e.currentTarget.dataset.sha));
       card.querySelector(".hold")?.addEventListener("click", () => grantHold(id));
@@ -92,7 +75,6 @@ async function load() {
       card.querySelector(".accept-cancellation")?.addEventListener("click", (e) => reviewCancellation(e.currentTarget.dataset.cancellation, "accepted"));
       card.querySelector(".reject-cancellation")?.addEventListener("click", (e) => reviewCancellation(e.currentTarget.dataset.cancellation, "rejected"));
     });
-    renderFinance(d.finance);
     renderSettings(d.settings);
     renderReviews(d.reviews);
     await loadCompliance();
@@ -103,7 +85,7 @@ async function load() {
 }
 
 async function changeStatus(id, status) {
-  if (status === "cancelled" && !confirm("Cancelar esta reserva? Valores já recebidos não serão estornados automaticamente; registre o estorno separadamente após a conciliação bancária.")) return;
+  if (status === "cancelled" && !confirm("Cancelar esta reserva? Eventuais valores e reembolsos devem ser tratados exclusivamente pelo WhatsApp.")) return;
   try { await api("/admin/reservations/" + id, "PATCH", { status }); await load(); }
   catch (e) { alert(e.message); }
 }
@@ -115,7 +97,7 @@ async function reviewCancellation(id, status) {
     : "Motivo para não aceitar a solicitação (opcional):", "");
   if (note === null) return;
   if (note.length > 1000) return alert("A observação deve ter no máximo 1000 caracteres.");
-  if (accepting && !confirm("Aceitar o cancelamento? A reserva será marcada como cancelada. Valores recebidos não são estornados automaticamente e devem ser conciliados separadamente.")) return;
+  if (accepting && !confirm("Aceitar o cancelamento? A reserva será marcada como cancelada. Eventuais questões financeiras são tratadas exclusivamente pelo WhatsApp.")) return;
   try { await api(`/admin/cancellations/${id}`, "PATCH", { status, note }); await load(); }
   catch (e) { alert(e.message); }
 }
@@ -140,38 +122,6 @@ async function rotateToken(id) {
   try {
     const result = await api(`/admin/reservations/${id}/rotate-token`, "POST", {});
     prompt("Novo código privado. Copie e envie ao hóspede por um canal confiável:", result.manageToken);
-    await load();
-  } catch (e) { alert(e.message); }
-}
-
-function renderFinance(finance) {
-  const box = $("#finance"); if (!box) return;
-  const s = finance?.summary || {};
-  const rows = (finance?.rows || []).filter((r) => r.status !== "cancelled" || r.receivedCents !== 0).slice(0, 12);
-  box.innerHTML = `
-    <div class="grid three">
-      <article class="card"><h3>${money(s.grossInflowCents || 0)}</h3><p>entradas compensadas</p></article>
-      <article class="card"><h3>${money(s.refundsCents || 0)}</h3><p>estornos registrados</p></article>
-      <article class="card"><h3>${money(s.confirmedOutstandingCents || 0)}</h3><p>saldo de reservas confirmadas</p></article>
-      <article class="card"><h3>${money(s.cancelledHeldCents || 0)}</h3><p>valor ainda retido em canceladas</p></article>
-    </div>
-    <div class="grid">
-      ${rows.map((r) => `<article class="card"><strong>${esc(r.name)} · ${esc(r.status)}</strong><p class="muted">${esc(r.checkIn)} → ${esc(r.checkOut)} · protocolo ${esc(r.reservationId)}</p><p>Total ${money(r.totalCents)} · recebido ${money(r.receivedCents)} · saldo ${money(r.balanceCents)}</p></article>`).join("") || "<p class=muted>Nenhum movimento financeiro registrado.</p>"}
-    </div>`;
-}
-
-async function payment(id) {
-  const amount = prompt("Valor compensado em R$ (use negativo somente para estorno):");
-  if (amount === null) return;
-  const method = prompt("Método: pix ou transfer", "pix");
-  if (!["pix", "transfer"].includes(method)) return alert("Método inválido.");
-  const bankReference = prompt("Identificador único no extrato bancário:");
-  if (!bankReference) return;
-  const note = prompt("Descrição:", "Pagamento conferido no extrato");
-  const cents = Math.round(Number(String(amount).replace(",", ".")) * 100);
-  if (!Number.isSafeInteger(cents) || !cents) return alert("Valor inválido.");
-  try {
-    await api("/admin/payments", "POST", { reservationId:id, amountCents:cents, note, method, bankReference, settled:true });
     await load();
   } catch (e) { alert(e.message); }
 }
@@ -242,22 +192,11 @@ async function term(id) {
 
 async function loadCompliance() {
   const c = await api("/admin/compliance");
-  $("#compliance").innerHTML = `<p><strong>Versão:</strong> ${esc(c.version)}</p><p><strong>Hash do termo:</strong> <code>${esc(c.termHash)}</code></p><p><strong>Aprovação jurídica:</strong> ${c.approval?.approved === 1 ? "registrada" : "pendente"}</p><div class="actions"><button class="button" id="legalApprove">Registrar aprovação validada</button><button class="button" id="banking">Configurar dados bancários</button><a class="button" href="/api/admin/term-template">Baixar minuta</a><a class="button" href="https://www.gov.br/pt-br/servicos/realizar-validacao-de-assinaturas-eletronicas-validar" target="_blank" rel="noopener noreferrer">Abrir VALIDAR/ITI</a></div>`;
+  $("#compliance").innerHTML = `<p><strong>Versão:</strong> ${esc(c.version)}</p><p><strong>Hash do termo:</strong> <code>${esc(c.termHash)}</code></p><p><strong>Aprovação jurídica:</strong> ${c.approval?.approved === 1 ? "registrada" : "pendente"}</p><div class="actions"><button class="button" id="legalApprove">Registrar aprovação validada</button><a class="button" href="/api/admin/term-template">Baixar minuta</a><a class="button" href="https://www.gov.br/pt-br/servicos/realizar-validacao-de-assinaturas-eletronicas-validar" target="_blank" rel="noopener noreferrer">Abrir VALIDAR/ITI</a></div>`;
   $("#legalApprove").onclick = async () => {
     const reviewer = prompt("Responsável/revisor jurídico:"); const reference = prompt("Referência do parecer/documento:");
     if (!reviewer || !reference) return;
     try { await api("/admin/legal-approval", "POST", { termHash:c.termHash, approved:true, confirmedReview:true, reviewer, reference }); await loadCompliance(); }
-    catch (e) { alert(e.message); }
-  };
-  $("#banking").onclick = async () => {
-    const bank = prompt("Banco:", c.bank.bank || "") ?? "";
-    const holder = prompt("Titular:", c.bank.holder || "") ?? "";
-    const holderDocument = prompt("Documento do titular:", c.bank.holderDocument || "") ?? "";
-    const branch = prompt("Agência:", c.bank.branch || "") ?? "";
-    const account = prompt("Conta:", c.bank.account || "") ?? "";
-    const accountType = prompt("Tipo de conta:", c.bank.accountType || "") ?? "";
-    const pixKey = prompt("Chave Pix:", c.bank.pixKey || "") ?? "";
-    try { await api("/admin/banking", "PUT", { bank, holder, holderDocument, branch, account, accountType, pixKey }); await loadCompliance(); }
     catch (e) { alert(e.message); }
   };
 }

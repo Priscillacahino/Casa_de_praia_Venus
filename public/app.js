@@ -27,7 +27,6 @@ const trackingForm = $("#trackingForm");
 const trackingResult = $("#trackingResult");
 const paymentInstructions = $("#paymentInstructions");
 const whatsappButton = $("#continueWhatsApp");
-const reportPaymentButton = $("#reportPayment");
 const cancellationButton = $("#requestCancellation");
 const reviewSection = $("#avaliar");
 const reviewForm = $("#reviewForm");
@@ -115,7 +114,6 @@ async function loadReservationStatus() {
   if (!id || !token) return;
   currentReservationAccess = { id, token };
   whatsappButton?.classList.add("hidden");
-  reportPaymentButton?.classList.add("hidden");
   cancellationButton?.classList.add("hidden");
   paymentInstructions.classList.add("hidden");
   termWorkflow?.classList.add("hidden");
@@ -132,26 +130,21 @@ async function loadReservationStatus() {
       : d.status === "requested" ? "Sem prioridade temporária no momento." : "";
     const cancellation = d.cancellationRequest;
     const cancellationInfo = cancellation?.status === "pending"
-      ? "<br><strong>Cancelamento solicitado e aguardando análise. Não realize novos pagamentos.</strong>"
+      ? "<br><strong>Cancelamento solicitado e aguardando análise. Questões financeiras são tratadas pelo WhatsApp.</strong>"
       : cancellation?.status === "accepted"
         ? "<br>Solicitação de cancelamento aceita."
         : cancellation?.status === "rejected" ? "<br>Solicitação de cancelamento analisada e não aceita." : "";
-    const paymentInfo = d.paymentReported
-      ? "<br><strong>Pagamento informado pelo hóspede — aguardando conferência bancária.</strong>"
-      : d.paidCents > 0
-        ? "<br><strong>Pagamento recebido e conciliado pela administração.</strong>"
-        : "";
     trackingResult.className = "notice ok";
-    trackingResult.innerHTML = `<strong>${statusLabel}</strong><br>${d.checkIn} → ${d.checkOut} · ${d.quote.nights} noite(s)<br>Total contratado: ${money(d.quote.totalCents)} · Recebido: ${money(d.paidCents)} · Saldo: ${money(d.balanceCents)}.<br>${priority}${paymentInfo}${cancellationInfo}${d.reviewSubmitted ? "<br>Avaliação da estadia já enviada." : ""}`;
+    trackingResult.innerHTML = `<strong>${statusLabel}</strong><br>${d.checkIn} → ${d.checkOut} · ${d.quote.nights} noite(s)<br>Total previsto: ${money(d.quote.totalCents)}.<br>${priority}${cancellationInfo}${d.reviewSubmitted ? "<br>Avaliação da estadia já enviada." : ""}`;
     reviewSection?.classList.toggle("hidden", !d.reviewEligible);
     if (d.status === "requested") {
       termWorkflow?.classList.remove("hidden");
       if (termStatus) {
         termStatus.className = d.signatureReady ? "notice ok" : "notice";
         termStatus.textContent = d.signatureReady
-          ? "Termo assinado e validado. O pagamento da reserva pode seguir pelo canal oficial quando as demais condições estiverem válidas."
+          ? "Termo assinado e validado. Continue o atendimento pelo WhatsApp oficial."
           : d.signedTermUploaded
-            ? "PDF assinado enviado. Aguarde a validação administrativa antes do pagamento."
+            ? "PDF assinado enviado. Aguarde a validação administrativa antes de continuar o atendimento."
             : d.legalReady
               ? "Prepare o termo, assine pelo GOV.BR e envie o PDF assinado."
               : "A versão atual do termo ainda aguarda a aprovação necessária para contratação.";
@@ -161,7 +154,6 @@ async function loadReservationStatus() {
     }
     if ((d.status === "requested" || d.status === "confirmed") && cancellation?.status !== "pending") {
       if (d.signatureReady) whatsappButton?.classList.remove("hidden");
-      if (d.balanceCents > 0 && !d.paymentReported && d.whatsappStarted) reportPaymentButton?.classList.remove("hidden");
       cancellationButton?.classList.remove("hidden");
     }
   } catch (e) {
@@ -182,7 +174,7 @@ cancellationButton?.addEventListener("click", async () => {
   const reason = prompt(tr("Motivo do cancelamento (opcional, até 1000 caracteres):"), "");
   if (reason === null) return;
   if (reason.length > 1000) return alert(tr("O motivo deve ter no máximo 1000 caracteres."));
-  if (!confirm(tr("Registrar a solicitação de cancelamento? Isso não gera estorno automático; a administração fará a análise e o eventual reembolso."))) return;
+  if (!confirm(tr("Registrar a solicitação de cancelamento? Qualquer questão de reembolso será tratada diretamente pelo WhatsApp."))) return;
   cancellationButton.disabled = true;
   try {
     await api(`/reservations/${encodeURIComponent(currentReservationAccess.id)}/cancellation-request`, {
@@ -235,28 +227,6 @@ whatsappButton?.addEventListener("click", async () => {
   paymentInstructions.className = "notice";
   paymentInstructions.textContent = "Verificando se a solicitação está liberada para continuar…";
   try {
-    const p = await api(`/reservations/${encodeURIComponent(currentReservationAccess.id)}/payment-options`, {
-      headers:{ "X-Reservation-Token":currentReservationAccess.token },
-    });
-    if (p.cancellationPending) {
-      paymentInstructions.textContent = "Há uma solicitação de cancelamento pendente. Não realize novos pagamentos.";
-      return;
-    }
-    if (!p.legalApproved) {
-      paymentInstructions.textContent = "A etapa de pagamento ainda não foi liberada porque o termo vigente não possui aprovação registrada.";
-      return;
-    }    if (!p.signatureReady) {
-      paymentInstructions.textContent = "O termo assinado ainda precisa ser enviado e validado antes do pagamento.";
-      return;
-    }
-    if (!p.reservationEligible) {
-      paymentInstructions.textContent = "Esta solicitação ainda não está liberada para pagamento. Aguarde a prioridade das datas ou a orientação da administração.";
-      return;
-    }
-    if (!p.whatsappAvailable) {
-      paymentInstructions.textContent = "O WhatsApp oficial ainda não está configurado. Use o canal de contato informado pela administração.";
-      return;
-    }
     const phone = String(publicSettings.whatsappNumber || "").replace(/\D/g, "");
     if (!phone) throw new Error(tr("WhatsApp oficial não configurado."));
     await api(`/reservations/${encodeURIComponent(currentReservationAccess.id)}/whatsapp-started`, {
@@ -273,14 +243,14 @@ whatsappButton?.addEventListener("click", async () => {
           `Protocolo: ${d.id}`,
           `Fechas: ${d.checkIn} a ${d.checkOut}`,
           `Huéspedes: ${d.guests}`,
-          "Me gustaría recibir las instrucciones para el pago por Pix o transferencia.",
+          "Quiero continuar la atención de mi reserva por WhatsApp.",
         ].join("\n")
       : [
           "Olá! Quero continuar a minha solicitação de reserva da Vênus Casa de Praia.",
           `Protocolo: ${d.id}`,
           `Datas: ${d.checkIn} a ${d.checkOut}`,
           `Hóspedes: ${d.guests}`,
-          "Gostaria de receber as orientações para pagamento por Pix ou transferência.",
+          "Gostaria de continuar o atendimento da minha reserva pelo WhatsApp.",
         ].join("\n");
     paymentInstructions.className = "notice ok";
     paymentInstructions.textContent = "O WhatsApp será aberto com os dados básicos da reserva. O código privado não será enviado.";
@@ -290,32 +260,6 @@ whatsappButton?.addEventListener("click", async () => {
     paymentInstructions.textContent = e.message;
   }
 });
-
-reportPaymentButton?.addEventListener("click", async () => {
-  if (!currentReservationAccess) return;
-  if (!confirm(tr("Você já realizou o Pix ou a transferência combinada pelo WhatsApp? Este aviso não confirma o pagamento; a administração ainda fará a conferência bancária."))) return;
-  reportPaymentButton.disabled = true;
-  paymentInstructions.className = "notice";
-  paymentInstructions.textContent = "Registrando seu aviso de pagamento…";
-  try {
-    const result = await api(`/reservations/${encodeURIComponent(currentReservationAccess.id)}/payment-reported`, {
-      method:"POST",
-      headers:{ "X-Reservation-Token":currentReservationAccess.token },
-      body:JSON.stringify({}),
-    });
-    paymentInstructions.className = "notice ok";
-    paymentInstructions.textContent = result.alreadyReported
-      ? "O pagamento já havia sido informado e continua aguardando conferência bancária."
-      : "Pagamento informado. A administração fará a conferência bancária antes de confirmar o recebimento.";
-    await loadReservationStatus();
-  } catch (e) {
-    paymentInstructions.className = "notice error";
-    paymentInstructions.textContent = e.message;
-  } finally {
-    reportPaymentButton.disabled = false;
-  }
-});
-
 
 contactForm?.addEventListener("submit", async (e) => {
   e.preventDefault(); contactResult.classList.add("hidden"); if (!contactForm.reportValidity()) return;
@@ -361,7 +305,7 @@ signedTermFile?.addEventListener("change", async () => {
   if(file.type!=="application/pdf"&&!file.name.toLowerCase().endsWith(".pdf")){signedTermFile.value="";return alert(tr("Envie o PDF original assinado."))}
   if(file.size>3*1024*1024){signedTermFile.value="";return alert(tr("O PDF deve ter no máximo 3 MB."))}
   if(!confirm(tr("Confirma o envio do PDF assinado? A administração ainda validará a assinatura e a integridade do documento."))){signedTermFile.value="";return}
-  try{const bytes=new Uint8Array(await file.arrayBuffer());let binary="";for(let i=0;i<bytes.length;i+=0x8000)binary+=String.fromCharCode(...bytes.subarray(i,i+0x8000));await api(`/reservations/${encodeURIComponent(currentReservationAccess.id)}/signed-term`,{method:"POST",headers:{"X-Reservation-Token":currentReservationAccess.token},body:JSON.stringify({base64:btoa(binary)})});termStatus.className="notice ok";termStatus.textContent="PDF assinado enviado. Aguarde a validação administrativa antes do pagamento.";signedTermFile.value="";await loadReservationStatus()}catch(error){termStatus.className="notice error";termStatus.textContent=error.message}
+  try{const bytes=new Uint8Array(await file.arrayBuffer());let binary="";for(let i=0;i<bytes.length;i+=0x8000)binary+=String.fromCharCode(...bytes.subarray(i,i+0x8000));await api(`/reservations/${encodeURIComponent(currentReservationAccess.id)}/signed-term`,{method:"POST",headers:{"X-Reservation-Token":currentReservationAccess.token},body:JSON.stringify({base64:btoa(binary)})});termStatus.className="notice ok";termStatus.textContent="PDF assinado enviado. Aguarde a validação administrativa antes de continuar o atendimento.";signedTermFile.value="";await loadReservationStatus()}catch(error){termStatus.className="notice error";termStatus.textContent=error.message}
 });
 
 
@@ -447,7 +391,7 @@ signedTermFile?.addEventListener("change", async () => {
   if (box) {
     if (publicSettings.whatsappNumber) {
       box.className = "notice ok";
-      box.textContent = "Após solicitar a reserva, continue pelo WhatsApp oficial. Pix ou transferência são combinados no atendimento e a confirmação final aparece no próprio site.";
+      box.textContent = "Após a validação do termo, continue pelo WhatsApp oficial. Todas as questões financeiras são tratadas fora do site, e a confirmação da reserva aparece aqui.";
     } else {
       box.className = "notice";
       box.textContent = "O canal oficial de WhatsApp ainda será configurado pela administração.";

@@ -1,4 +1,4 @@
-const CACHE="venus-shell-v15";
+const CACHE="venus-shell-v16";
 const SHELL=["/","/styles.css","/i18n.js","/app.js","/booking-experience.js","/offline.html","/manifest.webmanifest","/privacidade.html","/privacy.js","/termos.html","/terms.js","/images/venus-logo.jpg","/guia/index.html","/guia-venus-offline.html"];
 
 self.addEventListener("install",(event)=>{

@@ -42,7 +42,7 @@ test("v2.3.3 exige termo validado antes do WhatsApp de pagamento", () => {
 test("v2.3.3 preserva Guia Vênus e controles de reserva", () => {
   const html=readFileSync(join(root,"public","index.html"),"utf8");
   assert.match(html,/id="guia"/);
-  assert.match(html,/id="reportPayment"/);
+  assert.doesNotMatch(html,/id="reportPayment"/);
   assert.match(html,/id="requestCancellation"/);
   assert.match(html,/href="\/privacidade\.html"/);
 });

@@ -131,7 +131,7 @@
         <li><strong>De 24 horas até menos de 48 horas:</strong> devolução de 50% do sinal pago.</li>
         <li><strong>Menos de 24 horas:</strong> sem reembolso contratual do sinal, ressalvados direitos legais aplicáveis.</li>
       </ul>
-      <p class="muted">O site não executa estorno automaticamente. A administração analisa o caso e registra eventual devolução após a conferência financeira.</p>
+      <p class="muted">O site não executa estorno automaticamente. A administração analisa o caso e trata eventual devolução exclusivamente pelo WhatsApp.</p>
     </article>
   </div>
   <div class="actions"><a class="button primary" href="#reserva">Consultar disponibilidade</a><a class="button whatsapp-action" href="https://wa.me/5583986705999?text=Ol%C3%A1%21%20Gostaria%20de%20consultar%20a%20V%C3%AAnus%20Casa%20de%20Praia." target="_blank" rel="noopener noreferrer">💬 Perguntar no WhatsApp</a></div>
@@ -248,8 +248,8 @@
           <li data-step="dates"><span>1</span><small>Datas</small></li>
           <li data-step="request"><span>2</span><small>Solicitação</small></li>
           <li data-step="term"><span>3</span><small>Termo</small></li>
-          <li data-step="whatsapp"><span>4</span><small>WhatsApp / pagamento</small></li>
-          <li data-step="bank"><span>5</span><small>Conferência bancária</small></li>
+          <li data-step="whatsapp"><span>4</span><small>WhatsApp</small></li>
+          <li data-step="admin"><span>5</span><small>Análise do anfitrião</small></li>
           <li data-step="confirmed"><span>6</span><small>Confirmada</small></li>
         </ol>
         <small class="muted">Ao retornar do WhatsApp para esta aba, o site consulta novamente o andamento. O código privado não é enviado ao WhatsApp.</small>
@@ -262,7 +262,7 @@
   <p>Antes do pagamento da reserva, prepare o termo com os dados da solicitação, salve-o como PDF, assine pelo serviço oficial GOV.BR e envie o PDF assinado para validação.</p>
   <div id="termStatus" class="notice">Consulte a solicitação para verificar o termo.</div>
   <div class="actions"><button class="button" id="prepareTerm" type="button">1. Preparar termo em PDF</button><a class="button" id="govbrSignLink" href="https://www.gov.br/pt-br/servicos/assinatura-eletronica" target="_blank" rel="noopener noreferrer">2. Assinar pelo GOV.BR</a><label class="button file-button" for="signedTermFile">3. Enviar PDF assinado</label><input id="signedTermFile" class="hidden" type="file" accept="application/pdf"></div>
-  <small class="muted">O envio do PDF não confirma a assinatura automaticamente. A administração valida o documento antes de liberar o pagamento.</small>
+  <small class="muted">O envio do PDF não confirma a assinatura automaticamente. A administração valida o documento antes de liberar o atendimento da reserva.</small>
 </div>
 <section id="printableTerm" class="printable-term hidden" aria-label="Termo para impressão"><h1>Vênus Casa de Praia · Termo de compromisso</h1><pre id="printableTermText"></pre></section>
 
@@ -274,7 +274,6 @@
       <button class="button full secondary hidden" id="forgetReservationAccess" type="button">Esquecer acesso deste dispositivo</button>
       <small class="muted">Para facilitar o retorno do WhatsApp, o protocolo e o código privado ficam temporariamente apenas nesta aba do navegador.</small>
       <button class="button full hidden" id="continueWhatsApp" type="button">Continuar pelo WhatsApp</button>
-      <button class="button full hidden" id="reportPayment" type="button">Já realizei um pagamento</button>
       <button class="button full hidden" id="requestCancellation" type="button">Solicitar cancelamento</button>
     </form>
   </section>
@@ -326,13 +325,13 @@
     <span class="eyebrow">Pagamentos</span><h2>Negociação pelo WhatsApp, confirmação pelo site.</h2>
     <div id="paymentStatus" class="notice" role="status" aria-live="polite">O pagamento é combinado com a administração pelo WhatsApp.</div>
     <p>Depois de solicitar a reserva, use o botão de WhatsApp no acompanhamento. Os dados para Pix ou transferência são informados durante o atendimento, e os dados bancários não ficam publicados no site.</p>
-    <p class="muted">O botão “Já realizei um pagamento” apenas avisa a administração. A reserva só é confirmada depois da conferência do crédito no banco, do registro no painel, da validação das demais exigências e de uma nova checagem de conflito de datas.</p>
+    <p class="muted">Pagamentos, links de cartão e reembolsos são tratados exclusivamente pelo WhatsApp. O site não recebe nem registra transações financeiras; a administração confirma a reserva manualmente após as verificações externas e a validação do termo e das datas.</p>
   </section>
 
   <section id="privacidade" class="section">
     <span class="eyebrow">Privacidade</span><h2>Dados mínimos, finalidade clara.</h2>
     <p>Os dados de contato e reserva são usados para atender a solicitação, organizar a hospedagem e manter os registros operacionais necessários. Avaliações só são publicadas após moderação. Solicitações de correção ou exclusão devem ser tratadas pela administração, observadas as obrigações legais de retenção.</p>
-    <p class="muted">Este sistema não armazena senha do hóspede nem dados de cartão. Pix e transferência são registrados somente após conferência bancária pela administração.</p>
+    <p class="muted">Este sistema não solicita senhas do hóspede, dados de cartão, contas bancárias ou comprovantes, nem aceita novos registros de transações financeiras. O atendimento financeiro é externo, pelo WhatsApp.</p>
     <div class="actions"><a class="button" href="/privacidade.html">Política de privacidade</a><a class="button" href="/termos.html">Termo vigente da hospedagem</a></div>
     <p class="muted">O termo vigente só é disponibilizado pelo sistema depois que a versão exata possui aprovação registrada.</p>
   </section>

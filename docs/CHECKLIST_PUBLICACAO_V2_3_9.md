@@ -43,8 +43,8 @@ Este documento substitui, para a versão atual, os checklists históricos de v2.
 - [ ] configurar monitoramento/alertas do backend;
 - [ ] revisar juridicamente a versão exata da minuta e da política de privacidade;
 - [ ] registrar nova aprovação jurídica após qualquer alteração do texto do termo;
-- [ ] conferir os dados bancários reais antes de qualquer cobrança;
-- [ ] testar pagamento, conciliação, cancelamento e reembolso com transações controladas;
+- [ ] conferir condições de cobrança diretamente no atendimento externo pelo WhatsApp, sem cadastrar dados bancários no site;
+- [ ] testar o atendimento financeiro e eventual reembolso pelos canais externos, sem transações no site;
 - [ ] realizar revisão independente de segurança antes de aumentar volume financeiro.
 
 ## Homologação funcional
@@ -58,9 +58,9 @@ Antes da abertura comercial, registrar evidências para:
 5. protocolo e código privado;
 6. termo GOV.BR, upload e validação administrativa;
 7. WhatsApp oficial sem exposição do código privado;
-8. aviso de pagamento sem confirmação automática;
-9. conciliação bancária e confirmação;
-10. cancelamento/reembolso;
+8. atendimento financeiro externo pelo WhatsApp, sem aviso ou processamento financeiro no site;
+9. confirmação manual pelo administrador com termo válido e datas livres;
+10. cancelamento no site e eventual reembolso somente pelo WhatsApp;
 11. backup + restauração;
 12. PT/ES em desktop e celular;
 13. Guia online/offline;

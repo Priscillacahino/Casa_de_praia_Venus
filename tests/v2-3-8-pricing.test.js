@@ -82,7 +82,7 @@ test("v2.3.8 publica a nova regra e atualiza versões", () => {
   assert.match(server, /http:\/\/localhost:3001/);
 
   assert.equal(pkg.version, "2.3.9");
-  assert.match(sw, /venus-shell-v15/);
+  assert.match(sw, /venus-shell-v16/);
   assert.match(gradle, /versionCode = 239/);
   assert.match(gradle, /versionName = "2\.3\.9"/);
 });

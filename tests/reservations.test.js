@@ -76,7 +76,7 @@ test("CSV neutraliza fórmulas em campos de texto", () => {
     /"'=HYPERLINK/,
   );
 });
-test("fluxo HTTP: acesso, pedido idempotente, conflito, pagamento, avaliação e exportações", async () => {
+test("fluxo HTTP: acesso, pedido idempotente, conflito, documentação, avaliação e exportações", async () => {
   const db = fixture();
   const password = "test-only-password";
   const salt = "test-salt";
@@ -163,9 +163,6 @@ test("fluxo HTTP: acesso, pedido idempotente, conflito, pagamento, avaliação e
       "Idempotency-Key": randomUUID(),
     });
     assert.equal(second.status, 201);
-    const options=(await call('/payment-options')).data;
-    assert.equal(options.pixAvailable,false);
-    assert.ok(Object.values(options.bank).every(v=>v===''));
     const confirm=id=>call('/admin/reservations/'+id,'PATCH',{status:'confirmed'});
     assert.equal((await confirm(first.data.id)).status,422);
     const compliance=(await call('/admin/compliance')).data;
@@ -183,14 +180,6 @@ test("fluxo HTTP: acesso, pedido idempotente, conflito, pagamento, avaliação e
       assert.equal(current.requirements.signatureReady,false);
       assert.equal((await call(`/admin/reservations/${id}/validate-term`,'POST',validation)).status,409);
       assert.equal((await call(`/admin/reservations/${id}/validate-term`,'POST',{...validation,sha256:replaced.data.sha256})).status,200);
-      assert.equal((await confirm(id)).status,422);
-      assert.equal((await call('/admin/payments','POST',{reservationId:id,amountCents:10000,note:'Parcela teste',method:'pix',bankReference:id+'-1',settled:false})).status,400);
-      for(let part=1;part<=2;part++) {
-        const payment={reservationId:id,amountCents:10000,note:'Parcela teste',method:part===1?'pix':'transfer',bankReference:id+'-'+part,settled:true};
-        assert.equal((await call('/admin/payments','POST',payment)).status,201);
-        assert.equal((await call('/admin/payments','POST',payment)).status,409);
-        if(part===1)assert.equal((await confirm(id)).status,422);
-      }
     }
 
     assert.equal(
@@ -234,39 +223,6 @@ test("fluxo HTTP: acesso, pedido idempotente, conflito, pagamento, avaliação e
       "check_in",
       "check_out",
     ]);
-    assert.equal(
-      (
-        await call("/admin/payments", "POST", {
-          reservationId: first.data.id,
-          amountCents: 30000,
-          method: "pix", settled: true, bankReference: "payment-third",
-          note: "PIX conferido",
-        })
-      ).status,
-      201,
-    );
-    assert.equal(
-      (
-        await call("/admin/payments", "POST", {
-          reservationId: first.data.id,
-          amountCents: 60000,
-          method: "pix", settled: true, bankReference: "payment-excess",
-          note: "Excesso",
-        })
-      ).status,
-      400,
-    );
-    assert.equal(
-      (
-        await call("/admin/payments", "POST", {
-          reservationId: first.data.id,
-          amountCents: -60000,
-          method: "transfer", settled: true, bankReference: "refund-excess",
-          note: "Estorno inválido",
-        })
-      ).status,
-      400,
-    );
     assert.equal(
       (
         await call("/messages", "POST", {
