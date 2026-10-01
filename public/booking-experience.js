@@ -179,12 +179,10 @@
       current = 3;
     }
 
-    if (state.whatsappStarted && (state.paymentReported || Number(state.paidCents || 0) > 0)) {
+    if (state.whatsappStarted) {
       done.add(3);
       current = 4;
     }
-
-    if (Number(state.paidCents || 0) > 0) current = 4;
     if (state.status === "cancelled") current = 1;
 
     items.forEach((item, index) => {

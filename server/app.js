@@ -10,7 +10,7 @@ import {
   getReservationHold, grantReservationHold, releaseReservationHold, transaction, csv,
 } from "./domain.js";
 import {
-  TERM_HASH, TERM_TEXT, TERM_VERSION, legal, banking, readiness,
+  TERM_HASH, TERM_TEXT, TERM_VERSION, legal, readiness,
   assertConfirmationReady, saveSignedTerm, validateSignedTerm,
 } from "./compliance.js";
 
@@ -232,65 +232,12 @@ export function createApp(db, options = {}) {
     db.prepare("INSERT INTO reservation_events(reservation_id,event,actor,details_json) VALUES(?,?,?,?)")
       .run(reservationId, event, actor, JSON.stringify(details));
   };
-  const paidFor = (reservationId) => db.prepare(
-    "SELECT COALESCE(SUM(amount_cents),0) AS total FROM payments WHERE reservation_id=? AND settled=1",
-  ).get(reservationId).total;
-  const financialSnapshot = () => {
-    const reservations = db.prepare("SELECT * FROM reservations WHERE status!='blocked' ORDER BY check_in DESC").all();
-    const payments = db.prepare("SELECT reservation_id,amount_cents FROM payments WHERE settled=1").all();
-    const byReservation = new Map();
-    let grossInflowCents = 0, refundsCents = 0;
-    for (const p of payments) {
-      byReservation.set(p.reservation_id, (byReservation.get(p.reservation_id) || 0) + p.amount_cents);
-      if (p.amount_cents > 0) grossInflowCents += p.amount_cents;
-      else refundsCents += Math.abs(p.amount_cents);
-    }
-    const rows = reservations.map((r) => {
-      const q = JSON.parse(r.quote || "{}");
-      const totalCents = q.totalCents || 0;
-      const receivedCents = byReservation.get(r.id) || 0;
-      return {
-        reservationId: r.id,
-        name: r.name,
-        status: r.status,
-        checkIn: r.check_in,
-        checkOut: r.check_out,
-        totalCents,
-        receivedCents,
-        balanceCents: Math.max(0, totalCents - receivedCents),
-      };
-    });
-    const confirmed = rows.filter((r) => r.status === "confirmed");
-    const requested = rows.filter((r) => r.status === "requested");
-    const cancelled = rows.filter((r) => r.status === "cancelled");
-    const sum = (items, field) => items.reduce((total, item) => total + (item[field] || 0), 0);
-    return {
-      summary: {
-        grossInflowCents,
-        refundsCents,
-        netReceivedCents: grossInflowCents - refundsCents,
-        confirmedContractedCents: sum(confirmed, "totalCents"),
-        confirmedReceivedCents: sum(confirmed, "receivedCents"),
-        confirmedOutstandingCents: sum(confirmed, "balanceCents"),
-        requestedReceivedCents: sum(requested, "receivedCents"),
-        cancelledHeldCents: sum(cancelled, "receivedCents"),
-      },
-      rows,
-    };
-  };
-
   const publicReservationState = (row) => {
     const quote = JSON.parse(row.quote || "{}");
-    const paidCents = paidFor(row.id);
     const hold = getReservationHold(db, row.id);
     const review = db.prepare("SELECT id,approved FROM reviews WHERE reservation_id=?").get(row.id);
     const cancellation = db.prepare(`SELECT id,status,reason,requested_at,reviewed_at
       FROM cancellation_requests WHERE reservation_id=? ORDER BY requested_at DESC LIMIT 1`).get(row.id);
-    const paymentReport = db.prepare(`SELECT id,created_at FROM reservation_events
-      WHERE reservation_id=? AND event='payment.reported' ORDER BY id DESC LIMIT 1`).get(row.id);
-    const reconciledPayment = db.prepare(`SELECT id FROM reservation_events
-      WHERE reservation_id=? AND event IN ('payment.recorded','payment.refund_recorded') ORDER BY id DESC LIMIT 1`).get(row.id);
-    const paymentReported = !!paymentReport && (!reconciledPayment || paymentReport.id > reconciledPayment.id);
     const whatsappStarted = !!db.prepare(`SELECT id FROM reservation_events
       WHERE reservation_id=? AND event='whatsapp.started' ORDER BY id DESC LIMIT 1`).get(row.id);    const requirements = readiness(db, row);
 
@@ -305,17 +252,12 @@ export function createApp(db, options = {}) {
         nights: quote.nights || 0, totalCents: quote.totalCents || 0,
         depositCents: quote.depositCents || 0, depositPercent: quote.depositPercent || 20,
       },
-      paidCents,
-      balanceCents: Math.max(0, (quote.totalCents || 0) - paidCents),
-      depositReceived: paidCents >= (quote.depositCents || 0),
       reviewEligible: row.status === "confirmed" && row.check_out <= today() && !review,
       reviewSubmitted: !!review,
-      paymentReported,
       whatsappStarted,
       legalReady: requirements.legalReady,
       signatureReady: requirements.signatureReady,
       signedTermUploaded: !!requirements.documentId,
-      paymentReportedAt: paymentReported ? paymentReport.created_at : null,
       cancellationRequest: cancellation ? {
         id: cancellation.id, status: cancellation.status, reason: cancellation.reason || "",
         requestedAt: cancellation.requested_at, reviewedAt: cancellation.reviewed_at || null,
@@ -452,14 +394,14 @@ export function createApp(db, options = {}) {
     const row = db.prepare("SELECT * FROM reservations WHERE id=? AND status!='blocked'").get(ctx.params.id);
     const token = String(ctx.req.headers["x-reservation-token"] || "");
     if (!row || !verifyReservationToken(row, token)) throw new AppError("Reserva não encontrada.", 404);
-    if (!["requested","confirmed"].includes(row.status)) throw new AppError("Esta reserva não pode iniciar atendimento de pagamento.", 409);
+    if (!["requested","confirmed"].includes(row.status)) throw new AppError("Esta reserva não pode iniciar o atendimento pelo WhatsApp.", 409);
     if (db.prepare("SELECT id FROM cancellation_requests WHERE reservation_id=? AND status='pending'").get(row.id)) {
-      throw new AppError("Há uma solicitação de cancelamento pendente. Não inicie novo pagamento.", 409);
+      throw new AppError("Há uma solicitação de cancelamento pendente. Aguarde a análise do cancelamento.", 409);
     }
     const l = legal(db);
     const legalApproved = l?.approved === 1 && l.term_hash === TERM_HASH;
     if (!legalApproved) {
-      throw new AppError("A etapa de pagamento ainda não foi liberada porque o termo vigente não possui aprovação registrada.", 409);
+      throw new AppError("O atendimento da reserva ainda não foi liberado porque o termo vigente não possui aprovação registrada.", 409);
     }    const signature = readiness(db, row);
     if (!signature.signatureReady) {
       throw new AppError("Termo assinado ainda não foi validado. Conclua a assinatura pelo GOV.BR e aguarde a validação administrativa.", 409);
@@ -467,11 +409,7 @@ export function createApp(db, options = {}) {
     const hold = getReservationHold(db, row.id);
     const reservationEligible = row.status === "confirmed" || (row.status === "requested" && !!hold);
     if (!reservationEligible) {
-      throw new AppError("Esta solicitação ainda não está liberada para pagamento.", 409);
-    }
-    const quote = JSON.parse(row.quote || "{}");
-    if (paidFor(row.id) >= (quote.totalCents || 0)) {
-      throw new AppError("Não há saldo pendente nesta reserva.", 409);
+      throw new AppError("Esta solicitação ainda não está liberada para o atendimento.", 409);
     }
     if (!settings().whatsappNumber) throw new AppError("WhatsApp oficial ainda não configurado.", 409);
     const previous = db.prepare(`SELECT id,created_at FROM reservation_events
@@ -486,32 +424,6 @@ export function createApp(db, options = {}) {
     const created = db.prepare(`SELECT created_at FROM reservation_events
       WHERE reservation_id=? AND event='whatsapp.started' ORDER BY id DESC LIMIT 1`).get(row.id);
     json(ctx.res, 201, { ok:true, startedAt:created?.created_at || null });
-  });
-  register("POST", "/api/reservations/:id/payment-reported", (ctx) => {
-    const row = db.prepare("SELECT * FROM reservations WHERE id=? AND status!='blocked'").get(ctx.params.id);
-    const token = String(ctx.req.headers["x-reservation-token"] || "");
-    if (!row || !verifyReservationToken(row, token)) throw new AppError("Reserva não encontrada.", 404);
-    if (!["requested","confirmed"].includes(row.status)) throw new AppError("Esta reserva não aceita informação de pagamento.", 409);
-    if (!db.prepare(`SELECT id FROM reservation_events WHERE reservation_id=? AND event='whatsapp.started' ORDER BY id DESC LIMIT 1`).get(row.id)) {
-      throw new AppError("Inicie primeiro o atendimento pelo WhatsApp oficial antes de informar um pagamento.", 409);
-    }
-    if (db.prepare("SELECT id FROM cancellation_requests WHERE reservation_id=? AND status='pending'").get(row.id)) {
-      throw new AppError("Há uma solicitação de cancelamento pendente. Não informe novo pagamento.", 409);
-    }
-    const quote = JSON.parse(row.quote || "{}");
-    if (paidFor(row.id) >= (quote.totalCents || 0)) throw new AppError("Não há saldo pendente nesta reserva.", 409);
-    const latestReport = db.prepare(`SELECT id,created_at FROM reservation_events
-      WHERE reservation_id=? AND event='payment.reported' ORDER BY id DESC LIMIT 1`).get(row.id);
-    const latestReconciled = db.prepare(`SELECT id FROM reservation_events
-      WHERE reservation_id=? AND event IN ('payment.recorded','payment.refund_recorded') ORDER BY id DESC LIMIT 1`).get(row.id);
-    if (latestReport && (!latestReconciled || latestReport.id > latestReconciled.id)) {
-      return json(ctx.res, 200, { ok:true, alreadyReported:true, reportedAt:latestReport.created_at });
-    }
-    reservationEvent(row.id, "payment.reported", "guest", {});
-    audit(ctx, "payment.reported", row.id, {}, "guest");
-    const created = db.prepare(`SELECT created_at FROM reservation_events
-      WHERE reservation_id=? AND event='payment.reported' ORDER BY id DESC LIMIT 1`).get(row.id);
-    json(ctx.res, 201, { ok:true, reportedAt:created?.created_at || null });
   });
 
   register("POST", "/api/reservations/:id/cancellation-request", (ctx) => {
@@ -561,43 +473,8 @@ export function createApp(db, options = {}) {
     audit(ctx, "review.submitted", id, { reservationId: row.id }, "guest");
     json(ctx.res, 201, { id, status: "pending" });
   });
-  register("GET", "/api/payment-options", (ctx) => {
-    const l = legal(db);
-    const enabled = l?.approved === 1 && l.term_hash === TERM_HASH;
-    const empty = { bank: "", holder: "", holderDocument: "", branch: "", account: "", accountType: "", pixKey: "" };
-    json(ctx.res, 200, {
-      paymentFlow: "whatsapp",
-      whatsappAvailable: !!settings().whatsappNumber,
-      legalApproved: enabled,
-      pixAvailable: false,
-      transferAvailable: false,
-      bank: empty,
-    });
-  });
 
 
-  register("GET", "/api/reservations/:id/payment-options", (ctx) => {
-    const row = db.prepare("SELECT * FROM reservations WHERE id=? AND status!='blocked'").get(ctx.params.id);
-    const token = String(ctx.req.headers["x-reservation-token"] || "");
-    if (!row || !verifyReservationToken(row, token)) throw new AppError("Reserva não encontrada.", 404);
-    const l = legal(db);
-    const enabled = l?.approved === 1 && l.term_hash === TERM_HASH;
-    const hold = getReservationHold(db, row.id);
-    const pendingCancellation = db.prepare("SELECT id FROM cancellation_requests WHERE reservation_id=? AND status='pending'").get(row.id);
-    const requirements = readiness(db, row);
-    const allowed = enabled && requirements.signatureReady && !pendingCancellation && (row.status === "confirmed" || (row.status === "requested" && !!hold));
-    const empty = { bank: "", holder: "", holderDocument: "", branch: "", account: "", accountType: "", pixKey: "" };
-    json(ctx.res, 200, {
-      paymentFlow: "whatsapp",
-      whatsappAvailable: !!settings().whatsappNumber,
-      legalApproved: enabled,
-      reservationEligible: allowed,
-      cancellationPending: !!pendingCancellation,
-      pixAvailable: false,
-      transferAvailable: false,
-      bank: empty,
-    });
-  });
 
 
   // Login must stay outside authenticated /admin routes.
@@ -637,7 +514,6 @@ export function createApp(db, options = {}) {
         ...r,
         quote: JSON.parse(r.quote),
         requirements: readiness(db, r),
-        paidCents: paidFor(r.id),
         holdExpiresAt: hold?.expiresAtIso || null,
         events: db.prepare("SELECT event,actor,details_json,created_at FROM reservation_events WHERE reservation_id=? ORDER BY id DESC LIMIT 20").all(r.id),
         cancellationRequest: db.prepare(`SELECT id,status,reason,requested_at,reviewed_at,reviewed_by,review_note
@@ -650,8 +526,6 @@ export function createApp(db, options = {}) {
       reservations,
       messages: db.prepare("SELECT * FROM messages ORDER BY created_at DESC").all(),
       reviews: db.prepare("SELECT * FROM reviews ORDER BY created_at DESC").all(),
-      payments: db.prepare("SELECT * FROM payments ORDER BY created_at DESC").all(),
-      finance: financialSnapshot(),
     });
   }, true);
 
@@ -857,50 +731,6 @@ export function createApp(db, options = {}) {
     json(ctx.res, 200, { ok: true });
   }, true);
 
-  register("POST", "/api/admin/payments", (ctx) => {
-    const b = ctx.body, id = randomUUID();
-    integer(b.amountCents, "Valor", -100000000, 100000000);
-    if (!["pix", "transfer"].includes(b.method) || b.settled !== true) {
-      throw new AppError("Informe Pix ou transferência e confirme a compensação no banco.");
-    }
-    const bankReference = text(b.bankReference, "Identificação da transação bancária", 5, 250);
-    if (!b.amountCents) throw new AppError("Informe um valor diferente de zero.");
-    transaction(db, () => {
-      const row = db.prepare("SELECT status,quote FROM reservations WHERE id=?").get(b.reservationId);
-      if (!row || row.status === "blocked") throw new AppError("Reserva inválida.");
-      if (b.amountCents > 0 && db.prepare("SELECT id FROM cancellation_requests WHERE reservation_id=? AND status='pending'").get(b.reservationId)) {
-        throw new AppError("Há uma solicitação de cancelamento pendente. Não registre nova entrada antes da análise.", 409);
-      }
-      if (row.status === "cancelled" && b.amountCents > 0) {
-        throw new AppError("Reserva cancelada não pode receber nova entrada. Registre apenas estorno compatível com o saldo recebido.", 409);
-      }
-      if (db.prepare("SELECT id FROM payments WHERE method=? AND bank_reference=?").get(b.method, bankReference)) {
-        throw new AppError("Esta transação bancária já foi registrada.", 409);
-      }
-      const paid = db.prepare("SELECT COALESCE(SUM(amount_cents),0) AS total FROM payments WHERE reservation_id=? AND settled=1").get(b.reservationId).total;
-      const total = JSON.parse(row.quote).totalCents;
-      if (paid + b.amountCents < 0 || paid + b.amountCents > total) {
-        throw new AppError("O saldo recebido deve ficar entre zero e o total da reserva.");
-      }
-      try {
-        const movementType = b.amountCents < 0 ? "refund" : "payment";
-        db.prepare(`INSERT INTO payments(id,reservation_id,amount_cents,note,settled,method,bank_reference,movement_type,settled_at)
-          VALUES(?,?,?,?,1,?,?,?,CURRENT_TIMESTAMP)`).run(
-          id, b.reservationId, b.amountCents, text(b.note, "Descrição do pagamento/estorno", 2, 250), b.method, bankReference, movementType,
-        );
-      } catch (e) {
-        if (String(e.message).toLowerCase().includes("unique")) throw new AppError("Esta transação bancária já foi registrada.", 409);
-        throw e;
-      }
-      const paymentEvent = b.amountCents < 0 ? "payment.refund_recorded" : "payment.recorded";
-      reservationEvent(b.reservationId, paymentEvent, "admin", { amountCents: b.amountCents, method: b.method });
-      audit(ctx, paymentEvent, id, {
-        reservationId: b.reservationId, amountCents: b.amountCents, method: b.method,
-        bankReferenceHash: sha256(bankReference),
-      });
-    });
-    json(ctx.res, 201, { id });
-  }, true);
 
   register("PATCH", "/api/admin/reviews/:id", (ctx) => {
     const result = db.prepare("UPDATE reviews SET approved=? WHERE id=?").run(ctx.body.approved === true ? 1 : 0, ctx.params.id);
@@ -910,16 +740,7 @@ export function createApp(db, options = {}) {
   }, true);
 
   register("GET", "/api/admin/compliance", (ctx) => {
-    json(ctx.res, 200, { version: TERM_VERSION, termHash: TERM_HASH, approval: legal(db), bank: banking(db) });
-  }, true);
-  register("PUT", "/api/admin/banking", (ctx) => {
-    const b = {};
-    for (const key of ["bank","holder","holderDocument","branch","account","accountType","pixKey"]) {
-      b[key] = text(ctx.body[key] || "", key, 0, 150);
-    }
-    db.prepare("UPDATE banking SET value=? WHERE id=1").run(JSON.stringify(b));
-    audit(ctx, "banking.updated", "1", { configured: Object.values(b).some(Boolean) });
-    json(ctx.res, 200, { ok: true });
+    json(ctx.res, 200, { version: TERM_VERSION, termHash: TERM_HASH, approval: legal(db) });
   }, true);
   register("POST", "/api/admin/legal-approval", (ctx) => {
     if (ctx.body.termHash !== TERM_HASH) throw new AppError("A versão do termo mudou. Atualize a página.", 409);
@@ -952,28 +773,15 @@ export function createApp(db, options = {}) {
     json(ctx.res, 200, { ok: true });
   }, true);
 
-  register("GET", "/api/admin/finance", (ctx) => {
-    json(ctx.res, 200, financialSnapshot());
-  }, true);
 
-  register("GET", "/api/admin/finance.csv", (ctx) => {
-    const finance = financialSnapshot();
-    const money = (n) => ((n || 0) / 100).toFixed(2).replace(".", ",");
-    const output = [["Protocolo","Hóspede","Situação","Entrada","Saída","Total contratado (R$)","Recebido líquido (R$)","Saldo (R$)"]];
-    for (const r of finance.rows) {
-      output.push([r.reservationId,r.name,r.status,r.checkIn,r.checkOut,money(r.totalCents),money(r.receivedCents),money(r.balanceCents)]);
-    }
-    raw(ctx.res, 200, csv(output), "text/csv; charset=utf-8", attachment("conciliacao-financeira-venus.csv"));
-  }, true);
 
   register("GET", "/api/admin/export.csv", (ctx) => {
     const rows = db.prepare("SELECT * FROM reservations ORDER BY check_in").all();
-    const output = [["Protocolo","Hóspede","E-mail","Telefone","Entrada","Saída","Situação","Noites","Diárias (R$)","Limpeza (R$)","Total (R$)","Sinal previsto (R$)","Recebido (R$)","Saldo contratual (R$)"]];
+    const output = [["Protocolo","Hóspede","E-mail","Telefone","Entrada","Saída","Situação","Noites","Diárias (R$)","Limpeza (R$)","Total estimado (R$)","Sinal previsto (R$)"]];
     for (const r of rows) {
       const q = JSON.parse(r.quote || "{}");
-      const paid = db.prepare("SELECT COALESCE(SUM(amount_cents),0) AS total FROM payments WHERE reservation_id=? AND settled=1").get(r.id).total;
       const money = (n) => ((n || 0) / 100).toFixed(2).replace(".", ",");
-      output.push([r.id,r.name,r.email,r.phone,r.check_in,r.check_out,r.status,q.nights||0,money(q.subtotalCents),money(q.cleaningFeeCents),money(q.totalCents),money(q.depositCents),money(paid),money((q.totalCents||0)-paid)]);
+      output.push([r.id,r.name,r.email,r.phone,r.check_in,r.check_out,r.status,q.nights||0,money(q.subtotalCents),money(q.cleaningFeeCents),money(q.totalCents),money(q.depositCents)]);
     }
     raw(ctx.res, 200, csv(output), "text/csv; charset=utf-8", attachment("reservas-venus.csv"));
   }, true);
@@ -1029,8 +837,6 @@ export function createApp(db, options = {}) {
               ? { scope:"reservation-create", max:12, windowMs:3600000 }
               : /\/api\/reservations\/[^/]+\/signed-term$/.test(url.pathname)
                 ? { scope:"signed-term-upload", max:4, windowMs:3600000 }
-              : /\/api\/reservations\/[^/]+\/payment-reported$/.test(url.pathname)
-                ? { scope:"payment-report", max:8, windowMs:3600000 }
               : /\/api\/reservations\/[^/]+\/cancellation-request$/.test(url.pathname)
                 ? { scope:"cancellation-request", max:4, windowMs:3600000 }
               : url.pathname === "/api/messages"

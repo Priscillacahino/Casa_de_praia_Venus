@@ -3,7 +3,7 @@
   "version": "2.3.9",
   "private": true,
   "type": "module",
-  "description": "Vênus Casa de Praia — Android + API financeira controlada + Guia Vênus PB",
+  "description": "Casa de Praia Vênus — Android + reservas e documentação + Guia Vênus PB",
   "engines": {
     "node": ">=24.0.0"
   },

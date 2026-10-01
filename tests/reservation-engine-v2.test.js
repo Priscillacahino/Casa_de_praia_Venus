@@ -129,8 +129,7 @@ test("primeira solicitação recebe prioridade; concorrente vira fila e token co
     assert.equal(status.data.status, "requested");
 
     const genericPayment = await call("/payment-options");
-    assert.ok(genericPayment.data.bank);
-    assert.ok(Object.values(genericPayment.data.bank).every((v) => v === ""));
+    assert.equal(genericPayment.status, 404);
 
     await login();
     const release = await call(`/admin/reservations/${first.data.id}/hold`, "DELETE", {});

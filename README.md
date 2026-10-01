@@ -177,7 +177,7 @@ O foco não é apenas desenvolver uma aplicação, mas pensar na experiência co
 
 `Web/PWA` · `Node.js` · `SQLite` · `JavaScript` · `Kotlin` · `Jetpack Compose` · `GitHub Actions`
 
-Os detalhes de arquitetura, segurança, reservas, pagamentos e homologação ficam na pasta [`docs/`](docs/), mantendo este README focado na **apresentação do projeto**.
+Os detalhes técnicos e de homologação ficam em [`docs/`](docs/). O [fluxo operacional pelo WhatsApp](docs/FLUXO_OPERACIONAL_WHATSAPP.md) separa reservas e documentos (no site) de pagamentos e reembolsos (fora do site).
 
 ---
 

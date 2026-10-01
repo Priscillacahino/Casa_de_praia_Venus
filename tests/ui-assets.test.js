@@ -76,7 +76,7 @@ test("site expõe cancelamento autenticado e política de privacidade", () => {
   const html = readFileSync(join(root, "public", "index.html"), "utf8");
   assert.match(html, /id="requestCancellation"/);
   assert.match(html, /id="continueWhatsApp"/);
-  assert.match(html, /id="reportPayment"/);
+  assert.doesNotMatch(html, /id="reportPayment"/);
   assert.match(html, /href="\/privacidade.html"/);
   assert.ok(existsSync(join(root, "public", "privacidade.html")));
   assert.ok(existsSync(join(root, "public", "privacy.js")));

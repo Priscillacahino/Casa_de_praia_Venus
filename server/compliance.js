@@ -7,16 +7,12 @@ export const TERM_TEXT = readFileSync(new URL("../docs/termo-compromisso-minuta.
 export const TERM_HASH = createHash("sha256").update(TERM_TEXT).digest("hex");
 
 export const legal = (db) => db.prepare("SELECT * FROM legal_approval WHERE id=1").get();
-export const banking = (db) => JSON.parse(db.prepare("SELECT value FROM banking WHERE id=1").get().value);
 
 export function readiness(db, row) {
   const approval = legal(db);
   const doc = db.prepare(
     "SELECT id,sha256,term_hash,validated_at FROM signed_terms WHERE reservation_id=?",
   ).get(row.id);
-  const paid = db.prepare(
-    "SELECT COALESCE(SUM(amount_cents),0) AS total FROM payments WHERE reservation_id=? AND settled=1",
-  ).get(row.id).total;
   const q = JSON.parse(row.quote || "{}");
   const required = Number.isSafeInteger(q.depositCents)
     ? q.depositCents
@@ -26,11 +22,10 @@ export function readiness(db, row) {
   return {
     legalReady,
     signatureReady,
-    paidCents: paid,
     requiredDepositCents: required,
     documentId: doc?.id || null,
     documentHash: doc?.sha256 || null,
-    ready: legalReady && signatureReady && required > 0 && paid >= required,
+    ready: legalReady && signatureReady,
   };
 }
 
@@ -38,9 +33,8 @@ export function assertConfirmationReady(db, row) {
   const r = readiness(db, row);
   if (!r.legalReady) throw new AppError("O termo ainda depende de aprovação jurídica desta versão.", 422);
   if (!r.signatureReady) throw new AppError("Anexe o termo assinado e registre a validação antes de confirmar.", 422);
-  if (r.requiredDepositCents <= 0 || r.paidCents < r.requiredDepositCents) {
-    throw new AppError("O sinal mínimo previsto ainda não foi confirmado como recebido.", 422);
-  }
+  // O recebimento e a conferência do pagamento ocorrem exclusivamente fora do site, pelo WhatsApp.
+  // A confirmação administrativa exige somente termo aprovado e assinatura validada.
 }
 
 export function saveSignedTerm(db, reservationId, base64, audit) {

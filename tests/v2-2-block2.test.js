@@ -120,22 +120,8 @@ test("cancelamento exige código privado, bloqueia nova entrada e depende de dec
       VALUES(?,?,?,?,?,CURRENT_TIMESTAMP,'Teste automatizado','VALIDAR-TESTE')`).run(
       randomUUID(), reservation.id, Buffer.from("%PDF-1.4\n%%EOF"), `sha-${reservation.id}`, TERM_HASH,
     );
-    db.prepare("UPDATE banking SET value=? WHERE id=1").run(JSON.stringify({ bank:"Banco Teste", holder:"Titular", holderDocument:"12345678900", branch:"0001", account:"12345-6", accountType:"corrente", pixKey:"pix@example.com" }));
-    const paymentOptions = await call(`/reservations/${reservation.id}/payment-options`, "GET", undefined, { "X-Reservation-Token":reservation.manageToken });
-    assert.equal(paymentOptions.status, 200);
-    assert.equal(paymentOptions.data.paymentFlow, "whatsapp");
-    assert.equal(paymentOptions.data.bank.pixKey, "");
-    assert.equal(paymentOptions.data.bank.holderDocument, "");
-    assert.equal(paymentOptions.data.pixAvailable, false);
-    assert.equal(paymentOptions.data.transferAvailable, false);
-
     const whatsappStarted = await call(`/reservations/${reservation.id}/whatsapp-started`, "POST", {}, { "X-Reservation-Token":reservation.manageToken });
     assert.equal(whatsappStarted.status, 201);
-    const reported = await call(`/reservations/${reservation.id}/payment-reported`, "POST", {}, { "X-Reservation-Token":reservation.manageToken });
-    assert.equal(reported.status, 201);
-    const reportedStatus = await call(`/reservations/${reservation.id}/status`, "GET", undefined, { "X-Reservation-Token":reservation.manageToken });
-    assert.equal(reportedStatus.data.paymentReported, true);
-
     const invalid = await call(`/reservations/${reservation.id}/cancellation-request`, "POST", { reason:"teste" }, { "X-Reservation-Token":"invalido" });
     assert.equal(invalid.status, 404);
 
@@ -146,7 +132,7 @@ test("cancelamento exige código privado, bloqueia nova entrada e depende de dec
 
     await login();
     const blockedPayment = await call("/admin/payments", "POST", { reservationId:reservation.id, amountCents:1000, note:"Não deve entrar", method:"pix", bankReference:"pending-cancel-payment-001", settled:true });
-    assert.equal(blockedPayment.status, 409);
+    assert.equal(blockedPayment.status, 404);
 
     const rejected = await call(`/admin/cancellations/${requested.data.id}`, "PATCH", { status:"rejected", note:"Solicitação revisada" });
     assert.equal(rejected.status, 200);
@@ -162,32 +148,19 @@ test("cancelamento exige código privado, bloqueia nova entrada e depende de dec
   }
 });
 
-test("aviso de pagamento do hóspede só é encerrado após conciliação administrativa", async () => {
+test("atendimento do hóspede não registra valores financeiros no site", async () => {
   const db = fixture();
   const { server, call, login } = await startApp(db);
   try {
-    const reservation = await createReservation(call, "Hóspede Pagamento Manual");
-    db.prepare("UPDATE legal_approval SET approved=1,term_hash=? WHERE id=1").run(TERM_HASH);
-    db.prepare(`INSERT INTO signed_terms(id,reservation_id,pdf,sha256,term_hash,validated_at,reviewer,validation_reference)
-      VALUES(?,?,?,?,?,CURRENT_TIMESTAMP,'Teste automatizado','VALIDAR-TESTE')`).run(
-      randomUUID(), reservation.id, Buffer.from("%PDF-1.4\n%%EOF"), `sha-${reservation.id}`, TERM_HASH,
-    );
-    const whatsappStarted = await call(`/reservations/${reservation.id}/whatsapp-started`, "POST", {}, { "X-Reservation-Token":reservation.manageToken });
-    assert.equal(whatsappStarted.status, 201);
-    const reported = await call(`/reservations/${reservation.id}/payment-reported`, "POST", {}, { "X-Reservation-Token":reservation.manageToken });
-    assert.equal(reported.status, 201);
-    let status = await call(`/reservations/${reservation.id}/status`, "GET", undefined, { "X-Reservation-Token":reservation.manageToken });
-    assert.equal(status.data.paymentReported, true);
-
+    const r = await createReservation(call, "Hóspede WhatsApp");
     await login();
-    assert.equal((await call("/admin/payments", "POST", { reservationId:reservation.id, amountCents:1000, note:"Pagamento conciliado", method:"pix", bankReference:"reported-payment-001", settled:true })).status, 201);
-    status = await call(`/reservations/${reservation.id}/status`, "GET", undefined, { "X-Reservation-Token":reservation.manageToken });
-    assert.equal(status.data.paymentReported, false);
-    assert.equal(status.data.paidCents, 1000);
-  } finally {
-    await new Promise((resolve) => server.close(resolve));
-    db.close();
-  }
+    assert.equal((await call('/admin/payments', 'POST', { reservationId:r.id, amountCents:1000 })).status, 404);
+    assert.equal((await call('/admin/finance')).status, 404);
+    const state = await call('/admin/data');
+    assert.equal(state.status, 200);
+    assert.equal(Object.hasOwn(state.data, 'payments'), false);
+    assert.equal(Object.hasOwn(state.data, 'finance'), false);
+  } finally { await new Promise((resolve) => server.close(resolve)); db.close(); }
 });
 
 test("avaliação exige token, reserva confirmada e estadia encerrada", async () => {
@@ -236,67 +209,25 @@ test("avaliação exige token, reserva confirmada e estadia encerrada", async ()
   }
 });
 
-test("conciliação separa entradas, estornos, líquido e saldo confirmado", async () => {
+test("relatórios financeiros legados não são expostos", async () => {
   const db = fixture();
   const { server, call, login } = await startApp(db);
   try {
-    const reservationId = "finance-block2";
-    db.prepare(`INSERT INTO reservations
-      (id,request_key,request_hash,token_version,name,email,phone,check_in,check_out,guests,status,quote)
-      VALUES(?,?,?,?,?,?,?,?,?,?,'confirmed',?)`).run(
-      reservationId, "finance-request-key-123456", "hash", 1, "Financeiro Teste",
-      "finance@example.com", "83999999999", addDays(today(), 10), addDays(today(), 13), 2,
-      JSON.stringify({ totalCents:100000, depositCents:20000, depositPercent:20, nights:3 }),
-    );
-
     await login();
-
-    assert.equal((await call("/admin/payments", "POST", {
-      reservationId, amountCents:40000, note:"Entrada conciliada", method:"pix",
-      bankReference:"block2-payment-001", settled:true,
-    })).status, 201);
-
-    assert.equal((await call("/admin/payments", "POST", {
-      reservationId, amountCents:-5000, note:"Estorno parcial conciliado", method:"pix",
-      bankReference:"block2-refund-001", settled:true,
-    })).status, 201);
-
-    const finance = await call("/admin/finance");
-    assert.equal(finance.status, 200);
-    assert.equal(finance.data.summary.grossInflowCents, 40000);
-    assert.equal(finance.data.summary.refundsCents, 5000);
-    assert.equal(finance.data.summary.netReceivedCents, 35000);
-    assert.equal(finance.data.summary.confirmedContractedCents, 100000);
-    assert.equal(finance.data.summary.confirmedReceivedCents, 35000);
-    assert.equal(finance.data.summary.confirmedOutstandingCents, 65000);
-
-    const row = finance.data.rows.find((r) => r.reservationId === reservationId);
-    assert.equal(row.receivedCents, 35000);
-    assert.equal(row.balanceCents, 65000);
-    assert.ok(db.prepare("SELECT 1 FROM audit WHERE action='payment.refund_recorded'").get());
-    assert.ok(db.prepare("SELECT 1 FROM reservation_events WHERE reservation_id=? AND event='payment.refund_recorded'").get(reservationId));
-  } finally {
-    await new Promise((resolve) => server.close(resolve));
-    db.close();
-  }
+    assert.equal((await call('/admin/finance.csv')).status, 404);
+    assert.equal((await call('/admin/finance')).status, 404);
+    assert.equal((await call('/admin/banking', 'PUT', {pixKey:'test'})).status, 404);
+  } finally { await new Promise((resolve) => server.close(resolve)); db.close(); }
 });
 
-test("reserva cancelada rejeita nova entrada positiva e aceita estorno do saldo recebido", async () => {
+test("cancelamento mantém a decisão administrativa sem estorno no site", async () => {
   const db = fixture();
   const { server, call, login } = await startApp(db);
   try {
-    const reservation = await createReservation(call, "Hóspede Cancelamento");
+    const r = await createReservation(call, "Hóspede Cancelamento");
     await login();
-    assert.equal((await call("/admin/payments", "POST", { reservationId:reservation.id, amountCents:10000, note:"Entrada antes do cancelamento", method:"pix", bankReference:"cancel-test-payment-001", settled:true })).status, 201);
-    assert.equal((await call(`/admin/reservations/${reservation.id}`, "PATCH", { status:"cancelled" })).status, 200);
-    const novaEntrada = await call("/admin/payments", "POST", { reservationId:reservation.id, amountCents:1000, note:"Entrada indevida", method:"pix", bankReference:"cancel-test-payment-002", settled:true });
-    assert.equal(novaEntrada.status, 409);
-    assert.equal((await call("/admin/payments", "POST", { reservationId:reservation.id, amountCents:-5000, note:"Estorno parcial", method:"pix", bankReference:"cancel-test-refund-001", settled:true })).status, 201);
-    const movements = db.prepare("SELECT movement_type,settled_at FROM payments WHERE reservation_id=? ORDER BY created_at").all(reservation.id);
-    assert.deepEqual(movements.map((m) => m.movement_type), ["payment","refund"]);
-    assert.ok(movements.every((m) => m.settled_at));
-  } finally {
-    await new Promise((resolve) => server.close(resolve));
-    db.close();
-  }
+    assert.equal((await call('/admin/reservations/'+r.id, 'PATCH', {status:'cancelled'})).status, 200);
+    assert.equal(db.prepare('SELECT status FROM reservations WHERE id=?').get(r.id).status, 'cancelled');
+    assert.equal((await call('/admin/payments', 'POST', {reservationId:r.id,amountCents:-1000})).status, 404);
+  } finally { await new Promise((resolve) => server.close(resolve)); db.close(); }
 });
