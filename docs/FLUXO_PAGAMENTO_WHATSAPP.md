@@ -6,13 +6,13 @@
 4. Hóspede prepara o termo da própria reserva, salva em PDF e assina no serviço oficial GOV.BR.
 5. Hóspede envia o PDF assinado pelo acompanhamento da reserva.
 6. Administração valida assinatura, identidade, integridade e correspondência com a reserva.
-7. Só depois da validação o botão de pagamento específico é liberado.
+7. Só depois da validação o atendimento financeiro externo é liberado.
 8. Hóspede continua pelo WhatsApp; o código privado nunca é enviado.
-9. Administração orienta Pix/transferência.
+9. Administração orienta Pix/transferência fora do site.
 10. Sinal operacional: 20%. Saldo: 80% no check-in, salvo ajuste registrado.
-11. Hóspede pode avisar no site que pagou; isso não confirma recebimento.
-12. Administração confere o banco e registra a conciliação.
-13. Reserva só é confirmada após termo validado, sinal mínimo conciliado e nova verificação de disponibilidade.
+11. Administração confere o recebimento do sinal diretamente no canal financeiro externo.
+12. No painel, registra apenas “sinal conferido externamente”, com data/hora e ator administrativo; o site não guarda comprovante, chave Pix, banco, método, referência ou transação.
+13. Reserva só é confirmada após termo validado, assinatura validada, sinal conferido externamente e nova verificação de disponibilidade.
 
 Cancelamento contratual: 48h ou mais = 100% do sinal; 24h a menos de 48h = 50%; menos de 24h = 0%. Não há estorno automático.
 

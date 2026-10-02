@@ -50,11 +50,16 @@ async function load() {
         <strong>${esc(r.check_in)} → ${esc(r.check_out)}</strong> · ${esc(r.status)}<br>
         <span>${esc(r.name || "Bloqueio")} · ${q.totalCents ? money(q.totalCents) : "—"}</span>
         <p>${hold}</p>
-        <p class="muted">Termo jurídico: ${req.legalReady ? "OK" : "pendente"} · assinatura: ${req.signatureReady ? "OK" : "pendente"}</p>
+        <p class="muted">Termo jurídico: ${req.legalReady ? "OK" : "pendente"} · assinatura: ${req.signatureReady ? "OK" : "pendente"} · sinal externo: ${req.depositCheckedExternally ? `conferido em ${esc(when(req.depositCheckedAt))}` : "pendente"}</p>
         ${cancellationBox}
         ${r.status === "requested" ? `<div class="actions">
-          <button class="button confirm">Confirmar</button>
+          <button class="button confirm" ${req.ready ? "" : "disabled"}>Confirmar</button>
           <button class="button cancel">Cancelar</button>
+          ${req.depositCheckedExternally
+            ? '<button class="button deposit-uncheck">Desfazer conferência do sinal</button>'
+            : req.legalReady && req.signatureReady
+              ? '<button class="button deposit-check">Registrar sinal conferido externamente</button>'
+              : ""}
           ${req.documentId ? `<a class="button" href="/api/admin/reservations/${esc(r.id)}/signed-term" target="_blank" rel="noopener">Baixar termo enviado</a><button class="button validate-existing-term" data-sha="${esc(req.documentHash || "")}">Validar assinatura GOV.BR</button>` : `<button class="button term">Anexar termo manualmente</button>`}
           <button class="button hold">${r.holdExpiresAt ? "Renovar prioridade" : "Conceder prioridade"}</button>
           ${r.holdExpiresAt ? '<button class="button release-hold">Liberar prioridade</button>' : ""}
@@ -66,6 +71,8 @@ async function load() {
     document.querySelectorAll("[data-id]").forEach((card) => {
       const id = card.dataset.id;
       card.querySelector(".confirm")?.addEventListener("click", () => changeStatus(id, "confirmed"));
+      card.querySelector(".deposit-check")?.addEventListener("click", () => markDepositChecked(id));
+      card.querySelector(".deposit-uncheck")?.addEventListener("click", () => removeDepositCheck(id));
       card.querySelector(".cancel")?.addEventListener("click", () => changeStatus(id, "cancelled"));
       card.querySelector(".term")?.addEventListener("click", () => term(id));
       card.querySelector(".validate-existing-term")?.addEventListener("click", (e) => validateExistingTerm(id, e.currentTarget.dataset.sha));
@@ -82,6 +89,23 @@ async function load() {
     if (e.message.includes("Entre na administração")) return;
     alert(e.message);
   }
+}
+
+async function markDepositChecked(id) {
+  if (!confirm("Registre esta etapa somente depois de conferir o recebimento do sinal fora do site. Nenhum comprovante, chave Pix ou dado bancário será armazenado. Continuar?")) return;
+  try {
+    await api(`/admin/reservations/${id}/deposit-check`, "POST", {});
+    alert("Conferência externa do sinal registrada.");
+    await load();
+  } catch (e) { alert(e.message); }
+}
+
+async function removeDepositCheck(id) {
+  if (!confirm("Remover o registro administrativo de conferência do sinal?")) return;
+  try {
+    await api(`/admin/reservations/${id}/deposit-check`, "DELETE", {});
+    await load();
+  } catch (e) { alert(e.message); }
 }
 
 async function changeStatus(id, status) {

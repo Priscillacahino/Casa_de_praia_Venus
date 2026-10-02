@@ -33,6 +33,6 @@ test('WhatsApp requer documentação e não recebe nem expõe transações', asy
     assert.equal((await call(path+'/payment-reported','POST',{},auth)).status,404);
     assert.equal((await call('/payment-options')).status,404);
     assert.equal((await call(path+'/payment-options','GET',undefined,auth)).status,404);
-    assert.equal(db.prepare('SELECT COUNT(*) AS total FROM payments').get().total,0);
+    assert.equal(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='payments'").get(),undefined);
   } finally {await new Promise(resolve=>server.close(resolve));db.close();}
 });

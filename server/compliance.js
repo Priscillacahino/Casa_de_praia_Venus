@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { createHash, randomUUID } from "node:crypto";
 import { AppError, text, transaction } from "./domain.js";
 
-export const TERM_VERSION = "2026-10-02-v5";
+export const TERM_VERSION = "2026-10-02-v6";
 export const TERM_TEXT = readFileSync(new URL("../docs/termo-compromisso-minuta.txt", import.meta.url), "utf8");
 export const TERM_HASH = createHash("sha256").update(TERM_TEXT).digest("hex");
 
@@ -13,19 +13,26 @@ export function readiness(db, row) {
   const doc = db.prepare(
     "SELECT id,sha256,term_hash,validated_at FROM signed_terms WHERE reservation_id=?",
   ).get(row.id);
+  const depositCheck = db.prepare(
+    "SELECT checked_at,checked_by FROM external_deposit_checks WHERE reservation_id=?",
+  ).get(row.id);
   const q = JSON.parse(row.quote || "{}");
   const required = Number.isSafeInteger(q.depositCents)
     ? q.depositCents
     : Math.round((q.totalCents || 0) * ((q.depositPercent || 20) / 100));
   const legalReady = approval?.approved === 1 && approval.term_hash === TERM_HASH;
   const signatureReady = !!doc?.validated_at && doc.term_hash === TERM_HASH;
+  const depositCheckedExternally = !!depositCheck?.checked_at;
   return {
     legalReady,
     signatureReady,
+    depositCheckedExternally,
+    depositCheckedAt: depositCheck?.checked_at || null,
+    depositCheckedBy: depositCheck?.checked_by || null,
     requiredDepositCents: required,
     documentId: doc?.id || null,
     documentHash: doc?.sha256 || null,
-    ready: legalReady && signatureReady,
+    ready: legalReady && signatureReady && depositCheckedExternally,
   };
 }
 
@@ -33,8 +40,9 @@ export function assertConfirmationReady(db, row) {
   const r = readiness(db, row);
   if (!r.legalReady) throw new AppError("O termo ainda depende de aprovação jurídica desta versão.", 422);
   if (!r.signatureReady) throw new AppError("Anexe o termo assinado e registre a validação antes de confirmar.", 422);
-  // O recebimento e a conferência do pagamento ocorrem exclusivamente fora do site, pelo WhatsApp.
-  // A confirmação administrativa exige somente termo aprovado e assinatura validada.
+  if (!r.depositCheckedExternally) throw new AppError("Registre no painel a conferência externa do sinal antes de confirmar.", 422);
+  // O recebimento e a conferência financeira continuam exclusivamente fora do site.
+  // O sistema armazena somente o marcador administrativo de que a conferência foi realizada.
 }
 
 export function saveSignedTerm(db, reservationId, base64, audit) {

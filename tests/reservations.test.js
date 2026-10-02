@@ -182,6 +182,8 @@ test("fluxo HTTP: acesso, pedido idempotente, conflito, documentação, avaliaç
       assert.equal((await call(`/admin/reservations/${id}/validate-term`,'POST',{...validation,sha256:replaced.data.sha256})).status,200);
     }
 
+    assert.equal((await call("/admin/reservations/" + first.data.id + "/deposit-check", "POST", {})).status, 200);
+    assert.equal((await call("/admin/reservations/" + second.data.id + "/deposit-check", "POST", {})).status, 200);
     assert.equal(
       (
         await call("/admin/reservations/" + first.data.id, "PATCH", {

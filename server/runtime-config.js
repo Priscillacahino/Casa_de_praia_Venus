@@ -37,6 +37,9 @@ export function productionConfigErrors(env = process.env) {
   if (!validBackupKey(env.BACKUP_ENCRYPTION_KEY)) {
     errors.push("BACKUP_ENCRYPTION_KEY deve representar 32 bytes em Base64.");
   }
+  if (!validBackupKey(env.PII_ENCRYPTION_KEY)) {
+    errors.push("PII_ENCRYPTION_KEY deve representar 32 bytes em Base64.");
+  }
   if (!httpsUrl(env.GUIDE_SOURCE_URL)) {
     errors.push("GUIDE_SOURCE_URL deve ser HTTPS válido.");
   }
