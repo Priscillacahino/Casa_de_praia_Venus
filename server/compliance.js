@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { createHash, randomUUID } from "node:crypto";
 import { AppError, text, transaction } from "./domain.js";
 
-export const TERM_VERSION = "2026-10-02-v5";
+export const TERM_VERSION = "2026-10-02-v6";
 export const TERM_TEXT = readFileSync(new URL("../docs/termo-compromisso-minuta.txt", import.meta.url), "utf8");
 export const TERM_HASH = createHash("sha256").update(TERM_TEXT).digest("hex");
 
