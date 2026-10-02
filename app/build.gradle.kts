@@ -12,8 +12,8 @@ android {
         applicationId = "com.aistudio.venusbeachhouse"
         minSdk = 26
         targetSdk = 35
-        versionCode = 239
-        versionName = "2.3.9"
+        versionCode = 240
+        versionName = "2.3.10"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
         val bookingUrl = (project.findProperty("VENUS_BOOKING_URL") as String?) ?: System.getenv("VENUS_BOOKING_URL") ?: ""

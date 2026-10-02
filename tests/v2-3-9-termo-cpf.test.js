@@ -1,4 +1,4 @@
-﻿import test from "node:test";
+import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -8,7 +8,7 @@ import { cpf } from "../server/domain.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-test("v2.3.9 inclui CPF validado e termo de conservação v4", () => {
+test("v2.3.10 mantém CPF validado e termo de conservação v5", () => {
   const html = readFileSync(join(root, "public", "index.html"), "utf8");
   const app = readFileSync(join(root, "public", "app.js"), "utf8");
   const compliance = readFileSync(join(root, "server", "compliance.js"), "utf8");
@@ -16,7 +16,7 @@ test("v2.3.9 inclui CPF validado e termo de conservação v4", () => {
 
   assert.match(html, /name="cpf"/);
   assert.match(app, /cpf:form\.elements\.cpf\.value/);
-  assert.match(compliance, /2026-09-30-v4/);
+  assert.match(compliance, /2026-10-02-v5/);
 
   assert.match(term, /4 cadeiras de praia/);
   assert.match(term, /O suporte para televisão não está vinculado ao projetor smart/);

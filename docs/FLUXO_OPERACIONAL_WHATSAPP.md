@@ -1,6 +1,6 @@
 # Fluxo operacional da Casa de Praia Vênus — atendimento pelo WhatsApp
 
-**Situação:** revisão técnica da v2.3.9; pendente homologação e liberação comercial.
+**Situação:** revisão técnica da v2.3.10; pendente homologação e liberação comercial.
 
 ## O que acontece no site
 

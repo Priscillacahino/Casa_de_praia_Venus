@@ -1,6 +1,6 @@
 TERMO DE COMPROMISSO DE RESERVA E CIÊNCIA DE CONSERVAÇÃO
 VÊNUS CASA DE PRAIA
-Versão proposta 2026-09-30 — MINUTA NÃO VIGENTE
+Versão proposta 2026-10-02 — MINUTA NÃO VIGENTE
 Uso e implementação condicionados à validação jurídica da versão exata.
 
 1. IDENTIFICAÇÃO E OBJETO
@@ -139,10 +139,21 @@ Entre os principais equipamentos estão:
 
 São disponibilizados móveis e itens de convivência, incluindo rede e cadeiras de praia.
 
+SISTEMA DE ENERGIA SOLAR
+
+A propriedade possui sistema de geração de energia solar, composto por placas solares, inversor, cabos, conexões e demais componentes elétricos.
+
+Para preservar o funcionamento e a segurança do sistema, não é permitido aos hóspedes manusear, desligar, abrir, remover, alterar configurações ou realizar qualquer intervenção nesses equipamentos, incluindo o inversor, sem autorização expressa da administração.
+
+Caso seja identificada alguma falha, mensagem de erro, dano ou funcionamento anormal, o responsável pela reserva deverá comunicar a administração, sem tentar realizar reparos por conta própria.
+
+Eventuais danos decorrentes de intervenção indevida poderão ser avaliados individualmente, considerando as circunstâncias e os registros disponíveis. Falhas técnicas e desgastes decorrentes do uso normal não serão atribuídos automaticamente ao hóspede.
+
 13. BENS DE MAIOR RELEVÂNCIA
 
 Para fins de conservação e controle dos principais bens disponibilizados na hospedagem, destacam-se:
 
+- sistema de energia solar, incluindo placas solares, inversor, cabos, conexões e demais componentes;
 - projetor smart;
 - cafeteira Três Corações;
 - air fryer;
