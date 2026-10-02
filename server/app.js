@@ -13,6 +13,7 @@ import {
   TERM_HASH, TERM_TEXT, TERM_VERSION, legal, readiness,
   assertConfirmationReady, saveSignedTerm, validateSignedTerm,
 } from "./compliance.js";
+import { protectCpf, revealCpf } from "./privacy.js";
 
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 const MAX_JSON = 8 * 1024 * 1024;
@@ -348,7 +349,7 @@ export function createApp(db, options = {}) {
       db.prepare(`INSERT INTO reservations
         (id,request_key,request_hash,name,email,phone,cpf,check_in,check_out,guests,has_pet,notes,status,quote)
         VALUES(?,?,?,?,?,?,?,?,?,?,?,?,'requested',?)`).run(
-        id, requestKey, requestHash, person.name, person.email, person.phone, documentCpf,
+        id, requestKey, requestHash, person.name, person.email, person.phone, protectCpf(documentCpf),
         b.checkIn, b.checkOut, b.guests, b.hasPet === true ? 1 : 0,
         text(b.notes || "", "Observações", 0, 2000), JSON.stringify(quote),
       );
@@ -378,7 +379,7 @@ export function createApp(db, options = {}) {
     const row=db.prepare("SELECT * FROM reservations WHERE id=? AND status!='blocked'").get(ctx.params.id); const token=String(ctx.req.headers["x-reservation-token"]||"");
     if(!row||!verifyReservationToken(row,token))throw new AppError("Reserva não encontrada.",404); if(!["requested","confirmed"].includes(row.status))throw new AppError("O termo não está disponível neste estado.",409);
     const l=legal(db); if(l?.approved!==1||l.term_hash!==TERM_HASH)throw new AppError("A versão atual do termo ainda não foi liberada para contratação.",503); const q=JSON.parse(row.quote||"{}");
-    json(ctx.res,200,{termVersion:TERM_VERSION,termHash:TERM_HASH,termText:TERM_TEXT,reservation:{id:row.id,name:row.name,cpf:row.cpf||"",email:row.email,phone:row.phone,checkIn:row.check_in,checkOut:row.check_out,guests:row.guests,totalCents:q.totalCents||0,cleaningFeeCents:q.cleaningFeeCents||0,depositCents:q.depositCents||0,balanceCents:Math.max(0,(q.totalCents||0)-(q.depositCents||0)),emittedAt:new Date().toISOString()}});
+    json(ctx.res,200,{termVersion:TERM_VERSION,termHash:TERM_HASH,termText:TERM_TEXT,reservation:{id:row.id,name:row.name,cpf:revealCpf(row.cpf||""),email:row.email,phone:row.phone,checkIn:row.check_in,checkOut:row.check_out,guests:row.guests,totalCents:q.totalCents||0,cleaningFeeCents:q.cleaningFeeCents||0,depositCents:q.depositCents||0,balanceCents:Math.max(0,(q.totalCents||0)-(q.depositCents||0)),emittedAt:new Date().toISOString()}});
   });
 
   register("POST", "/api/reservations/:id/signed-term", (ctx) => {
@@ -510,8 +511,9 @@ export function createApp(db, options = {}) {
     cleanupExpiredHolds(db);
     const reservations = db.prepare("SELECT * FROM reservations ORDER BY check_in DESC").all().map((r) => {
       const hold = getReservationHold(db, r.id);
+      const { cpf: _protectedCpf, ...safeReservation } = r;
       return {
-        ...r,
+        ...safeReservation,
         quote: JSON.parse(r.quote),
         requirements: readiness(db, r),
         holdExpiresAt: hold?.expiresAtIso || null,
@@ -670,6 +672,49 @@ export function createApp(db, options = {}) {
       return { manageToken: reservationToken(updated), tokenVersion: nextVersion };
     });
     json(ctx.res, 200, result);
+  }, true);
+
+
+  register("POST", "/api/admin/reservations/:id/deposit-check", (ctx) => {
+    const result = transaction(db, () => {
+      const row = db.prepare("SELECT * FROM reservations WHERE id=?").get(ctx.params.id);
+      if (!row) throw new AppError("Reserva não encontrada.", 404);
+      if (row.status !== "requested") throw new AppError("A conferência do sinal só pode ser registrada enquanto a solicitação estiver pendente.", 409);
+
+      const requirements = readiness(db, row);
+      if (!requirements.legalReady || !requirements.signatureReady) {
+        throw new AppError("Valide o termo e a assinatura antes de registrar a conferência externa do sinal.", 422);
+      }
+
+      const existing = db.prepare("SELECT checked_at,checked_by FROM external_deposit_checks WHERE reservation_id=?").get(row.id);
+      if (existing) return existing;
+
+      db.prepare("INSERT INTO external_deposit_checks(reservation_id,checked_by) VALUES(?,'admin')").run(row.id);
+      const check = db.prepare("SELECT checked_at,checked_by FROM external_deposit_checks WHERE reservation_id=?").get(row.id);
+      reservationEvent(row.id, "deposit.checked_externally", "admin", { channel:"external" });
+      audit(ctx, "reservation.deposit_checked_externally", row.id, { channel:"external" });
+      return check;
+    });
+    json(ctx.res, 200, {
+      ok:true,
+      depositCheckedExternally:true,
+      checkedAt:result.checked_at,
+      checkedBy:result.checked_by,
+    });
+  }, true);
+
+  register("DELETE", "/api/admin/reservations/:id/deposit-check", (ctx) => {
+    transaction(db, () => {
+      const row = db.prepare("SELECT * FROM reservations WHERE id=?").get(ctx.params.id);
+      if (!row) throw new AppError("Reserva não encontrada.", 404);
+      if (row.status !== "requested") throw new AppError("Não é possível remover a conferência depois da confirmação da reserva.", 409);
+      const removed = db.prepare("DELETE FROM external_deposit_checks WHERE reservation_id=?").run(row.id).changes;
+      if (removed) {
+        reservationEvent(row.id, "deposit.check_removed", "admin");
+        audit(ctx, "reservation.deposit_check_removed", row.id);
+      }
+    });
+    json(ctx.res, 200, { ok:true, depositCheckedExternally:false });
   }, true);
 
   register("PATCH", "/api/admin/cancellations/:id", (ctx) => {

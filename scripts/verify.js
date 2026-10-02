@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 
 const required = [
-  "server/app.js","server/db.js","server/domain.js","server/compliance.js","server/index.js",
+  "server/app.js","server/db.js","server/domain.js","server/compliance.js","server/privacy.js","server/index.js",
   "server/runtime-config.js","docs/termo-compromisso-minuta.txt","public/index.html",
   "public/admin.html","scripts/production-check.js","scripts/restore-backup.js",
 ];
@@ -14,9 +14,10 @@ for (const file of required) {
 }
 
 for (const file of [
-  "server/app.js","server/db.js","server/domain.js","server/compliance.js","server/index.js",
+  "server/app.js","server/db.js","server/domain.js","server/compliance.js","server/privacy.js","server/index.js",
   "server/runtime-config.js","public/app.js","public/admin.js","public/sw.js",
-  "scripts/production-check.js","scripts/restore-backup.js",
+  "scripts/production-check.js","scripts/restore-backup.js","scripts/migrate-cpf.js",
+  "scripts/legacy-finance-audit.js","scripts/legacy-finance-cleanup-empty.js",
 ]) {
   const result = spawnSync(process.execPath, ["--check", file], { stdio:"inherit" });
   if (result.status !== 0) process.exit(result.status || 1);

@@ -24,6 +24,10 @@
     "production:check": "node scripts/production-check.js",
     "android:release-check": "node scripts/android-release-check.js",
     "audit:secret": "node scripts/generate-audit-secret.js",
-    "db:migrate": "node scripts/migrate.js"
+    "db:migrate": "node scripts/migrate.js",
+    "pii:key": "node scripts/generate-pii-key.js",
+    "privacy:migrate-cpf": "node scripts/migrate-cpf.js",
+    "legacy-finance:audit": "node scripts/legacy-finance-audit.js",
+    "legacy-finance:cleanup-empty": "node scripts/legacy-finance-cleanup-empty.js"
   }
 }

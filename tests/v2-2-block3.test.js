@@ -12,6 +12,7 @@ function validEnv() {
     RESERVATION_TOKEN_SECRET:"reservation-secret-0123456789abcdef",
     AUDIT_HMAC_SECRET:"audit-secret-0123456789abcdef0123456789",
     BACKUP_ENCRYPTION_KEY:Buffer.alloc(32, 7).toString("base64"),
+    PII_ENCRYPTION_KEY:Buffer.alloc(32, 8).toString("base64"),
     GUIDE_SOURCE_URL:"https://raw.githubusercontent.com/Priscillacahino/guia_lugares_pb/main/guia_offline.html",
     GUIDE_EXPECTED_SHA256:"a".repeat(64),
   };
@@ -27,6 +28,7 @@ test("produção rejeita configuração frágil", () => {
   env.APP_URL = "http://venus.example";
   env.DATABASE_PATH = ":memory:";
   env.BACKUP_ENCRYPTION_KEY = "fraca";
+  env.PII_ENCRYPTION_KEY = "fraca";
   env.GUIDE_EXPECTED_SHA256 = "";
   const errors = productionConfigErrors(env);
   assert.ok(errors.some((e) => e.includes("HTTPS")));

@@ -6,7 +6,7 @@ import { createApp } from '../server/app.js';
 import { TERM_HASH } from '../server/compliance.js';
 import { today, addDays } from '../server/domain.js';
 
-test('confirmação manual depende de documentação, não de registro financeiro', async () => {
+test('confirmação manual exige documentação e sinal conferido externamente sem registrar transação', async () => {
   const db=openDatabase(':memory:');
   const salt='test-salt', password='test-password';
   const app=createApp(db,{ passwordHash: salt+':'+scryptSync(password,salt,64).toString('hex') });
@@ -30,16 +30,25 @@ test('confirmação manual depende de documentação, não de registro financeir
     assert.equal(login.status,200);
     cookie=login.headers.get('set-cookie').split(';')[0];
     const confirm=id=>call('/admin/reservations/'+id,'PATCH',{status:'confirmed'});
+    const check=id=>call('/admin/reservations/'+id+'/deposit-check','POST',{});
+
     assert.equal((await confirm('manual-a')).status,422,'não confirmar antes da aprovação jurídica');
     db.prepare('UPDATE legal_approval SET approved=1,term_hash=? WHERE id=1').run(TERM_HASH);
     assert.equal((await confirm('manual-a')).status,422,'não confirmar sem termo validado');
     doc('manual-a');
-    assert.equal(db.prepare('SELECT COUNT(*) AS total FROM payments').get().total,0);
-    assert.equal((await confirm('manual-a')).status,200,'a documentação basta para confirmação manual');
+    assert.equal((await confirm('manual-a')).status,422,'não confirmar sem sinal conferido externamente');
+    assert.equal((await check('manual-a')).status,200);
+    assert.equal((await confirm('manual-a')).status,200);
     assert.equal(db.prepare(`SELECT status FROM reservations WHERE id='manual-a'`).get().status,'confirmed');
-    assert.equal(db.prepare('SELECT COUNT(*) AS total FROM payments').get().total,0);
+
+    const legacyPaymentTable=db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='payments'").get();
+    assert.equal(legacyPaymentTable,undefined);
+
     insert('manual-b');doc('manual-b');
+    assert.equal((await check('manual-b')).status,200);
     assert.equal((await confirm('manual-b')).status,409,'mesmas datas não podem ser confirmadas duas vezes');
+
+    assert.ok(db.prepare(`SELECT id FROM audit WHERE action='reservation.deposit_checked_externally'`).get());
     assert.ok(db.prepare(`SELECT id FROM audit WHERE action='reservation.confirmed'`).get());
   } finally {
     await new Promise(resolve=>server.close(resolve));

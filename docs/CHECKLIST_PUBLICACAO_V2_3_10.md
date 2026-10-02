@@ -8,7 +8,7 @@ Este documento substitui, para a versão atual, os checklists históricos de v2.
 
 - [x] banco atualizado para schema 9;
 - [x] CPF incluído na reserva e validado no backend;
-- [x] termo de reserva e ciência de conservação consolidado na versão 2026-10-02-v5;
+- [x] termo de reserva e ciência de conservação consolidado na versão 2026-10-02-v6;
 
 - [x] tabela pública com os valores atuais: R$ 120/noite para até 2 hóspedes em dias úteis e R$ 150/noite em sexta/sábado/domingo e feriados cadastrados;
 - [x] adicional de R$ 50 por pessoa do 3º ao 6º hóspede, cobrado a cada noite da hospedagem;
@@ -22,7 +22,7 @@ Este documento substitui, para a versão atual, os checklists históricos de v2.
 - [x] URL do Guia no APK passa a ser configurável e, no release, deve ser fixada em commit;
 - [x] versão Android alinhada à v2.3.10;
 - [x] nome da minuta corrigido para Vênus Casa de Praia; a minuta continua explicitamente não vigente;
-- [x] termo v5 inclui orientação de segurança e conservação do sistema de energia solar;
+- [x] termo v6 inclui orientação de segurança e conservação do sistema de energia solar e inventário atualizado;
 - [x] gerador de senha administrativa corrigido e validado;
 - [x] domingo incluído automaticamente na tarifa de fim de semana;
 - [x] cache PWA renovado;

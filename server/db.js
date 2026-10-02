@@ -87,18 +87,6 @@ export function openDatabase(path) {
       approved INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
-    CREATE TABLE IF NOT EXISTS payments (
-      id TEXT PRIMARY KEY,
-      reservation_id TEXT NOT NULL REFERENCES reservations(id),
-      amount_cents INTEGER NOT NULL CHECK(amount_cents != 0),
-      note TEXT NOT NULL,
-      settled INTEGER NOT NULL DEFAULT 0 CHECK(settled IN (0,1)),
-      method TEXT,
-      bank_reference TEXT,
-      movement_type TEXT NOT NULL DEFAULT 'payment' CHECK(movement_type IN ('payment','refund')),
-      settled_at TEXT,
-      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-    );
     CREATE TABLE IF NOT EXISTS audit (
       id INTEGER PRIMARY KEY,
       action TEXT NOT NULL,
@@ -130,9 +118,10 @@ export function openDatabase(path) {
       reference TEXT,
       approved_at TEXT
     );
-    CREATE TABLE IF NOT EXISTS banking(
-      id INTEGER PRIMARY KEY CHECK(id=1),
-      value TEXT NOT NULL
+    CREATE TABLE IF NOT EXISTS external_deposit_checks(
+      reservation_id TEXT PRIMARY KEY REFERENCES reservations(id) ON DELETE CASCADE,
+      checked_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      checked_by TEXT NOT NULL DEFAULT 'admin'
     );
     CREATE TABLE IF NOT EXISTS signed_terms(
       id TEXT PRIMARY KEY,
@@ -166,13 +155,6 @@ export function openDatabase(path) {
   addColumnIfMissing(db, "reservations", "cpf", "TEXT NOT NULL DEFAULT ''");
   addColumnIfMissing(db, "reviews", "reservation_id", "TEXT REFERENCES reservations(id)");
 
-  for (const [name, def] of [
-    ["settled", "INTEGER NOT NULL DEFAULT 0"],
-    ["method", "TEXT"],
-    ["bank_reference", "TEXT"],
-    ["movement_type", "TEXT NOT NULL DEFAULT 'payment'"],
-    ["settled_at", "TEXT"],
-  ]) addColumnIfMissing(db, "payments", name, def);
   for (const [name, def] of [
     ["actor", "TEXT NOT NULL DEFAULT 'system'"],
     ["request_id", "TEXT"],
@@ -220,25 +202,7 @@ export function openDatabase(path) {
   db.prepare("UPDATE settings SET value=? WHERE id=1").run(JSON.stringify(mergedSettings));
 
   db.prepare("INSERT OR IGNORE INTO legal_approval(id) VALUES(1)").run();
-  db.prepare("INSERT OR IGNORE INTO banking(id,value) VALUES(1,?)").run(JSON.stringify({
-    bank: "", holder: "", holderDocument: "", branch: "", account: "", accountType: "", pixKey: "",
-  }));
 
-  const duplicate = db.prepare(`
-    SELECT method, bank_reference, COUNT(*) n
-    FROM payments
-    WHERE bank_reference IS NOT NULL AND bank_reference <> ''
-    GROUP BY method, bank_reference
-    HAVING COUNT(*) > 1
-    LIMIT 1
-  `).get();
-  if (duplicate) {
-    throw new Error("Há referências bancárias duplicadas no histórico. Faça conciliação antes de iniciar a versão endurecida.");
-  }
-  db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS payments_bank_reference_unique
-    ON payments(method, bank_reference)
-    WHERE bank_reference IS NOT NULL AND bank_reference <> '';`);
-
-  db.exec("PRAGMA user_version=9");
+  db.exec("PRAGMA user_version=10");
   return db;
 }
