@@ -187,7 +187,7 @@ Os detalhes técnicos e de homologação ficam em [`docs/`](docs/). O [fluxo ope
 
 A experiência visual e os principais fluxos já estão implementados. A operação comercial definitiva ainda depende da conclusão das etapas de produção e validação.
 
-O acompanhamento atualizado está em [`docs/CHECKLIST_PUBLICACAO_V2_3_9.md`](docs/CHECKLIST_PUBLICACAO_V2_3_9.md).
+O acompanhamento atualizado está em [`docs/CHECKLIST_PUBLICACAO_V2_3_10.md`](docs/CHECKLIST_PUBLICACAO_V2_3_10.md).
 
 ---
 

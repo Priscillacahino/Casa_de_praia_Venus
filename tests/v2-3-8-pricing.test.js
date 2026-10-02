@@ -81,8 +81,33 @@ test("v2.3.8 publica a nova regra e atualiza versões", () => {
   assert.match(i18n, /Adicional por noche/);
   assert.match(server, /http:\/\/localhost:3001/);
 
-  assert.equal(pkg.version, "2.3.9");
-  assert.match(sw, /venus-shell-v16/);
-  assert.match(gradle, /versionCode = 239/);
-  assert.match(gradle, /versionName = "2\.3\.9"/);
+  assert.equal(pkg.version, "2.3.10");
+  assert.match(sw, /venus-shell-v17/);
+  assert.match(gradle, /versionCode = 240/);
+  assert.match(gradle, /versionName = "2\.3\.10"/);
+});
+
+test("domingo recebe tarifa de fim de semana", () => {
+  const db = fixture();
+
+  try {
+    for (const dia of ["2026-10-02", "2026-10-03", "2026-10-04"]) {
+      const seguinte = new Date(Date.parse(dia) + 86400000)
+        .toISOString().slice(0, 10);
+
+      const q = calculateQuote(db, dia, seguinte, { guests: 2 });
+
+      assert.equal(q.subtotalCents, 15000);
+      assert.equal(q.nightlyDetails[0].rateType, "weekend");
+    }
+
+    const segunda = calculateQuote(
+      db, "2026-10-05", "2026-10-06", { guests: 2 }
+    );
+
+    assert.equal(segunda.subtotalCents, 12000);
+    assert.equal(segunda.nightlyDetails[0].rateType, "weekday");
+  } finally {
+    db.close();
+  }
 });

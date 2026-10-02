@@ -153,7 +153,7 @@ export function calculateQuote(db, start, end, { checkPast = true, guests = 2 } 
     if (!rule) {
       throw new AppError("Não há tarifa cadastrada para todas as noites selecionadas.", 422);
     }
-    const weekend = [5, 6].includes(new Date(day + "T12:00:00Z").getUTCDay());
+    const weekend = [0, 5, 6].includes(new Date(day + "T12:00:00Z").getUTCDay());
     const holiday = holidayDates.has(day);
     const specialRate = weekend || holiday;
     return {

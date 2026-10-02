@@ -608,7 +608,7 @@ export function createApp(db, options = {}) {
       const id = randomUUID();
       db.prepare("INSERT INTO rates VALUES(?,?,?,?,?,?,?)").run(
         id, text(b.label, "Descrição", 2, 120), start, end,
-        integer(b.weekdayCents, "Diária", 1), integer(b.weekendCents, "Diária de sexta/sábado/feriado", 1),
+        integer(b.weekdayCents, "Diária", 1), integer(b.weekendCents, "Diária de sexta/sábado/domingo/feriado", 1),
         integer(b.minNights, "Mínimo de noites", 1, 366),
       );
       audit(ctx, "rate.created", id, { start, end });

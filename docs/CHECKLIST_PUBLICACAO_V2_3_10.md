@@ -1,16 +1,16 @@
-# Checklist de publicação — Vênus Casa de Praia v2.3.9
+# Checklist de publicação — Vênus Casa de Praia v2.3.10
 
-**Data de consolidação:** 30/09/2026
+**Data de consolidação:** 02/10/2026
 
 Este documento substitui, para a versão atual, os checklists históricos de v2.2/v2.3.x. Ele separa o que pode ser concluído no repositório do que depende de infraestrutura, validação jurídica ou operação real.
 
-## Concluído no código da v2.3.9
+## Concluído no código da v2.3.10
 
 - [x] banco atualizado para schema 9;
 - [x] CPF incluído na reserva e validado no backend;
-- [x] termo de reserva e ciência de conservação consolidado na versão 2026-09-30-v4;
+- [x] termo de reserva e ciência de conservação consolidado na versão 2026-10-02-v5;
 
-- [x] tabela pública com os valores atuais: R$ 120/noite para até 2 hóspedes em dias úteis e R$ 150/noite em sexta/sábado e feriados cadastrados;
+- [x] tabela pública com os valores atuais: R$ 120/noite para até 2 hóspedes em dias úteis e R$ 150/noite em sexta/sábado/domingo e feriados cadastrados;
 - [x] adicional de R$ 50 por pessoa do 3º ao 6º hóspede, cobrado a cada noite da hospedagem;
 - [x] cotação oficial continua calculada e revalidada no backend;
 - [x] quantidade de hóspedes passa a integrar a cotação e a revalidação da reserva;
@@ -20,8 +20,11 @@ Este documento substitui, para a versão atual, os checklists históricos de v2.
 - [x] interface PT/ES cobre a nova tabela e o detalhamento da cotação;
 - [x] fonte Android do Guia deixa de apontar para `guia_offline.html` inexistente;
 - [x] URL do Guia no APK passa a ser configurável e, no release, deve ser fixada em commit;
-- [x] versão Android alinhada à v2.3.9;
+- [x] versão Android alinhada à v2.3.10;
 - [x] nome da minuta corrigido para Vênus Casa de Praia; a minuta continua explicitamente não vigente;
+- [x] termo v5 inclui orientação de segurança e conservação do sistema de energia solar;
+- [x] gerador de senha administrativa corrigido e validado;
+- [x] domingo incluído automaticamente na tarifa de fim de semana;
 - [x] cache PWA renovado;
 - [x] testes automatizados específicos adicionados.
 
@@ -53,7 +56,7 @@ Antes da abertura comercial, registrar evidências para:
 
 1. cotação de 2, 3, 4, 5 e 6 hóspedes;
 2. adicional de R$ 50 por pessoa adicional a cada noite, inclusive em estadias de várias noites;
-3. tarifa normal, sexta/sábado e feriado cadastrado;
+3. tarifa normal, sexta/sábado/domingo e feriado cadastrado;
 4. conflito e prioridade temporária de datas;
 5. protocolo e código privado;
 6. termo GOV.BR, upload e validação administrativa;

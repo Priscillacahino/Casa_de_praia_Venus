@@ -28,7 +28,7 @@ const fixture = () => {
   );
   return db;
 };
-test("calcula centavos, sexta/sábado, limpeza única e saída exclusiva", () => {
+test("calcula centavos, sexta/sábado/domingo, limpeza única e saída exclusiva", () => {
   const db = fixture();
   const q = calculateQuote(db, "2030-01-03", "2030-01-06");
   assert.equal(q.nights, 3);

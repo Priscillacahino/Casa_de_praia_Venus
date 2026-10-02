@@ -72,7 +72,7 @@
     "+ R$ 200/noite": "+ R$ 200/noche",
     "Até 2 hóspedes estão incluídos na diária. Do 3º ao 6º hóspede, é acrescentado R$ 50 por pessoa a cada noite da hospedagem. Todos seguem o mesmo período e horários de check-in e check-out da reserva.": "Hasta 2 huéspedes están incluidos en la tarifa. Del 3.º al 6.º huésped se añaden R$ 50 por persona por cada noche de la estancia. Todos siguen el mismo período y los mismos horarios de check-in y check-out de la reserva.",
     "📅 Feriados e datas especiais": "📅 Festivos y fechas especiales",
-    "Noites de sexta e sábado seguem a tarifa de fim de semana. Feriados cadastrados também usam essa tarifa; outros períodos especiais podem ter valores próprios configurados pela administração.": "Las noches de viernes y sábado utilizan la tarifa de fin de semana. Los festivos registrados también utilizan esta tarifa; otros períodos especiales pueden tener valores propios configurados por la administración.",
+    "Noites de sexta, sábado e domingo seguem a tarifa de fim de semana. Feriados cadastrados também usam essa tarifa; outros períodos especiais podem ter valores próprios configurados pela administração.": "Las noches de viernes, sábado y domingo utilizan la tarifa de fin de semana. Los festivos registrados también utilizan esta tarifa; otros períodos especiales pueden tener valores propios configurados por la administración.",
     "🧾 Limpeza": "🧾 Limpieza",
     "Quando houver taxa de limpeza, o valor aparece na cotação antes do envio da solicitação.": "Cuando exista una tarifa de limpieza, su valor aparecerá en la cotización antes de enviar la solicitud.",
     "🔐 Reserva": "🔐 Reserva",
