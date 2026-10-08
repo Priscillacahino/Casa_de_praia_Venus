@@ -794,12 +794,12 @@ export function createApp(db, options = {}) {
       audit(ctx, "legal.disabled", TERM_HASH);
       return json(ctx.res, 200, { ok: true });
     }
-    if (ctx.body.confirmedReview !== true) throw new AppError("Confirme que o jurídico validou esta versão.");
+    if (ctx.body.confirmedReview !== true) throw new AppError("Confirme a liberação administrativa desta versão.");
     db.prepare(`UPDATE legal_approval SET approved=1,term_hash=?,reviewer=?,reference=?,approved_at=CURRENT_TIMESTAMP
       WHERE id=1`).run(
-      TERM_HASH, text(ctx.body.reviewer, "Responsável jurídico", 3, 150), text(ctx.body.reference, "Referência da aprovação", 5, 1000),
+      TERM_HASH, text(ctx.body.reviewer, "Responsável pela liberação", 3, 150), text(ctx.body.reference, "Referência da liberação", 5, 1000),
     );
-    audit(ctx, "legal.approved", TERM_HASH, { reviewer: text(ctx.body.reviewer, "Responsável jurídico", 3, 150) });
+    audit(ctx, "legal.approved", TERM_HASH, { reviewer: text(ctx.body.reviewer, "Responsável pela liberação", 3, 150) });
     json(ctx.res, 200, { ok: true });
   }, true);
   register("GET", "/api/admin/term-template", (ctx) => {
