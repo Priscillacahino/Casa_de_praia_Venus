@@ -1,11 +1,13 @@
 TERMO DE COMPROMISSO DE RESERVA E CIÊNCIA DE CONSERVAÇÃO
 VÊNUS CASA DE PRAIA
-Versão proposta 2026-10-02 — MINUTA NÃO VIGENTE
-Uso e implementação condicionados à validação jurídica da versão exata.
+Versão 2026-10-08 — v7
+Conteúdo concluído pela administração da Vênus Casa de Praia. A liberação desta versão para contratação deve ser registrada no sistema antes do uso.
 
 1. IDENTIFICAÇÃO E OBJETO
 
 Os dados específicos da reserva serão apresentados no quadro gerado automaticamente pelo sistema, incluindo protocolo, hóspede responsável, CPF, contato, período, quantidade de hóspedes e valores da contratação.
+
+A tarifa da hospedagem corresponde ao uso da casa inteira. Não há cobrança por quarto, cama ou cômodo utilizado. Até 2 hóspedes estão incluídos na tarifa-base; a partir do 3º hóspede, aplica-se o adicional informado na cotação por pessoa e por noite, respeitado o limite configurado da hospedagem.
 
 Este instrumento disciplina a solicitação e confirmação da hospedagem, pagamento, cancelamento, utilização e conservação do imóvel e dos bens disponibilizados.
 
@@ -34,7 +36,11 @@ Os dados bancários não serão publicados no site.
 
 4. DIREITO DE ARREPENDIMENTO NAS RESERVAS A DISTÂNCIA
 
-Nas reservas contratadas pelo site, WhatsApp, telefone ou outros meios a distância, serão preservados os direitos legalmente aplicáveis ao consumidor, inclusive eventual direito de arrependimento dentro do prazo previsto em lei, sem prejuízo de condição legal mais favorável.
+Nas contratações realizadas fora do estabelecimento comercial, inclusive pelos canais digitais adotados pela Vênus Casa de Praia, serão respeitados os direitos previstos no art. 49 do Código de Defesa do Consumidor quando presentes os requisitos legais para sua aplicação.
+
+Nessas hipóteses, o consumidor poderá exercer o direito de arrependimento no prazo legal de 7 dias, contado na forma prevista pela legislação aplicável.
+
+Quando regularmente exercido o direito de arrependimento, os valores eventualmente pagos durante o prazo legal serão restituídos na forma da legislação aplicável.
 
 5. CANCELAMENTO POR INICIATIVA DO HÓSPEDE
 

@@ -52,7 +52,7 @@ async function refreshQuote() {
   currentQuote = null;
   if (!checkIn || !checkOut) {
     quoteBox.className = "notice";
-    quoteBox.textContent = "Informe check-in e check-out para consultar.";
+    quoteBox.textContent = "Informe check-in, check-out e hóspedes para consultar.";
     return;
   }
   lastQuoteKey = [checkIn, checkOut, guests].join("|");
@@ -62,15 +62,22 @@ async function refreshQuote() {
     if (lastQuoteKey !== [checkIn, checkOut, guests].join("|")) return;
     currentQuote = q;
     quoteBox.className = "notice ok";
-    quoteBox.innerHTML = `<strong>${q.nights} noite(s) · ${money(q.totalCents)}</strong><br>Diárias: ${money(q.subtotalCents)} · Hóspedes adicionais: ${money(q.guestFeeCents)} · Limpeza: ${money(q.cleaningFeeCents)} · Sinal previsto (${q.depositPercent}%): ${money(q.depositCents)}.`;
+    const balanceCents = Math.max(0, Number(q.totalCents || 0) - Number(q.depositCents || 0));
+    const isSpanishQuote = window.VenusI18n?.getLanguage?.() === "es";
+    quoteBox.innerHTML = isSpanishQuote
+      ? `<strong>Casa completa · ${q.nights} noche(s) · Total ${money(q.totalCents)}</strong><br>Tarifa base de la casa: ${money(q.subtotalCents)} · Huéspedes adicionales: ${money(q.guestFeeCents)} · Limpieza: ${money(q.cleaningFeeCents)}.<br>No se cobra por habitación, cama o ambiente utilizado.<br>Señal prevista (${q.depositPercent}%): ${money(q.depositCents)} · Saldo previsto: ${money(balanceCents)}.`
+      : `<strong>Casa inteira · ${q.nights} noite(s) · Total ${money(q.totalCents)}</strong><br>Valor-base da casa: ${money(q.subtotalCents)} · Hóspedes adicionais: ${money(q.guestFeeCents)} · Limpeza: ${money(q.cleaningFeeCents)}.<br>Não há cobrança por quarto, cama ou cômodo utilizado.<br>Sinal previsto (${q.depositPercent}%): ${money(q.depositCents)} · Saldo previsto: ${money(balanceCents)}.`;
   } catch (e) {
     quoteBox.className = "notice error";
     quoteBox.textContent = e.message;
   }
 }
 
+form.elements.checkIn.addEventListener("input", refreshQuote);
 form.elements.checkIn.addEventListener("change", refreshQuote);
+form.elements.checkOut.addEventListener("input", refreshQuote);
 form.elements.checkOut.addEventListener("change", refreshQuote);
+form.elements.guests.addEventListener("input", refreshQuote);
 form.elements.guests.addEventListener("change", refreshQuote);
 
 form.addEventListener("submit", async (e) => {
@@ -147,7 +154,7 @@ async function loadReservationStatus() {
             ? "PDF assinado enviado. Aguarde a validação administrativa antes de continuar o atendimento."
             : d.legalReady
               ? "Prepare o termo, assine pelo GOV.BR e envie o PDF assinado."
-              : "A versão atual do termo ainda aguarda a aprovação necessária para contratação.";
+              : "A versão atual do termo ainda aguarda a liberação administrativa para contratação.";
       }
       if (prepareTermButton) prepareTermButton.disabled = !d.legalReady;
       if (signedTermFile) signedTermFile.disabled = !d.legalReady || d.signatureReady;
