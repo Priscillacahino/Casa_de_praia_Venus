@@ -1,8 +1,9 @@
 import { readFileSync } from "node:fs";
 import { createHash, randomUUID } from "node:crypto";
 import { AppError, text, transaction } from "./domain.js";
+import { protectSignedTermPdf } from "./privacy.js";
 
-export const TERM_VERSION = "2026-10-02-v6";
+export const TERM_VERSION = "2026-10-08-v7";
 export const TERM_TEXT = readFileSync(new URL("../docs/termo-compromisso-minuta.txt", import.meta.url), "utf8");
 export const TERM_HASH = createHash("sha256").update(TERM_TEXT).digest("hex");
 
@@ -38,7 +39,7 @@ export function readiness(db, row) {
 
 export function assertConfirmationReady(db, row) {
   const r = readiness(db, row);
-  if (!r.legalReady) throw new AppError("O termo ainda depende de aprovação jurídica desta versão.", 422);
+  if (!r.legalReady) throw new AppError("O termo ainda depende de liberação administrativa desta versão.", 422);
   if (!r.signatureReady) throw new AppError("Anexe o termo assinado e registre a validação antes de confirmar.", 422);
   if (!r.depositCheckedExternally) throw new AppError("Registre no painel a conferência externa do sinal antes de confirmar.", 422);
   // O recebimento e a conferência financeira continuam exclusivamente fora do site.
@@ -62,7 +63,7 @@ export function saveSignedTerm(db, reservationId, base64, audit) {
     ON CONFLICT(reservation_id) DO UPDATE SET
       id=excluded.id,pdf=excluded.pdf,sha256=excluded.sha256,term_hash=excluded.term_hash,
       validated_at=NULL,reviewer=NULL,validation_reference=NULL,uploaded_at=CURRENT_TIMESTAMP`).run(
-    id, r.id, bytes, sha, TERM_HASH,
+    id, r.id, protectSignedTermPdf(bytes), sha, TERM_HASH,
   );
   audit("signature.uploaded", r.id, { sha256: sha });
   return { id, sha256: sha, status: "awaiting_validation" };
@@ -76,7 +77,7 @@ export function validateSignedTerm(db, reservationId, body, audit) {
     if (!d || d.sha256 !== body.sha256) throw new AppError("Documento mudou ou não foi enviado. Atualize a página.", 409);
     const l = legal(db);
     if (l?.approved !== 1 || l.term_hash !== TERM_HASH || d.term_hash !== TERM_HASH) {
-      throw new AppError("Aprovação jurídica pendente ou versão desatualizada.", 422);
+      throw new AppError("Liberação administrativa pendente ou versão desatualizada.", 422);
     }
     if (body.signatureChecked !== true || body.identityChecked !== true || body.contentChecked !== true) {
       throw new AppError("Confira assinatura, identidade e conteúdo.");

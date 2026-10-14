@@ -221,15 +221,15 @@
         <div id="availabilityDays" class="availability-days"></div>
         <p id="availabilityStatus" class="availability-status" role="status" aria-live="polite">Carregando disponibilidade…</p>
       </div>
-      <div id="quote" class="notice" role="status" aria-live="polite">Informe check-in e check-out para consultar.</div>
       <div id="reservationResult" class="notice hidden" role="status" aria-live="polite"></div>
     </div>
     <form id="bookingForm" class="card form" novalidate>
       <div class="two"><label>Check-in<input name="checkIn" type="date" required></label><label>Check-out<input name="checkOut" type="date" required></label></div>
+      <div class="two"><label>Hóspedes<input name="guests" type="number" min="1" max="6" value="2" required></label><label class="check"><input name="hasPet" type="checkbox"> Levo pet</label></div>
+      <div id="quote" class="notice" role="status" aria-live="polite">Informe check-in, check-out e hóspedes para consultar.</div>
       <label>Nome completo<input name="name" autocomplete="name" maxlength="120" required></label>
       <label>CPF do responsável pela reserva<input name="cpf" inputmode="numeric" autocomplete="off" maxlength="14" placeholder="000.000.000-00" required></label>
       <div class="two"><label>E-mail<input name="email" type="email" autocomplete="email" maxlength="254" required></label><label>Telefone/WhatsApp<input name="phone" autocomplete="tel" inputmode="tel" maxlength="25" required></label></div>
-      <div class="two"><label>Hóspedes<input name="guests" type="number" min="1" max="6" value="2" required></label><label class="check"><input name="hasPet" type="checkbox"> Levo pet</label></div>
       <label>Observações<textarea name="notes" rows="3" maxlength="2000"></textarea></label>
       <label class="check"><input name="consent" type="checkbox" required> Autorizo o uso destes dados para atender esta solicitação.</label>
       <button class="button primary full" type="submit">Enviar solicitação</button>
@@ -332,8 +332,8 @@
     <span class="eyebrow">Privacidade</span><h2>Dados mínimos, finalidade clara.</h2>
     <p>Os dados de contato e reserva são usados para atender a solicitação, organizar a hospedagem e manter os registros operacionais necessários. Avaliações só são publicadas após moderação. Solicitações de correção ou exclusão devem ser tratadas pela administração, observadas as obrigações legais de retenção.</p>
     <p class="muted">Este sistema não solicita senhas do hóspede, dados de cartão, contas bancárias ou comprovantes, nem aceita novos registros de transações financeiras. O atendimento financeiro é externo, pelo WhatsApp.</p>
-    <div class="actions"><a class="button" href="/privacidade.html">Política de privacidade</a><a class="button" href="/termos.html">Termo vigente da hospedagem</a></div>
-    <p class="muted">O termo vigente só é disponibilizado pelo sistema depois que a versão exata possui aprovação registrada.</p>
+    <div class="actions"><a class="button" href="/privacidade.html">Política de privacidade</a><a class="button" href="/termos.html">Termo vigente da hospedagem</a><a class="button" href="/docs/codigo-defesa-consumidor.pdf" target="_blank" rel="noopener noreferrer">Código de Defesa do Consumidor — PDF</a><a class="button" href="https://www.planalto.gov.br/ccivil_03/leis/l8078compilado.htm" target="_blank" rel="noopener noreferrer">CDC no Planalto</a></div>
+    <p class="muted">O termo vigente só é disponibilizado pelo sistema depois que a versão exata possui liberação administrativa registrada.</p>
   </section>
 </main>
 

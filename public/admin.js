@@ -50,7 +50,7 @@ async function load() {
         <strong>${esc(r.check_in)} → ${esc(r.check_out)}</strong> · ${esc(r.status)}<br>
         <span>${esc(r.name || "Bloqueio")} · ${q.totalCents ? money(q.totalCents) : "—"}</span>
         <p>${hold}</p>
-        <p class="muted">Termo jurídico: ${req.legalReady ? "OK" : "pendente"} · assinatura: ${req.signatureReady ? "OK" : "pendente"} · sinal externo: ${req.depositCheckedExternally ? `conferido em ${esc(when(req.depositCheckedAt))}` : "pendente"}</p>
+        <p class="muted">Liberação do termo: ${req.legalReady ? "OK" : "pendente"} · assinatura: ${req.signatureReady ? "OK" : "pendente"} · sinal externo: ${req.depositCheckedExternally ? `conferido em ${esc(when(req.depositCheckedAt))}` : "pendente"}</p>
         ${cancellationBox}
         ${r.status === "requested" ? `<div class="actions">
           <button class="button confirm" ${req.ready ? "" : "disabled"}>Confirmar</button>
@@ -216,9 +216,9 @@ async function term(id) {
 
 async function loadCompliance() {
   const c = await api("/admin/compliance");
-  $("#compliance").innerHTML = `<p><strong>Versão:</strong> ${esc(c.version)}</p><p><strong>Hash do termo:</strong> <code>${esc(c.termHash)}</code></p><p><strong>Aprovação jurídica:</strong> ${c.approval?.approved === 1 ? "registrada" : "pendente"}</p><div class="actions"><button class="button" id="legalApprove">Registrar aprovação validada</button><a class="button" href="/api/admin/term-template">Baixar minuta</a><a class="button" href="https://www.gov.br/pt-br/servicos/realizar-validacao-de-assinaturas-eletronicas-validar" target="_blank" rel="noopener noreferrer">Abrir VALIDAR/ITI</a></div>`;
+  $("#compliance").innerHTML = `<p><strong>Versão:</strong> ${esc(c.version)}</p><p><strong>Hash do termo:</strong> <code>${esc(c.termHash)}</code></p><p><strong>Liberação administrativa:</strong> ${c.approval?.approved === 1 ? "registrada" : "pendente"}</p><div class="actions"><button class="button" id="legalApprove">Registrar liberação administrativa</button><a class="button" href="/api/admin/term-template">Baixar minuta</a><a class="button" href="https://www.gov.br/pt-br/servicos/realizar-validacao-de-assinaturas-eletronicas-validar" target="_blank" rel="noopener noreferrer">Abrir VALIDAR/ITI</a></div>`;
   $("#legalApprove").onclick = async () => {
-    const reviewer = prompt("Responsável/revisor jurídico:"); const reference = prompt("Referência do parecer/documento:");
+    const reviewer = prompt("Responsável pela liberação administrativa:"); const reference = prompt("Referência da liberação administrativa:");
     if (!reviewer || !reference) return;
     try { await api("/admin/legal-approval", "POST", { termHash:c.termHash, approved:true, confirmedReview:true, reviewer, reference }); await loadCompliance(); }
     catch (e) { alert(e.message); }

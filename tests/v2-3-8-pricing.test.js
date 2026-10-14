@@ -41,7 +41,7 @@ function fixture() {
 test("v2.3.8 cobra R$ 50 por hóspede adicional a cada noite", () => {
   const db = fixture();
 
-  const q = calculateQuote(db, "2026-10-02", "2026-10-04", { guests: 4 });
+  const q = calculateQuote(db, "2026-10-02", "2026-10-04", { guests: 4, checkPast: false });
 
   assert.equal(q.nights, 2);
   assert.equal(q.subtotalCents, 30000);
@@ -57,7 +57,7 @@ test("v2.3.8 cobra R$ 50 por hóspede adicional a cada noite", () => {
 test("v2.3.8 mantém casal sem adicional", () => {
   const db = fixture();
 
-  const q = calculateQuote(db, "2026-10-02", "2026-10-04", { guests: 2 });
+  const q = calculateQuote(db, "2026-10-02", "2026-10-04", { guests: 2, checkPast: false });
 
   assert.equal(q.guestFeeCents, 0);
   assert.equal(q.totalCents, 30000);
@@ -95,14 +95,14 @@ test("domingo recebe tarifa de fim de semana", () => {
       const seguinte = new Date(Date.parse(dia) + 86400000)
         .toISOString().slice(0, 10);
 
-      const q = calculateQuote(db, dia, seguinte, { guests: 2 });
+      const q = calculateQuote(db, dia, seguinte, { guests: 2, checkPast: false });
 
       assert.equal(q.subtotalCents, 15000);
       assert.equal(q.nightlyDetails[0].rateType, "weekend");
     }
 
     const segunda = calculateQuote(
-      db, "2026-10-05", "2026-10-06", { guests: 2 }
+      db, "2026-10-05", "2026-10-06", { guests: 2, checkPast: false }
     );
 
     assert.equal(segunda.subtotalCents, 12000);

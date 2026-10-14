@@ -95,11 +95,11 @@ test("v2.3.7 remove fonte Android inexistente do Guia e alinha versões", () => 
   assert.match(sw, /venus-shell-v\d+/);
 });
 
-test("v2.3.7 corrige marca da minuta contratual e mantém status de minuta", () => {
+test("termo atual está concluído administrativamente como v7", () => {
   const term = readFileSync(join(root, "docs", "termo-compromisso-minuta.txt"), "utf8");
   const compliance = readFileSync(join(root, "server", "compliance.js"), "utf8");
   assert.match(term, /VÊNUS CASA DE PRAIA/);
   assert.doesNotMatch(term, /VÊNUS BEACH HOUSE/);
-  assert.match(term, /MINUTA NÃO VIGENTE/);
-  assert.match(compliance, /2026-10-02-v6/);
+  assert.match(term, /Versão 2026-10-08 — v7/);
+  assert.match(compliance, /2026-10-08-v7/);
 });

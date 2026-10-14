@@ -13,7 +13,11 @@ import {
   TERM_HASH, TERM_TEXT, TERM_VERSION, legal, readiness,
   assertConfirmationReady, saveSignedTerm, validateSignedTerm,
 } from "./compliance.js";
-import { protectCpf, revealCpf } from "./privacy.js";
+import {
+  protectCpf,
+  revealCpf,
+  revealSignedTermPdf,
+} from "./privacy.js";
 
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 const MAX_JSON = 8 * 1024 * 1024;
@@ -268,11 +272,11 @@ export function createApp(db, options = {}) {
   };
 
   // Public endpoints.
-  register("GET", "/api/health", (ctx) => json(ctx.res, 200, { ok: true, version: 9 }));
+  register("GET", "/api/health", (ctx) => json(ctx.res, 200, { ok: true, version: 10 }));
   register("GET", "/api/ready", (ctx) => {
     const quick = db.prepare("PRAGMA quick_check(1)").get()?.quick_check;
     const schemaVersion = Number(db.prepare("PRAGMA user_version").get()?.user_version || 0);
-    const ok = quick === "ok" && schemaVersion === 9;
+    const ok = quick === "ok" && schemaVersion === 10;
     json(ctx.res, ok ? 200 : 503, { ok, schemaVersion });
   });
   register("GET", "/api/public", (ctx) => {
@@ -794,12 +798,12 @@ export function createApp(db, options = {}) {
       audit(ctx, "legal.disabled", TERM_HASH);
       return json(ctx.res, 200, { ok: true });
     }
-    if (ctx.body.confirmedReview !== true) throw new AppError("Confirme que o jurídico validou esta versão.");
+    if (ctx.body.confirmedReview !== true) throw new AppError("Confirme a liberação administrativa desta versão.");
     db.prepare(`UPDATE legal_approval SET approved=1,term_hash=?,reviewer=?,reference=?,approved_at=CURRENT_TIMESTAMP
       WHERE id=1`).run(
-      TERM_HASH, text(ctx.body.reviewer, "Responsável jurídico", 3, 150), text(ctx.body.reference, "Referência da aprovação", 5, 1000),
+      TERM_HASH, text(ctx.body.reviewer, "Responsável pela liberação", 3, 150), text(ctx.body.reference, "Referência da liberação", 5, 1000),
     );
-    audit(ctx, "legal.approved", TERM_HASH, { reviewer: text(ctx.body.reviewer, "Responsável jurídico", 3, 150) });
+    audit(ctx, "legal.approved", TERM_HASH, { reviewer: text(ctx.body.reviewer, "Responsável pela liberação", 3, 150) });
     json(ctx.res, 200, { ok: true });
   }, true);
   register("GET", "/api/admin/term-template", (ctx) => {
@@ -811,7 +815,7 @@ export function createApp(db, options = {}) {
   register("GET", "/api/admin/reservations/:id/signed-term", (ctx) => {
     const d = db.prepare("SELECT pdf FROM signed_terms WHERE reservation_id=?").get(ctx.params.id);
     if (!d) throw new AppError("Documento não encontrado.", 404);
-    raw(ctx.res, 200, Buffer.from(d.pdf), "application/pdf", attachment("termo-assinado.pdf"));
+    raw(ctx.res, 200, revealSignedTermPdf(d.pdf), "application/pdf", attachment("termo-assinado.pdf"));
   }, true);
   register("POST", "/api/admin/reservations/:id/validate-term", (ctx) => {
     validateSignedTerm(db, ctx.params.id, ctx.body, (a, r, d) => audit(ctx, a, r, d));

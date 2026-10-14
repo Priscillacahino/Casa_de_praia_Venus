@@ -19,14 +19,18 @@
     "audit:verify": "node scripts/verify-audit.js",
     "backup": "node scripts/backup.js",
     "backup:restore": "node scripts/restore-backup.js",
+    "backup:key": "node scripts/generate-backup-key.js",
     "privacy:retention": "node scripts/privacy-retention.js",
     "backup:selftest": "node scripts/backup-selftest.js",
     "production:check": "node scripts/production-check.js",
+    "production:config-check": "node scripts/production-config-check.js",
+    "preprod:db-rehearsal": "node scripts/preprod-db-rehearsal.js",
     "android:release-check": "node scripts/android-release-check.js",
     "audit:secret": "node scripts/generate-audit-secret.js",
     "db:migrate": "node scripts/migrate.js",
     "pii:key": "node scripts/generate-pii-key.js",
     "privacy:migrate-cpf": "node scripts/migrate-cpf.js",
+    "privacy:migrate-signed-terms": "node scripts/migrate-signed-terms.js",
     "legacy-finance:audit": "node scripts/legacy-finance-audit.js",
     "legacy-finance:cleanup-empty": "node scripts/legacy-finance-cleanup-empty.js"
   }
