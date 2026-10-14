@@ -13,7 +13,11 @@ import {
   TERM_HASH, TERM_TEXT, TERM_VERSION, legal, readiness,
   assertConfirmationReady, saveSignedTerm, validateSignedTerm,
 } from "./compliance.js";
-import { protectCpf, revealCpf } from "./privacy.js";
+import {
+  protectCpf,
+  revealCpf,
+  revealSignedTermPdf,
+} from "./privacy.js";
 
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 const MAX_JSON = 8 * 1024 * 1024;
@@ -811,7 +815,7 @@ export function createApp(db, options = {}) {
   register("GET", "/api/admin/reservations/:id/signed-term", (ctx) => {
     const d = db.prepare("SELECT pdf FROM signed_terms WHERE reservation_id=?").get(ctx.params.id);
     if (!d) throw new AppError("Documento não encontrado.", 404);
-    raw(ctx.res, 200, Buffer.from(d.pdf), "application/pdf", attachment("termo-assinado.pdf"));
+    raw(ctx.res, 200, revealSignedTermPdf(d.pdf), "application/pdf", attachment("termo-assinado.pdf"));
   }, true);
   register("POST", "/api/admin/reservations/:id/validate-term", (ctx) => {
     validateSignedTerm(db, ctx.params.id, ctx.body, (a, r, d) => audit(ctx, a, r, d));

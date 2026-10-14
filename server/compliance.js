@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { createHash, randomUUID } from "node:crypto";
 import { AppError, text, transaction } from "./domain.js";
+import { protectSignedTermPdf } from "./privacy.js";
 
 export const TERM_VERSION = "2026-10-08-v7";
 export const TERM_TEXT = readFileSync(new URL("../docs/termo-compromisso-minuta.txt", import.meta.url), "utf8");
@@ -62,7 +63,7 @@ export function saveSignedTerm(db, reservationId, base64, audit) {
     ON CONFLICT(reservation_id) DO UPDATE SET
       id=excluded.id,pdf=excluded.pdf,sha256=excluded.sha256,term_hash=excluded.term_hash,
       validated_at=NULL,reviewer=NULL,validation_reference=NULL,uploaded_at=CURRENT_TIMESTAMP`).run(
-    id, r.id, bytes, sha, TERM_HASH,
+    id, r.id, protectSignedTermPdf(bytes), sha, TERM_HASH,
   );
   audit("signature.uploaded", r.id, { sha256: sha });
   return { id, sha256: sha, status: "awaiting_validation" };
