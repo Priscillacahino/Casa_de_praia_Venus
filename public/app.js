@@ -10,8 +10,11 @@ const api = async (path, options = {}) => {
     ...options,
     headers:{ ...(options.body ? { "Content-Type":"application/json" } : {}), ...(options.headers || {}) },
   });
-  const data = await response.json().catch(() => ({ error:tr("Resposta inválida do servidor.") }));
-  if (!response.ok) throw new Error(tr(data.error || "Não foi possível concluir."));
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(tr(data?.error || "Não foi possível concluir."));
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    throw new Error(tr("Serviço de reservas indisponível. Consulte a anfitriã pelo WhatsApp."));
+  }
   return data;
 };
 
@@ -20,6 +23,7 @@ let lastQuoteKey = "";
 let currentReservationAccess = null;
 let currentReservationState = null;
 let publicSettings = {};
+let backendAvailable = false;
 const form = $("#bookingForm");
 const quoteBox = $("#quote");
 const resultBox = $("#reservationResult");
@@ -312,6 +316,8 @@ signedTermFile?.addEventListener("change", async () => {
 (async () => {
   try {
     const pub = await api("/public");
+    if (!pub.settings || !Array.isArray(pub.rates)) throw new Error("API de reservas não configurada.");
+    backendAvailable = true;
     publicSettings = pub.settings || {};
     const emailCard = $("#contactEmailCard");
     const emailText = $("#contactEmailText");
@@ -386,10 +392,21 @@ signedTermFile?.addEventListener("change", async () => {
     } else if (apkStatus) {
       apkStatus.textContent = "O APK oficial ainda não foi publicado. Use a versão web/PWA enquanto isso.";
     }
-  } catch {}
+  } catch (error) {
+    quoteBox.className = "notice error";
+    quoteBox.textContent = "Reservas online temporariamente indisponíveis. Consulte as datas pelo WhatsApp; não envie CPF nem realize pagamento sem confirmação do anfitrião.";
+    form.querySelector('button[type="submit"]')?.setAttribute("disabled", "");
+    contactResult.className = "notice error";
+    contactResult.textContent = "Formulário online indisponível. Use os contatos diretos desta página.";
+    contactForm.querySelector('button[type="submit"]')?.setAttribute("disabled", "");
+    console.warn("API pública indisponível:", error.message);
+  }
   const box = $("#paymentStatus");
   if (box) {
-    if (publicSettings.whatsappNumber) {
+    if (!backendAvailable) {
+      box.className = "notice error";
+      box.textContent = "Ainda não é possível acompanhar ou confirmar reservas online. Para dúvidas e datas, utilize o WhatsApp geral; não efetue pagamento sem conferência direta.";
+    } else if (publicSettings.whatsappNumber) {
       box.className = "notice ok";
       box.textContent = "Após a validação do termo, continue pelo WhatsApp oficial. Todas as questões financeiras são tratadas fora do site, e a confirmação da reserva aparece aqui.";
     } else {

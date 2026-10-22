@@ -268,11 +268,11 @@ export function createApp(db, options = {}) {
   };
 
   // Public endpoints.
-  register("GET", "/api/health", (ctx) => json(ctx.res, 200, { ok: true, version: 9 }));
+  register("GET", "/api/health", (ctx) => json(ctx.res, 200, { ok: true, version: 10, schemaVersion: 10 }));
   register("GET", "/api/ready", (ctx) => {
     const quick = db.prepare("PRAGMA quick_check(1)").get()?.quick_check;
     const schemaVersion = Number(db.prepare("PRAGMA user_version").get()?.user_version || 0);
-    const ok = quick === "ok" && schemaVersion === 9;
+    const ok = quick === "ok" && schemaVersion === 10;
     json(ctx.res, ok ? 200 : 503, { ok, schemaVersion });
   });
   register("GET", "/api/public", (ctx) => {

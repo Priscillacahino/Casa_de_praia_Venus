@@ -57,8 +57,12 @@
       credentials: "same-origin",
       headers: { "Accept": "application/json" },
     });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(t(data.error || "Não foi possível carregar a disponibilidade."));
+    const data = await response.json().catch(() => null);
+    if (!response.ok) throw new Error(t(data?.error || "Não foi possível carregar a disponibilidade."));
+    if (!data || typeof data !== "object" ||
+        (path === "/public" ? !data.settings : !Array.isArray(data.ranges))) {
+      throw new Error(t("Agenda online indisponível. Consulte a anfitriã pelo WhatsApp."));
+    }
     return data;
   };
 

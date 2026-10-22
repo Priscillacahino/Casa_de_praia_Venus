@@ -11,8 +11,11 @@ async function api(path, method = "GET", body) {
     headers: body ? { "Content-Type":"application/json" } : {},
     body: body ? JSON.stringify(body) : undefined,
   });
-  const d = await r.json().catch(() => ({ error:"Resposta inválida" }));
-  if (!r.ok) throw new Error(d.error || "Falha");
+  const d = await r.json().catch(() => null);
+  if (!r.ok) throw new Error(d?.error || "Falha no servidor");
+  if (!d || typeof d !== "object" || Array.isArray(d)) {
+    throw new Error("API administrativa indisponível. Verifique a hospedagem do backend.");
+  }
   return d;
 }
 
