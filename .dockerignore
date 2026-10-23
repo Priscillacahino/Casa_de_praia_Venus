@@ -1,0 +1,27 @@
+# Keep runtime secrets, personal data and local artifacts out of build context.
+.git
+.github
+node_modules
+.gradle
+.idea
+.vscode
+.env
+.env.*
+data
+backups
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.db
+*.enc
+*.pem
+*.key
+*.jks
+*.keystore
+*.log
+*.zip
+coverage
+dist
+app
+android
+*.ps1
